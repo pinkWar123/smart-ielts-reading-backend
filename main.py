@@ -1,0 +1,38 @@
+from contextlib import asynccontextmanager
+
+from fastapi import APIRouter, FastAPI
+
+from app.common.db.engine import close_database, initialize_database
+from app.container import container
+from app.presentation.routes.test_router import router as test_router
+from app.presentation.routes.passage_router import router as passage_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await initialize_database()
+    container.wire(modules=["app.presentation.routes.passage_router", "app.common.di"])
+    yield
+    # Shutdown
+    await close_database()
+
+
+app = FastAPI(lifespan=lifespan)
+
+v1_router = APIRouter(prefix="/api/v1")
+
+
+@v1_router.get("/health")
+def health_check():
+    return "OK"
+
+
+v1_router.include_router(passage_router)
+v1_router.include_router(test_router)
+app.include_router(v1_router)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8001)

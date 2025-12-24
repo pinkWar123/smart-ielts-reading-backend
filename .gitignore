@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+
+# Database
+*.db
+
+# uv
+uv.lock.bak
+
+# Testing
+.pytest_cache/
+
+# Alembic
+migrations/versions/*.pyc

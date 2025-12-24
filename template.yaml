@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FastAPI Clean Architecture on Lambda
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 15
+    MemorySize: 512
+    Architectures: [arm64]
+    Environment:
+      Variables:
+        APP_ENV: prod
+        APP_NAME: story-backend
+        JWT_SECRET: CHANGE_ME_LONG_RANDOM
+        JWT_ISSUER: story-backend
+        ADMIN_SEED_KEY: CHANGE_ME
+
+Resources:
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: ["*"]
+        AllowHeaders: ["authorization", "content-type"]
+        AllowMethods: ["GET", "POST", "DELETE", "OPTIONS"]
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/app/handler.handler
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
