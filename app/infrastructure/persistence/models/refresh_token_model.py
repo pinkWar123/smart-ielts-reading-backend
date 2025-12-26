@@ -1,7 +1,10 @@
 import uuid
-from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean
-from app.infrastructure.persistence.models.base import BaseModel
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
+
+from app.infrastructure.persistence.models.base import BaseModel
+
 
 class RefreshTokenModel(BaseModel):
     __tablename__ = "refresh_tokens"

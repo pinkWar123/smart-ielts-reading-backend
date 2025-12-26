@@ -20,7 +20,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     config.from_env("jwt_secret", "JWT_SECRET")
     config.from_env("db_url", "DATABASE_URL")
     config.from_env("jwt_algorithm", "JWT_ALGORITHM")
-    config.from_env("jwt_access_token_expire_minutes", "JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    config.from_env(
+        "jwt_access_token_expire_minutes", "JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
 
     database_session = providers.Resource(get_database_session)
 
@@ -31,7 +33,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
-    jwt_service = providers.Factory(JwtService,settings=settings)
+    jwt_service = providers.Factory(JwtService, settings=settings)
 
     # Use Cases
     create_passage_use_case = providers.Factory(

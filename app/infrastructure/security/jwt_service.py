@@ -1,4 +1,3 @@
-
 from app.common.settings import Settings
 
 
@@ -7,4 +6,8 @@ class JwtService:
         self.settings = settings
 
     def log_secret(self):
-        return self.settings.jwt_secret + self.settings.jwt_algorithm + str(self.settings.jwt_access_token_expire_minutes)
+        return (
+            self.settings.jwt_secret
+            + self.settings.jwt_algorithm
+            + str(self.settings.jwt_access_token_expire_minutes)
+        )

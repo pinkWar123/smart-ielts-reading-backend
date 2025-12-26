@@ -4,8 +4,8 @@ from fastapi import APIRouter, FastAPI
 
 from app.common.db.engine import close_database, initialize_database
 from app.container import container
-from app.presentation.routes.test_router import router as test_router
 from app.presentation.routes.passage_router import router as passage_router
+from app.presentation.routes.test_router import router as test_router
 
 
 @asynccontextmanager

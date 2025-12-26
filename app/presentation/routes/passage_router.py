@@ -1,7 +1,6 @@
 from dependency_injector.wiring import Provide
 from fastapi import APIRouter, Depends
 
-
 from app.common.di import make_service_dependency
 from app.container import ApplicationContainer
 from app.presentation.controllers.passage_controller import PassageController

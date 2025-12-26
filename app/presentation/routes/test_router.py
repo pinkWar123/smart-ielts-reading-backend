@@ -10,8 +10,7 @@ router = APIRouter()
 
 get_jwt_service = make_service_dependency(Provide[ApplicationContainer.jwt_service])
 
+
 @router.get("/test", response_model=str)
-async def test(
-        jwt_service: JwtService = Depends(get_jwt_service)
-):
+async def test(jwt_service: JwtService = Depends(get_jwt_service)):
     return jwt_service.log_secret()

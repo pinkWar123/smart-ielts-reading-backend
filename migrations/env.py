@@ -6,13 +6,14 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-from app.infrastructure.persistence.models import refresh_token_model
-from app.infrastructure.persistence.models import test_model
-from app.infrastructure.persistence.models import user_model
-from app.infrastructure.persistence.models import question_model
-from app.infrastructure.persistence.models import passage_model
-from app.infrastructure.persistence.models import attempt_model
-
+from app.infrastructure.persistence.models import (
+    attempt_model,
+    passage_model,
+    question_model,
+    refresh_token_model,
+    test_model,
+    user_model,
+)
 
 # Load environment variables
 load_dotenv()
