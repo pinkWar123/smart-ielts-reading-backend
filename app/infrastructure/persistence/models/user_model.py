@@ -31,3 +31,4 @@ class UserModel(BaseModel):
         foreign_keys="[PassageModel.created_by]",
     )
     attempts = relationship("AttemptModel", back_populates="student")
+    refresh_tokens = relationship("RefreshTokenModel", back_populates="user")

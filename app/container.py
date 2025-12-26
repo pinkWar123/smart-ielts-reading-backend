@@ -19,6 +19,8 @@ class ApplicationContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
     config.from_env("jwt_secret", "JWT_SECRET")
     config.from_env("db_url", "DATABASE_URL")
+    config.from_env("jwt_algorithm", "JWT_ALGORITHM")
+    config.from_env("jwt_access_token_expire_minutes", "JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
     database_session = providers.Resource(get_database_session)
 

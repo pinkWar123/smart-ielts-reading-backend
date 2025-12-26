@@ -24,3 +24,4 @@ uv.lock.bak
 
 # Alembic
 migrations/versions/*.pyc
+/.vscode/settings.json
