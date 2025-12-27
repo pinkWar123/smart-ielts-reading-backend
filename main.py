@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await close_database()
 
+
 app = FastAPI(lifespan=lifespan)
 
 # Middlewares

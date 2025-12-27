@@ -3,12 +3,10 @@ import enum
 from sqlalchemy import Column, DateTime, Enum, String
 from sqlalchemy.orm import relationship
 
+from app.domain.entities.user import UserRole
 from app.infrastructure.persistence.models.base import BaseModel
 
 
-class UserRole(str, enum.Enum):
-    ADMIN = "admin"
-    STUDENT = "student"
 
 
 class UserModel(BaseModel):

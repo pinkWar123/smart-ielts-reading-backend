@@ -7,13 +7,21 @@ from app.infrastructure.persistence.models.refresh_token_model import RefreshTok
 
 class RefreshTokenRepository(ABC):
     @abstractmethod
-    def find(self, token: str) -> Optional[RefreshTokenModel]:
+    async def find(self, token: str) -> Optional[RefreshTokenModel]:
         pass
 
     @abstractmethod
-    def create(self, refresh_token: RefreshToken) -> RefreshTokenModel:
+    async def create(self, refresh_token: RefreshToken) -> RefreshTokenModel:
         pass
 
     @abstractmethod
-    def revoke(self, token: str) -> Optional[RefreshTokenModel]:
+    async def revoke(self, token: str) -> Optional[RefreshTokenModel]:
+        pass
+
+    @abstractmethod
+    async def get_active_tokens(self, user_id: str) -> list[RefreshTokenModel]:
+        pass
+
+    @abstractmethod
+    async def revoke_active_tokens_by_user(self, user_id: str) -> None:
         pass

@@ -13,18 +13,20 @@ from app.domain.entities.refresh_token import RefreshToken
 
 class JwtService(TokenService):
 
-    def create_token_pair(self, user_id: str, additional_claims: Optional[Dict] = None) -> Tuple[str, RefreshToken]:
+    async def create_token_pair(
+        self, user_id: str, additional_claims: Optional[Dict] = None
+    ) -> Tuple[str, RefreshToken]:
         payload = {"user_id": user_id}
         if additional_claims:
             payload.update(additional_claims)
 
         access_token = self.encode(payload)
-        refresh_token = self.create_refresh_token(user_id)
+        refresh_token = await self.create_refresh_token(user_id)
 
         return access_token, refresh_token
 
-    def get_refresh_token(self, token: str) -> Optional[RefreshToken]:
-        refresh_token_model = self.refresh_token_repo.find(token)
+    async def get_refresh_token(self, token: str) -> Optional[RefreshToken]:
+        refresh_token_model = await self.refresh_token_repo.find(token)
 
         if not refresh_token_model:
             return None
@@ -34,11 +36,11 @@ class JwtService(TokenService):
             user_id=refresh_token_model.user_id,
             issued_at=refresh_token_model.issued_at,
             expires_at=refresh_token_model.expires_at,
-            revoked=refresh_token_model.revoked
+            revoked=refresh_token_model.revoked,
         )
 
-    def validate_refresh_token(self, token: str) -> bool:
-        refresh_token = self.get_refresh_token(token)
+    async def validate_refresh_token(self, token: str) -> bool:
+        refresh_token = await self.get_refresh_token(token)
 
         if not refresh_token:
             return False
@@ -51,21 +53,21 @@ class JwtService(TokenService):
 
         return True
 
-    def revoke_refresh_token(self, token: str) -> Optional[RefreshToken]:
-        token_after_revoke = self.refresh_token_repo.revoke(token)
+    async def revoke_refresh_token(self, token: str):
+        token_after_revoke = await self.refresh_token_repo.revoke(token)
         return token_after_revoke
 
-    def regenerate_tokens(self, token: str, additional_claims: Optional[Dict]) -> Optional[Tuple[str, RefreshToken]]:
+    async def regenerate_tokens(
+        self, token: str, additional_claims: Optional[Dict]
+    ) -> Optional[Tuple[str, RefreshToken]]:
         if not self.validate_refresh_token(token):
             return None
 
-        refresh_token = self.revoke_refresh_token(token)
+        refresh_token = await self.revoke_refresh_token(token)
         if not refresh_token:
             return None
 
-        self.revoke_refresh_token(token)
-
-        return self.create_token_pair(refresh_token.user_id, additional_claims)
+        return await self.create_token_pair(refresh_token.user_id, additional_claims)
 
     def log_secret(self):
         return (
@@ -76,6 +78,7 @@ class JwtService(TokenService):
 
     def encode(self, payload: dict) -> str:
         # Dummy implementation for illustration
+        print(f"Algorithm: {self.settings.jwt_algorithm}")
         expire = datetime.datetime.now() + timedelta(
             minutes=self.settings.jwt_access_token_expire_minutes
         )
@@ -101,16 +104,17 @@ class JwtService(TokenService):
         except jose.JWTError:
             return None
 
-    def create_refresh_token(self, user_id: str) -> RefreshToken:
+    async def create_refresh_token(self, user_id: str) -> RefreshToken:
         refresh_token = RefreshToken(
             token=secrets.token_urlsafe(32),
             user_id=user_id,
             issued_at=datetime.datetime.utcnow(),
             expires_at=datetime.datetime.utcnow()
-            + timedelta(minutes=self.settings.jwt_refresh_token_expire_minutes),
+            + timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
             revoked=False,
         )
-        self.refresh_token_repo.create(refresh_token)
+        await self.refresh_token_repo.revoke_active_tokens_by_user(user_id=user_id)
+        await self.refresh_token_repo.create(refresh_token)
+
 
         return refresh_token
-

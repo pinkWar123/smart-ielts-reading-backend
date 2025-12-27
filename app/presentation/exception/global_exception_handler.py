@@ -10,7 +10,7 @@ from app.domain.errors.error_codes import ErrorCode
 
 logger = logging.getLogger(__name__)
 
-HTTP_STATUS_MAPPINGS : Dict[ErrorCode, int] = {
+HTTP_STATUS_MAPPINGS: Dict[ErrorCode, int] = {
     ErrorCode.NOT_FOUND: 404,
     ErrorCode.INVALID_DATA: 400,
     ErrorCode.UNAUTHORIZED: 401,
@@ -20,21 +20,27 @@ HTTP_STATUS_MAPPINGS : Dict[ErrorCode, int] = {
 }
 
 
-def get_error_details(exc: Exception, include_debug: bool = False) -> Optional[Dict[str, Any]]:
+def get_error_details(
+    exc: Exception, include_debug: bool = False
+) -> Optional[Dict[str, Any]]:
     if not include_debug:
         return None
 
     return {
         "exception_type": type(exc).__name__,
         "traceback": str(exc.__traceback__) if exc.__traceback__ else None,
-        "args": exc.args if exc.args else None
+        "args": exc.args if exc.args else None,
     }
+
 
 def setup_exception_handlers(app: FastAPI):
     debug_mode = os.getenv("DEBUG", "false").lower() == "true"
+
     @app.exception_handler(DomainError)
     async def domain_error_handler(request: Request, exc: DomainError):
-        logger.warning(logger.warning(f"Domain error: {exc.code.value} - {exc.message}"))
+        logger.warning(
+            logger.warning(f"Domain error: {exc.code.value} - {exc.message}")
+        )
 
         details = None
         if hasattr(exc, "details") and exc.details:
@@ -46,8 +52,8 @@ def setup_exception_handlers(app: FastAPI):
             content={
                 "error_code": HTTP_STATUS_MAPPINGS[exc.code],
                 "message": exc.message,
-                "details": details
-            }
+                "details": details,
+            },
         )
 
     @app.exception_handler(Exception)
@@ -58,6 +64,6 @@ def setup_exception_handlers(app: FastAPI):
             content={
                 "error_code": "INTERNAL_SERVER_ERROR",
                 "message": "An unexpected error occurred",
-                "details": get_error_details(exc, debug_mode)
-            }
+                "details": get_error_details(exc, debug_mode),
+            },
         )

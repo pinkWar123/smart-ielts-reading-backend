@@ -2,6 +2,7 @@ from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.operators import or_
 
 from app.domain.entities.user import User
 from app.domain.repositories.user_repository import UserRepository
@@ -9,10 +10,24 @@ from app.infrastructure.persistence.models import UserModel
 
 
 class SqlUserRepository(UserRepository):
+    async def find(self, username: str, email: str) -> Optional[User]:
+        query = select(UserModel).filter(
+            or_(UserModel.username == username, UserModel.email == email)
+        )
+        result = await self.session.execute(query)
+        user_model = result.scalar_one_or_none()
+        return self._to_domain_entity(user_model) if user_model else None
+
+    async def get_by_username(self, username: str) -> Optional[User]:
+        query = select(UserModel).filter_by(username=username)
+        result = await self.session.execute(query)
+        user_model = result.scalar_one_or_none()
+        return self._to_domain_entity(user_model) if user_model else None
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user: User) -> User:
+    async def create(self, user: User) -> UserModel:
         user_model = UserModel(
             username=user.username,
             email=user.email,
@@ -24,7 +39,7 @@ class SqlUserRepository(UserRepository):
         self.session.add(user_model)
         await self.session.commit()
         await self.session.refresh(user_model)
-        return user
+        return user_model
 
     async def get_by_password(self, username: str, password: str) -> Optional[User]:
         stmt = select(UserModel).filter_by(username=username, password_hash=password)

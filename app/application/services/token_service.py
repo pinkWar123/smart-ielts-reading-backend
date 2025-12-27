@@ -57,7 +57,7 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def create_refresh_token(self, user_id):
+    async def create_refresh_token(self, user_id):
         """
         Create a new refresh token for a user.
 
@@ -72,10 +72,8 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def create_token_pair(
-            self,
-            user_id: str,
-            additional_claims: Optional[Dict] = None
+    async def create_token_pair(
+        self, user_id: str, additional_claims: Optional[Dict] = None
     ) -> Tuple[str, RefreshToken]:
         """
         Create both an access token and a refresh token for a user.
@@ -94,7 +92,7 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_refresh_token(self, token: str) -> Optional[RefreshToken]:
+    async def get_refresh_token(self, token: str) -> Optional[RefreshToken]:
         """
         Retrieve a refresh token from the database by its value.
 
@@ -107,7 +105,7 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def validate_refresh_token(self, token: str) -> bool:
+    async def validate_refresh_token(self, token: str) -> bool:
         """
         Validate whether a refresh token is valid and usable.
 
@@ -122,7 +120,7 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def revoke_refresh_token(self, token: str) -> Optional[RefreshToken]:
+    async def revoke_refresh_token(self, token: str):
         """
         Mark a refresh token as revoked in the database.
 
@@ -137,7 +135,9 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def regenerate_tokens(self, token: str, additional_claims: Optional[Dict]) -> Optional[Tuple[str, RefreshToken]]:
+    async def regenerate_tokens(
+        self, token: str, additional_claims: Optional[Dict]
+    ) -> Optional[Tuple[str, RefreshToken]]:
         """
         Regenerate both access and refresh tokens using a valid refresh token.
 
