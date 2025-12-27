@@ -10,6 +10,12 @@ from app.infrastructure.persistence.models import UserModel
 
 
 class SqlUserRepository(UserRepository):
+    async def get_by_id(self, user_id: str) -> Optional[UserModel]:
+        query = select(UserModel).filter_by(id=user_id)
+        result = await self.session.execute(query)
+        user_model = result.scalar_one_or_none()
+        return user_model
+
     async def find(self, username: str, email: str) -> Optional[User]:
         query = select(UserModel).filter(
             or_(UserModel.username == username, UserModel.email == email)

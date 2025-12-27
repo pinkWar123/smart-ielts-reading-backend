@@ -106,7 +106,7 @@ class TokenService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def validate_refresh_token(self, token: str) -> bool:
+    async def validate_refresh_token(self, token: str, user_id: str):
         """
         Validate whether a refresh token is valid and usable.
 
@@ -114,6 +114,7 @@ class TokenService(metaclass=ABCMeta):
 
         Args:
             token: The refresh token string to validate
+            user_id: The user ID associated with the token
 
         Returns:
             True if the token is valid and can be used, False otherwise

@@ -9,7 +9,13 @@ from app.application.services.token_service import TokenService
 from app.common.utils.time_helper import TimeHelper
 from app.domain.entities.refresh_token import RefreshToken
 from app.domain.entities.user import User
-from app.domain.errors.jwt_errors import JwtTokenExpiredError, JwtTokenInvalidError
+from app.domain.errors.jwt_errors import (
+    JwtTokenExpiredError,
+    JwtTokenInvalidError,
+    RefreshTokenExpiredError,
+    RefreshTokenNotFoundError,
+    RefreshTokenRevokedError,
+)
 
 
 class JwtService(TokenService):
@@ -48,27 +54,31 @@ class JwtService(TokenService):
             revoked=refresh_token_model.revoked,
         )
 
-    async def validate_refresh_token(self, token: str) -> bool:
+    async def validate_refresh_token(self, token: str, user_id: str):
         refresh_token = await self.get_refresh_token(token)
 
         if not refresh_token:
-            return False
+            raise RefreshTokenNotFoundError()
 
         if refresh_token.revoked:
-            return False
+            raise RefreshTokenRevokedError()
 
-        if TimeHelper.utc_now() > refresh_token.expires_at:
-            await self.revoke_refresh_token(token)
-            return False
+        current_time = TimeHelper.utc_now()
+        expires_at = refresh_token.expires_at
 
-        return True
+        # If expires_at is naive, make it timezone-aware (assume UTC)
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=current_time.tzinfo)
+
+        if current_time > expires_at:
+            raise RefreshTokenExpiredError()
 
     async def revoke_refresh_token(self, token: str):
         token_after_revoke = await self.refresh_token_repo.revoke(token)
         return token_after_revoke
 
     async def regenerate_tokens(
-        self, token: str, additional_claims: Optional[Dict]
+        self, user: User, token: str, additional_claims: Optional[Dict]
     ) -> Optional[Tuple[str, RefreshToken]]:
         # TODO: Fix this method - it has a type mismatch issue
         # The create_token_pair method expects a User object, not user_id string
@@ -81,7 +91,7 @@ class JwtService(TokenService):
             return None
 
         # This line has a bug - refresh_token.user_id is a string but create_token_pair expects User object
-        # return await self.create_token_pair(refresh_token.user_id, additional_claims)
+        return await self.create_token_pair(user, additional_claims)
         raise NotImplementedError(
             "regenerate_tokens method needs to be properly implemented"
         )

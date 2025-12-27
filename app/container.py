@@ -16,6 +16,9 @@ from app.use_cases.auth.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
 from app.use_cases.auth.login.login_use_case import LoginUseCase
+from app.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
+    RegenerateTokensUseCase,
+)
 from app.use_cases.auth.register.register_use_case import RegisterUseCase
 from app.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
@@ -73,6 +76,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
         GetCurrentUserUseCase, token_service=jwt_service
     )
 
+    regenerate_tokens_use_case = providers.Factory(
+        RegenerateTokensUseCase,
+        token_service=jwt_service,
+        user_repo=user_repository,
+    )
+
     # Passage use cases
     create_passage_use_case = providers.Factory(
         CreatePassageUseCase, passage_repo=passage_repository
@@ -91,6 +100,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         login_use_case=login_use_case,
         register_use_case=register_use_case,
         get_me_use_case=get_me_use_case,
+        regenerate_tokens_use_case=regenerate_tokens_use_case,
     )
 
 

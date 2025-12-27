@@ -24,5 +24,9 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_by_id(self, user_id: str) -> Optional[UserModel]:
+        pass
+
+    @abstractmethod
     async def find(self, username: str, email: str) -> Optional[User]:
         pass

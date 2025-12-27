@@ -10,6 +10,10 @@ from app.use_cases.auth.get_current_user.get_current_user_dto import (
     GetCurrentUserResponse,
 )
 from app.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
+from app.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
+    RegenerateTokensRequest,
+    RegenerateTokensResponse,
+)
 from app.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
 
 router = APIRouter()
@@ -45,3 +49,12 @@ async def register(
 @router.get("/me", response_model=GetCurrentUserResponse)
 async def get_me(current_user=Depends(verify_token)):
     return current_user
+
+
+@router.post("/refresh-tokens", response_model=RegenerateTokensResponse)
+async def regenerate_tokens(
+    request: RegenerateTokensRequest,
+    controller: AuthController = Depends(get_auth_controller),
+):
+    result = await controller.regenerate_tokens(request)
+    return result
