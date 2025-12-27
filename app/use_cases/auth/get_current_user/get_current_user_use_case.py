@@ -19,4 +19,6 @@ class GetCurrentUserUseCase(UseCase[GetCurrentUserQuery, GetCurrentUserResponse]
             role=payload.get("role"),
             user_id=payload.get("user_id"),
             email=payload.get("email"),
+            full_name=payload.get("full_name"),
+            exp=payload.get("exp"),
         )

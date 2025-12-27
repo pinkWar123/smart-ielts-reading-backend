@@ -1,7 +1,7 @@
-from alembic.util import status
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import ExpiredSignatureError, JWTError
 
 from app.application.services.token_service import TokenService
 from app.common.di import make_service_dependency
@@ -21,8 +21,18 @@ async def verify_token(
     try:
         payload = token_service.decode(token)
         return payload
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail="Token validation failed",
         )

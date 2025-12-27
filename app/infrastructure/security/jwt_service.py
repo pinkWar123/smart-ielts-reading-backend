@@ -1,6 +1,5 @@
 import datetime
 import secrets
-from abc import ABC
 from datetime import timedelta
 from typing import Any, Dict, Optional, Tuple
 
@@ -10,6 +9,8 @@ from jose import jwt
 from app.application.services.token_service import TokenService
 from app.domain.entities.refresh_token import RefreshToken
 from app.domain.entities.user import User
+from app.domain.errors.jwt_errors import JwtTokenExpiredError, JwtTokenInvalidError
+from app.domain.errors.jwt_errors import JwtTokenExpiredError, JwtTokenInvalidError
 
 
 class JwtService(TokenService):
@@ -57,7 +58,7 @@ class JwtService(TokenService):
         if refresh_token.revoked:
             return False
 
-        if datetime.datetime.now() > refresh_token.expires_at:
+        if datetime.datetime.now(datetime.timezone.utc) > refresh_token.expires_at:
             await self.revoke_refresh_token(token)
             return False
 
@@ -70,14 +71,19 @@ class JwtService(TokenService):
     async def regenerate_tokens(
         self, token: str, additional_claims: Optional[Dict]
     ) -> Optional[Tuple[str, RefreshToken]]:
-        if not self.validate_refresh_token(token):
+        # TODO: Fix this method - it has a type mismatch issue
+        # The create_token_pair method expects a User object, not user_id string
+        # This needs to be properly implemented with user repository
+        if not await self.validate_refresh_token(token):
             return None
 
         refresh_token = await self.revoke_refresh_token(token)
         if not refresh_token:
             return None
 
-        return await self.create_token_pair(refresh_token.user_id, additional_claims)
+        # This line has a bug - refresh_token.user_id is a string but create_token_pair expects User object
+        # return await self.create_token_pair(refresh_token.user_id, additional_claims)
+        raise NotImplementedError("regenerate_tokens method needs to be properly implemented")
 
     def log_secret(self):
         return (
@@ -87,19 +93,32 @@ class JwtService(TokenService):
         )
 
     def encode(self, payload: dict) -> str:
-        # Dummy implementation for illustration
-        print(f"Algorithm: {self.settings.jwt_algorithm}")
-        expire = datetime.datetime.now() + timedelta(
+        # Create a copy to avoid modifying the original payload
+        token_payload = payload.copy()
+
+        # Use UTC time consistently
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        expire_utc = now_utc + timedelta(
             minutes=self.settings.jwt_access_token_expire_minutes
         )
-        payload.update({"exp": expire})
+
+        # Convert to timestamps for JWT (jose expects UTC timestamps)
+        exp_timestamp = int(expire_utc.timestamp())
+        iat_timestamp = int(now_utc.timestamp())
+
+        token_payload.update({
+            "exp": exp_timestamp,
+            "iat": iat_timestamp,
+        })
+
         token = jwt.encode(
-            payload, self.settings.jwt_secret, algorithm=self.settings.jwt_algorithm
+            token_payload, self.settings.jwt_secret, algorithm=self.settings.jwt_algorithm
         )
         return token
 
     def decode(self, token: str) -> Optional[Dict[str, Any]]:
         try:
+            # Decode the token - JWT library will automatically check expiration
             decoded = jwt.decode(
                 token,
                 self.settings.jwt_secret,
@@ -109,18 +128,18 @@ class JwtService(TokenService):
             return decoded
 
         except jose.ExpiredSignatureError:
-            return None
+            raise JwtTokenExpiredError()
 
         except jose.JWTError:
-            return None
+            raise JwtTokenInvalidError()
 
     async def create_refresh_token(self, user_id: str) -> RefreshToken:
+        now = datetime.datetime.now(datetime.timezone.utc)
         refresh_token = RefreshToken(
             token=secrets.token_urlsafe(32),
             user_id=user_id,
-            issued_at=datetime.datetime.utcnow(),
-            expires_at=datetime.datetime.utcnow()
-            + timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
+            issued_at=now,
+            expires_at=now + timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
             revoked=False,
         )
         await self.refresh_token_repo.revoke_active_tokens_by_user(user_id=user_id)
