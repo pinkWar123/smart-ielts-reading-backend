@@ -1,0 +1,51 @@
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.domain.entities.user import User
+from app.domain.repositories.user_repository import UserRepository
+from app.infrastructure.persistence.models import UserModel
+
+
+class SqlUserRepository(UserRepository):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create(self, user: User) -> User:
+        user_model = UserModel(
+            username=user.username,
+            email=user.email,
+            password_hash=user.password_hash,
+            role=user.role,
+            full_name=user.full_name,
+        )
+
+        self.session.add(user_model)
+        await self.session.commit()
+        await self.session.refresh(user_model)
+        return user
+
+    async def get_by_password(self, username: str, password: str) -> Optional[User]:
+        stmt = select(UserModel).filter_by(username=username, password_hash=password)
+        result = await self.session.execute(stmt)
+        user_model = result.scalar_one_or_none()
+        return self._to_domain_entity(user_model) if user_model else None
+
+    async def get_all(self) -> list[User]:
+        stmt = select(UserModel)
+        result = await self.session.execute(stmt)
+        user_models = result.scalars().all()
+        return [self._to_domain_entity(user_model) for user_model in user_models]
+
+    def _to_domain_entity(self, user_model: UserModel) -> User:
+        return User(
+            id=user_model.id,
+            username=user_model.username,
+            email=user_model.email,
+            password_hash=user_model.password_hash,
+            role=user_model.role,
+            full_name=user_model.full_name,
+            created_at=user_model.created_at,
+            is_active=user_model.is_active,
+        )

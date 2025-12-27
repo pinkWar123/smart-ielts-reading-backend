@@ -4,8 +4,10 @@ from fastapi import APIRouter, FastAPI
 
 from app.common.db.engine import close_database, initialize_database
 from app.container import container
+from app.presentation.exception.global_exception_handler import setup_exception_handlers
 from app.presentation.routes.passage_router import router as passage_router
 from app.presentation.routes.test_router import router as test_router
+from app.presentation.routes.auth_router import router as auth_router
 
 
 @asynccontextmanager
@@ -17,8 +19,10 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await close_database()
 
-
 app = FastAPI(lifespan=lifespan)
+
+# Middlewares
+setup_exception_handlers(app)
 
 v1_router = APIRouter(prefix="/api/v1")
 
@@ -30,6 +34,8 @@ def health_check():
 
 v1_router.include_router(passage_router)
 v1_router.include_router(test_router)
+v1_router.include_router(auth_router)
+
 app.include_router(v1_router)
 
 if __name__ == "__main__":

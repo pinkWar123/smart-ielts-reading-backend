@@ -13,7 +13,7 @@ class UserRole(str, Enum):
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     username: str = Field(min_length=3, max_length=50)
-    email: str = Field(regex=r"^[^@]+@[^@]+\.[^@]+$")
+    email: str = Field(pattern=r"^[^@]+@[^@]+\.[^@]+$")
     password_hash: str
     role: UserRole = Field(default=UserRole.STUDENT)
     full_name: str = Field(min_length=4, max_length=100)
