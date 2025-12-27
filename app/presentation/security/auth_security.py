@@ -17,22 +17,4 @@ async def verify_token(
     token_service: TokenService = Depends(get_token_service),
 ):
     token = credentials.credentials
-
-    try:
-        payload = token_service.decode(token)
-        return payload
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-        )
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token validation failed",
-        )
+    return token_service.decode(token)

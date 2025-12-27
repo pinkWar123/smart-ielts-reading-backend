@@ -1,11 +1,14 @@
 import uuid
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from app.common.utils.time_helper import TimeHelper
 
-class AttemptStatus:
+
+class AttemptStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     SUBMITTED = "SUBMITTED"
     ABANDONED = "ABANDONED"
@@ -28,8 +31,8 @@ class Attempt(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     test_id: str
     student_id: str
-    status: AttemptStatus = AttemptStatus.IN_PROGRESS
-    started_at: datetime = Field(default_factory=lambda: datetime.now)
+    status: AttemptStatus = Field(default=AttemptStatus.IN_PROGRESS)
+    started_at: datetime = Field(default_factory=TimeHelper.utc_now)
     submitted_at: Optional[datetime] = None
     time_remaining_seconds: Optional[int] = None
     answers: List[Answer] = Field(default_factory=list)

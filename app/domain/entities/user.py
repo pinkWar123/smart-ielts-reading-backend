@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
+
+from app.common.utils.time_helper import TimeHelper
 
 
 class UserRole(str, Enum):
@@ -18,5 +19,5 @@ class User(BaseModel):
     password_hash: str
     role: UserRole = Field(default=UserRole.STUDENT)
     full_name: str = Field(min_length=4, max_length=100)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=TimeHelper.utc_now)
     is_active: bool = True

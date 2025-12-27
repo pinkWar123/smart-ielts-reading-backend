@@ -1,4 +1,3 @@
-import datetime
 import secrets
 from datetime import timedelta
 from typing import Any, Dict, Optional, Tuple
@@ -7,9 +6,9 @@ import jose
 from jose import jwt
 
 from app.application.services.token_service import TokenService
+from app.common.utils.time_helper import TimeHelper
 from app.domain.entities.refresh_token import RefreshToken
 from app.domain.entities.user import User
-from app.domain.errors.jwt_errors import JwtTokenExpiredError, JwtTokenInvalidError
 from app.domain.errors.jwt_errors import JwtTokenExpiredError, JwtTokenInvalidError
 
 
@@ -58,7 +57,7 @@ class JwtService(TokenService):
         if refresh_token.revoked:
             return False
 
-        if datetime.datetime.now(datetime.timezone.utc) > refresh_token.expires_at:
+        if TimeHelper.utc_now() > refresh_token.expires_at:
             await self.revoke_refresh_token(token)
             return False
 
@@ -83,7 +82,9 @@ class JwtService(TokenService):
 
         # This line has a bug - refresh_token.user_id is a string but create_token_pair expects User object
         # return await self.create_token_pair(refresh_token.user_id, additional_claims)
-        raise NotImplementedError("regenerate_tokens method needs to be properly implemented")
+        raise NotImplementedError(
+            "regenerate_tokens method needs to be properly implemented"
+        )
 
     def log_secret(self):
         return (
@@ -96,23 +97,27 @@ class JwtService(TokenService):
         # Create a copy to avoid modifying the original payload
         token_payload = payload.copy()
 
-        # Use UTC time consistently
-        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        # Use TimeHelper for consistent UTC timezone handling
+        now_utc = TimeHelper.utc_now()
         expire_utc = now_utc + timedelta(
             minutes=self.settings.jwt_access_token_expire_minutes
         )
 
         # Convert to timestamps for JWT (jose expects UTC timestamps)
-        exp_timestamp = int(expire_utc.timestamp())
-        iat_timestamp = int(now_utc.timestamp())
+        exp_timestamp = int(TimeHelper.to_timestamp(expire_utc))
+        iat_timestamp = int(TimeHelper.to_timestamp(now_utc))
 
-        token_payload.update({
-            "exp": exp_timestamp,
-            "iat": iat_timestamp,
-        })
+        token_payload.update(
+            {
+                "exp": exp_timestamp,
+                "iat": iat_timestamp,
+            }
+        )
 
         token = jwt.encode(
-            token_payload, self.settings.jwt_secret, algorithm=self.settings.jwt_algorithm
+            token_payload,
+            self.settings.jwt_secret,
+            algorithm=self.settings.jwt_algorithm,
         )
         return token
 
@@ -134,12 +139,13 @@ class JwtService(TokenService):
             raise JwtTokenInvalidError()
 
     async def create_refresh_token(self, user_id: str) -> RefreshToken:
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = TimeHelper.utc_now()
         refresh_token = RefreshToken(
             token=secrets.token_urlsafe(32),
             user_id=user_id,
             issued_at=now,
-            expires_at=now + timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
+            expires_at=now
+            + timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
             revoked=False,
         )
         await self.refresh_token_repo.revoke_active_tokens_by_user(user_id=user_id)

@@ -13,7 +13,9 @@ class UserModel(BaseModel):
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), nullable=False)
     full_name = Column(String(100), nullable=False)
-    last_login = Column(DateTime, nullable=True)  # New column for testing migrations
+    last_login = Column(
+        DateTime(timezone=True), nullable=True
+    )  # New column for testing migrations
 
     # Relationships
     created_tests = relationship(
