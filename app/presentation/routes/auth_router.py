@@ -5,7 +5,11 @@ from fastapi.params import Depends
 from app.common.di import make_service_dependency
 from app.container import ApplicationContainer
 from app.presentation.controllers.auth_controller import AuthController
-from app.use_cases.auth.login.login_dto import LoginResponse, LoginRequest
+from app.presentation.security.auth_security import verify_token
+from app.use_cases.auth.get_current_user.get_current_user_dto import (
+    GetCurrentUserResponse,
+)
+from app.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
 from app.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
 
 router = APIRouter()
@@ -28,6 +32,7 @@ async def login(
         username=result.username,
     )
 
+
 @router.post("/register", response_model=RegisterResponse)
 async def register(
     request: RegisterRequest,
@@ -35,3 +40,8 @@ async def register(
 ):
     result = await controller.register(request)
     return result
+
+
+@router.get("/me", response_model=GetCurrentUserResponse)
+async def get_me(current_user=Depends(verify_token)):
+    return current_user

@@ -5,9 +5,9 @@ from fastapi import APIRouter, FastAPI
 from app.common.db.engine import close_database, initialize_database
 from app.container import container
 from app.presentation.exception.global_exception_handler import setup_exception_handlers
+from app.presentation.routes.auth_router import router as auth_router
 from app.presentation.routes.passage_router import router as passage_router
 from app.presentation.routes.test_router import router as test_router
-from app.presentation.routes.auth_router import router as auth_router
 
 
 @asynccontextmanager

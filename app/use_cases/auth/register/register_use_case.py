@@ -1,10 +1,13 @@
 from app.application.services.token_service import TokenService
-from app.domain.errors.user_errors import UsernameAlreadyExistsError, EmailAlreadyBeenUsedError
+from app.domain.entities.user import User, UserRole
+from app.domain.errors.user_errors import (
+    EmailAlreadyBeenUsedError,
+    UsernameAlreadyExistsError,
+)
 from app.domain.repositories.user_repository import UserRepository
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 from app.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
 from app.use_cases.base.use_case import UseCase
-from app.domain.entities.user import User, UserRole
 
 
 class RegisterUseCase(UseCase[RegisterRequest, RegisterResponse]):
@@ -26,7 +29,10 @@ class RegisterUseCase(UseCase[RegisterRequest, RegisterResponse]):
         )
 
         user_model = await self.user_repo.create(user)
-        access_token, refresh_token = await self.token_service.create_token_pair(user_model.id, {})
+        user = user_model.to_domain()
+        access_token, refresh_token = await self.token_service.create_token_pair(
+            user, {}
+        )
         return RegisterResponse(
             access_token=access_token,
             refresh_token=refresh_token.token,

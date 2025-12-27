@@ -9,19 +9,28 @@ from jose import jwt
 
 from app.application.services.token_service import TokenService
 from app.domain.entities.refresh_token import RefreshToken
+from app.domain.entities.user import User
 
 
 class JwtService(TokenService):
 
     async def create_token_pair(
-        self, user_id: str, additional_claims: Optional[Dict] = None
+        self, user: User, additional_claims: Optional[Dict] = None
     ) -> Tuple[str, RefreshToken]:
-        payload = {"user_id": user_id}
+        payload = {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "full_name": user.full_name,
+            # Convert datetime to timestamp for JSON serialization
+            "created_at": user.created_at.timestamp() if user.created_at else None,
+        }
         if additional_claims:
             payload.update(additional_claims)
 
         access_token = self.encode(payload)
-        refresh_token = await self.create_refresh_token(user_id)
+        refresh_token = await self.create_refresh_token(user.id)
 
         return access_token, refresh_token
 
@@ -49,6 +58,7 @@ class JwtService(TokenService):
             return False
 
         if datetime.datetime.now() > refresh_token.expires_at:
+            await self.revoke_refresh_token(token)
             return False
 
         return True
@@ -115,6 +125,5 @@ class JwtService(TokenService):
         )
         await self.refresh_token_repo.revoke_active_tokens_by_user(user_id=user_id)
         await self.refresh_token_repo.create(refresh_token)
-
 
         return refresh_token

@@ -12,6 +12,9 @@ from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.passage_controller import PassageController
+from app.use_cases.auth.get_current_user.get_current_user_use_case import (
+    GetCurrentUserUseCase,
+)
 from app.use_cases.auth.login.login_use_case import LoginUseCase
 from app.use_cases.auth.register.register_use_case import RegisterUseCase
 from app.use_cases.passages.create_passage.create_passage_use_case import (
@@ -53,7 +56,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
     # Use Cases
     # Auth use cases
     login_use_case = providers.Factory(
-        LoginUseCase, user_repo=user_repository, jwt_service=jwt_service, password_hasher=password_hasher
+        LoginUseCase,
+        user_repo=user_repository,
+        jwt_service=jwt_service,
+        password_hasher=password_hasher,
     )
 
     register_use_case = providers.Factory(
@@ -61,6 +67,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
         user_repo=user_repository,
         token_service=jwt_service,
         password_hasher=password_hasher,
+    )
+
+    get_me_use_case = providers.Factory(
+        GetCurrentUserUseCase, token_service=jwt_service
     )
 
     # Passage use cases
@@ -80,6 +90,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         AuthController,
         login_use_case=login_use_case,
         register_use_case=register_use_case,
+        get_me_use_case=get_me_use_case,
     )
 
 

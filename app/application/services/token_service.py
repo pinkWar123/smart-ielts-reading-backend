@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from app.common.settings import Settings
 from app.domain.entities.refresh_token import RefreshToken
+from app.domain.entities.user import User
 from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
 
 
@@ -73,7 +74,7 @@ class TokenService(metaclass=ABCMeta):
 
     @abstractmethod
     async def create_token_pair(
-        self, user_id: str, additional_claims: Optional[Dict] = None
+        self, user: User, additional_claims: Optional[Dict] = None
     ) -> Tuple[str, RefreshToken]:
         """
         Create both an access token and a refresh token for a user.
@@ -83,7 +84,7 @@ class TokenService(metaclass=ABCMeta):
         used to get new access tokens.
 
         Args:
-            user_id: The user ID for which to create tokens
+            user: The user for whom to create tokens
             additional_claims: Optional dictionary of extra claims to include in the access token
 
         Returns:

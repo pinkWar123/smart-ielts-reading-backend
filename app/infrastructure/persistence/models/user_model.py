@@ -1,12 +1,8 @@
-import enum
-
 from sqlalchemy import Column, DateTime, Enum, String
 from sqlalchemy.orm import relationship
 
-from app.domain.entities.user import UserRole
+from app.domain.entities.user import User, UserRole
 from app.infrastructure.persistence.models.base import BaseModel
-
-
 
 
 class UserModel(BaseModel):
@@ -30,3 +26,14 @@ class UserModel(BaseModel):
     )
     attempts = relationship("AttemptModel", back_populates="student")
     refresh_tokens = relationship("RefreshTokenModel", back_populates="user")
+
+    def to_domain(self):
+        return User(
+            id=self.id,
+            username=self.username,
+            email=self.email,
+            role=self.role,
+            full_name=self.full_name,
+            password_hash=self.password_hash,
+            created_at=self.created_at,
+        )

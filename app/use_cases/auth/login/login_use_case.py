@@ -8,7 +8,12 @@ from app.use_cases.base.use_case import RequestType, ResponseType, UseCase
 
 
 class LoginUseCase(UseCase[LoginRequest, LoginResponse]):
-    def __init__(self, user_repo: UserRepository, jwt_service: TokenService, password_hasher: PasswordService):
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        jwt_service: TokenService,
+        password_hasher: PasswordService,
+    ):
         self.user_repo = user_repo
         self.jwt_service = jwt_service
         self.password_hasher = password_hasher
@@ -18,13 +23,14 @@ class LoginUseCase(UseCase[LoginRequest, LoginResponse]):
         if user is None:
             raise UserNotFoundError()
 
-        is_password_valid = self.password_hasher.verify(request.password, user.password_hash)
+        is_password_valid = self.password_hasher.verify(
+            request.password, user.password_hash
+        )
         if not is_password_valid:
             raise WrongPasswordError()
 
-        payload = {"user_id": user.id, "role": user.role, "username": user.username}
         access_token, refresh_token = await self.jwt_service.create_token_pair(
-            user.id, payload
+            user, None
         )
 
         response = LoginResponse(

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.domain.entities.user import UserRole
 
@@ -11,6 +11,7 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(min_length=1, max_length=255)
     role: UserRole = Field(default=UserRole.STUDENT)
     email: EmailStr
+
 
 class RegisterResponse(BaseModel):
     access_token: str

@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,11 @@ from app.infrastructure.persistence.models.refresh_token_model import RefreshTok
 
 class SQLRefreshTokenRepository(RefreshTokenRepository):
     async def revoke_active_tokens_by_user(self, user_id: str) -> None:
-        query = update(RefreshTokenModel).where(RefreshTokenModel.user_id == user_id).values(revoked=True)
+        query = (
+            update(RefreshTokenModel)
+            .where(RefreshTokenModel.user_id == user_id)
+            .values(revoked=True)
+        )
         await self.session.execute(query)
         await self.session.commit()
 
