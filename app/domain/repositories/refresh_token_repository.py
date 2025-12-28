@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from app.domain.entities.refresh_token import RefreshToken
+from app.infrastructure.persistence.models import UserModel
 from app.infrastructure.persistence.models.refresh_token_model import RefreshTokenModel
 
 
@@ -24,4 +25,8 @@ class RefreshTokenRepository(ABC):
 
     @abstractmethod
     async def revoke_active_tokens_by_user(self, user_id: str) -> None:
+        pass
+
+    @abstractmethod
+    async def get_user_by_token(self, token: str) -> Optional[UserModel]:
         pass

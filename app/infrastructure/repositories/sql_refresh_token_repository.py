@@ -5,10 +5,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.refresh_token import RefreshToken
 from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
+from app.infrastructure.persistence.models import UserModel
 from app.infrastructure.persistence.models.refresh_token_model import RefreshTokenModel
 
 
 class SQLRefreshTokenRepository(RefreshTokenRepository):
+    async def get_user_by_token(self, token: str) -> Optional[UserModel]:
+        query = (
+            select(UserModel)
+            .join(RefreshTokenModel)
+            .filter(RefreshTokenModel.token == token)
+        )
+        result = await self.session.execute(query)
+        user_model = result.scalar_one_or_none()
+        return user_model
+
     async def revoke_active_tokens_by_user(self, user_id: str) -> None:
         query = (
             update(RefreshTokenModel)

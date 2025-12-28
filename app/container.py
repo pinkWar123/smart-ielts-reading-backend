@@ -79,7 +79,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     regenerate_tokens_use_case = providers.Factory(
         RegenerateTokensUseCase,
         token_service=jwt_service,
-        user_repo=user_repository,
+        refresh_token_repo=refresh_token_repository,
     )
 
     # Passage use cases

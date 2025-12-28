@@ -3,7 +3,6 @@ from pydantic import BaseModel
 
 class RegenerateTokensRequest(BaseModel):
     refresh_token: str
-    user_id: str
 
 
 class RegenerateTokensResponse(BaseModel):

@@ -54,7 +54,7 @@ class JwtService(TokenService):
             revoked=refresh_token_model.revoked,
         )
 
-    async def validate_refresh_token(self, token: str, user_id: str):
+    async def validate_refresh_token(self, token: str):
         refresh_token = await self.get_refresh_token(token)
 
         if not refresh_token:
