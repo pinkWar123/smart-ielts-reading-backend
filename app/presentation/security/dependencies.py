@@ -15,9 +15,10 @@ class RequireRoles:
         if current_user.role.value not in self.roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Required roles: {', '.join(self.roles)}"
+                detail=f"Required roles: {', '.join(self.roles)}",
             )
         return current_user
+
 
 require_auth = Depends(verify_token)
 required_admin = RequireRoles([UserRole.ADMIN.value])

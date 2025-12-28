@@ -1,8 +1,10 @@
+from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 
 from app.application.services.passage_service import PassageService
 from app.common.db.engine import get_database_session
 from app.common.settings import settings
+from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
 from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
 from app.infrastructure.repositories.sql_refresh_token_repository import (
     SQLRefreshTokenRepository,
@@ -11,6 +13,7 @@ from app.infrastructure.repositories.sql_user_repository import SqlUserRepositor
 from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.controllers.ocr_controller import OcrController
 from app.presentation.controllers.passage_controller import PassageController
 from app.use_cases.auth.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
@@ -20,10 +23,17 @@ from app.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
 )
 from app.use_cases.auth.register.register_use_case import RegisterUseCase
+from app.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
+    ExtractTextFromImageUseCase,
+)
 from app.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
 from app.use_cases.passages.get_passages.get_passages_use_case import GetPassagesUseCase
+
+
+def create_anthropic_client():
+    return AsyncAnthropic(api_key=settings.claude_api_key)
 
 
 class ApplicationContainer(containers.DeclarativeContainer):
@@ -55,6 +65,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
         JwtService, settings=settings, refresh_token_repo=refresh_token_repository
     )
     password_hasher = providers.Singleton(PasswordHasher)
+
+    claude_client = providers.Factory(create_anthropic_client)
+    image_to_text_service = providers.Factory(
+        ClaudeImageToTextService, settings=settings, client=claude_client
+    )
 
     # Use Cases
     # Auth use cases
@@ -91,6 +106,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
         GetPassagesUseCase, passage_repo=passage_repository
     )
 
+    # OCR use cases
+    extract_text_use_case = providers.Factory(
+        ExtractTextFromImageUseCase, image_to_text_service=image_to_text_service
+    )
+
     # Controllers
     passage_controller = providers.Factory(
         PassageController, passage_service=passage_service
@@ -101,6 +121,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
         register_use_case=register_use_case,
         get_me_use_case=get_me_use_case,
         regenerate_tokens_use_case=regenerate_tokens_use_case,
+    )
+    ocr_controller = providers.Factory(
+        OcrController, extract_text_use_case=extract_text_use_case
     )
 
 
