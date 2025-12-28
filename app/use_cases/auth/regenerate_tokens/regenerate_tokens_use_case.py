@@ -40,4 +40,5 @@ class RegenerateTokensUseCase(
             username=associated_user.username,
             full_name=associated_user.full_name,
             role=associated_user.role.value,
+            email=associated_user.email,
         )

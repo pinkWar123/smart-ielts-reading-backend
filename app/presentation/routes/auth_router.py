@@ -29,12 +29,7 @@ async def login(
     controller: AuthController = Depends(get_auth_controller),
 ):
     result = await controller.login(request)
-    return LoginResponse(
-        access_token=result.access_token,
-        refresh_token=result.refresh_token,
-        user_id=result.user_id,
-        username=result.username,
-    )
+    return result
 
 
 @router.post("/register", response_model=RegisterResponse)

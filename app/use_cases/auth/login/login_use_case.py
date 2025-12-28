@@ -38,6 +38,9 @@ class LoginUseCase(UseCase[LoginRequest, LoginResponse]):
             refresh_token=refresh_token.token,
             user_id=user.id,
             username=user.username,
+            role=user.role.value,
+            email=user.email,
+            full_name=user.full_name,
         )
 
         return response

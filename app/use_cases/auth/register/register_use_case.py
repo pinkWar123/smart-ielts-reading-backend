@@ -39,6 +39,8 @@ class RegisterUseCase(UseCase[RegisterRequest, RegisterResponse]):
             user_id=user_model.id,
             username=user_model.username,
             role=user_model.role.value,
+            email=user_model.email,
+            full_name=user_model.full_name,
         )
 
     def __init__(

@@ -12,3 +12,4 @@ class RegenerateTokensResponse(BaseModel):
     username: str
     full_name: str
     role: str
+    email: str

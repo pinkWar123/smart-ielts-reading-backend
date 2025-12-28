@@ -11,3 +11,6 @@ class LoginResponse(BaseModel):
     refresh_token: str
     user_id: str
     username: str
+    role: str
+    email: str
+    full_name: str
