@@ -33,9 +33,9 @@ def health_check():
     return "OK"
 
 
-v1_router.include_router(passage_router)
-v1_router.include_router(test_router)
-v1_router.include_router(auth_router)
+v1_router.include_router(passage_router, prefix="/passages", tags=["Passages"])
+v1_router.include_router(test_router, prefix="/tests", tags=["Tests"])
+v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 
 app.include_router(v1_router)
 
