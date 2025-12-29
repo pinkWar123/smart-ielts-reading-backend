@@ -1,7 +1,7 @@
 from app.domain.errors.passage_errors import InvalidPassageDataError
 from app.domain.repositories.passage_repository import PassageRepository
-from app.use_cases.base.use_case import UseCase
-from app.use_cases.passages.create_passage.create_passage_dtos import (
+from app.application.use_cases.base.use_case import UseCase
+from app.application.use_cases.passages.create_passage.create_passage_dtos import (
     CreatePassageRequest,
     PassageResponse,
 )

@@ -1,13 +1,13 @@
 from app.application.services.token_service import TokenService
-from app.domain.entities.user import User, UserRole
+from app.domain.entities.user import User
 from app.domain.errors.user_errors import (
     EmailAlreadyBeenUsedError,
     UsernameAlreadyExistsError,
 )
 from app.domain.repositories.user_repository import UserRepository
 from app.infrastructure.security.password_hasher_service import PasswordHasher
-from app.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
-from app.use_cases.base.use_case import UseCase
+from app.application.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
+from app.application.use_cases.base.use_case import UseCase
 
 
 class RegisterUseCase(UseCase[RegisterRequest, RegisterResponse]):

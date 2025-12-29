@@ -1,9 +1,9 @@
 from app.application.services.token_service import TokenService
-from app.use_cases.auth.get_current_user.get_current_user_dto import (
+from app.application.use_cases.auth.get_current_user.get_current_user_dto import (
     GetCurrentUserQuery,
     GetCurrentUserResponse,
 )
-from app.use_cases.base.use_case import ResponseType, UseCase
+from app.application.use_cases.base.use_case import ResponseType, UseCase
 
 
 class GetCurrentUserUseCase(UseCase[GetCurrentUserQuery, GetCurrentUserResponse]):

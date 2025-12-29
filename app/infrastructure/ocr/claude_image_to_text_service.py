@@ -10,6 +10,8 @@ from PIL import Image
 from app.application.services.image_to_text_service import IImageToTextService
 from app.common.settings import Settings
 
+MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
+
 
 class ClaudeImageToTextService(IImageToTextService):
     def __init__(self, settings: Settings, client: AsyncAnthropic):
@@ -60,7 +62,7 @@ class ClaudeImageToTextService(IImageToTextService):
                 # Exponential backoff
                 await asyncio.sleep(2**attempt)
 
-    async def validate_image(self, image_data: bytes) -> bool:
+    async def validate_image_format(self, image_data: bytes) -> bool:
         """Validate image format and size constraints."""
         try:
             with Image.open(io.BytesIO(image_data)) as img:
@@ -69,7 +71,7 @@ class ClaudeImageToTextService(IImageToTextService):
                     return False
 
                 # Check size constraints (Claude API limits)
-                if len(image_data) > 20 * 1024 * 1024:  # 20MB limit
+                if len(image_data) > MAX_IMAGE_SIZE_BYTES:  # 20MB limit
                     return False
 
                 # Check dimensions

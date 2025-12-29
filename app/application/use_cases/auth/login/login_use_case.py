@@ -2,9 +2,8 @@ from app.application.services.password_service import PasswordService
 from app.application.services.token_service import TokenService
 from app.domain.errors.user_errors import UserNotFoundError, WrongPasswordError
 from app.domain.repositories.user_repository import UserRepository
-from app.infrastructure.security.jwt_service import JwtService
-from app.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
-from app.use_cases.base.use_case import RequestType, ResponseType, UseCase
+from app.application.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
+from app.application.use_cases.base.use_case import UseCase
 
 
 class LoginUseCase(UseCase[LoginRequest, LoginResponse]):

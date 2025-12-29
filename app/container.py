@@ -15,21 +15,21 @@ from app.infrastructure.security.password_hasher_service import PasswordHasher
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.ocr_controller import OcrController
 from app.presentation.controllers.passage_controller import PassageController
-from app.use_cases.auth.get_current_user.get_current_user_use_case import (
+from app.application.use_cases.auth.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
-from app.use_cases.auth.login.login_use_case import LoginUseCase
-from app.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
+from app.application.use_cases.auth.login.login_use_case import LoginUseCase
+from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
 )
-from app.use_cases.auth.register.register_use_case import RegisterUseCase
-from app.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
+from app.application.use_cases.auth.register.register_use_case import RegisterUseCase
+from app.application.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
-from app.use_cases.passages.create_passage.create_passage_use_case import (
+from app.application.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
-from app.use_cases.passages.get_passages.get_passages_use_case import GetPassagesUseCase
+from app.application.use_cases.passages.get_passages.get_passages_use_case import GetPassagesUseCase
 
 
 def create_anthropic_client():

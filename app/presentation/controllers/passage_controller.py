@@ -2,7 +2,7 @@ from fastapi import HTTPException
 
 from app.application.services.passage_service import PassageService
 from app.domain.errors.passage_errors import InvalidPassageDataError
-from app.use_cases.passages.create_passage.create_passage_dtos import (
+from app.application.use_cases.passages.create_passage.create_passage_dtos import (
     CreatePassageRequest,
     PassageResponse,
 )

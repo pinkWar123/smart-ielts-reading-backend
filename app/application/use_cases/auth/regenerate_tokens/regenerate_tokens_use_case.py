@@ -1,12 +1,11 @@
 from app.application.services.token_service import TokenService
 from app.domain.errors.user_errors import UserNotFoundError
 from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
-from app.domain.repositories.user_repository import UserRepository
-from app.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
+from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
     RegenerateTokensRequest,
     RegenerateTokensResponse,
 )
-from app.use_cases.base.use_case import UseCase
+from app.application.use_cases.base.use_case import UseCase
 
 
 class RegenerateTokensUseCase(

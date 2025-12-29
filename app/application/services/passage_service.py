@@ -1,6 +1,5 @@
-from app.domain.entities.passage import Passage
 from app.domain.repositories.passage_repository import PassageRepository
-from app.use_cases.passages.create_passage.create_passage_dtos import PassageResponse
+from app.application.use_cases.passages.create_passage.create_passage_dtos import PassageResponse
 
 
 class PassageService:

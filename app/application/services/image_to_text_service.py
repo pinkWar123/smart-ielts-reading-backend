@@ -9,7 +9,7 @@ class IImageToTextService(ABC):
         pass
 
     @abstractmethod
-    async def validate_image(self, image_data: bytes) -> bool:
+    async def validate_image_format(self, image_data: bytes) -> bool:
         """Validate an image format, size, and readability."""
         pass
 

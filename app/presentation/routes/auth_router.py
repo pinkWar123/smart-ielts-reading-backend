@@ -6,15 +6,15 @@ from app.common.di import make_service_dependency
 from app.container import ApplicationContainer
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.security.dependencies import require_auth
-from app.use_cases.auth.get_current_user.get_current_user_dto import (
+from app.application.use_cases.auth.get_current_user.get_current_user_dto import (
     GetCurrentUserResponse,
 )
-from app.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
-from app.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
+from app.application.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
+from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
     RegenerateTokensRequest,
     RegenerateTokensResponse,
 )
-from app.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
+from app.application.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
 
 router = APIRouter()
 

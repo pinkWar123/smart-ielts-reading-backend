@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import File, Form, UploadFile
 
-from app.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
+from app.application.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
 
