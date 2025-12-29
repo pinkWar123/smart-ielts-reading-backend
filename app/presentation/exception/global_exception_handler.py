@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
 
-from app.domain.errors.domain_errors import DomainError
+from app.domain.errors.domain_errors import Error
 from app.domain.errors.error_codes import ErrorCode
 
 logger = logging.getLogger(__name__)
@@ -36,8 +36,8 @@ def get_error_details(
 def setup_exception_handlers(app: FastAPI):
     debug_mode = os.getenv("DEBUG", "false").lower() == "true"
 
-    @app.exception_handler(DomainError)
-    async def domain_error_handler(request: Request, exc: DomainError):
+    @app.exception_handler(Error)
+    async def domain_error_handler(request: Request, exc: Error):
         logger.warning(
             logger.warning(f"Domain error: {exc.code.value} - {exc.message}")
         )

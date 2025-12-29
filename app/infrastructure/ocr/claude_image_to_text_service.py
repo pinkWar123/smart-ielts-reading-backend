@@ -24,8 +24,9 @@ class ClaudeImageToTextService(IImageToTextService):
         processed_image = await self.preprocess_image(image_data)
         base64_image = base64.b64encode(processed_image).decode("utf-8")
 
-        prompt = """Please extract all text content from this image. 
-        Return only the text content without any additional commentary or formatting.
+        prompt = """Please extract all text content from this image.
+        In case it is not a reading passage, do not provide any explanation, just NO.
+        Otherwise, Extract the text from this image. Remove any watermarks, advertisements, contact information (like phone numbers), or promotional content. Only return the main educational or document content.
         Maintain the original structure and line breaks where appropriate."""
 
         for attempt in range(self.max_retries):

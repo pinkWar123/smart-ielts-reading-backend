@@ -1,11 +1,11 @@
-from app.domain.errors.domain_errors import DomainError
+from app.domain.errors.domain_errors import Error
 
 
-class PassageNotFoundError(DomainError):
+class PassageNotFoundError(Error):
     def __init__(self):
         super().__init__("Passage not found", "NOT_FOUND")
 
 
-class InvalidPassageDataError(DomainError):
+class InvalidPassageDataError(Error):
     def __init__(self, message: str = "Invalid passage data"):
         super().__init__(message, "INVALID_DATA")
