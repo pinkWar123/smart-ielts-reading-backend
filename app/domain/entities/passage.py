@@ -8,6 +8,16 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.common.utils.time_helper import TimeHelper
 from app.domain.entities.question import Question, QuestionGroup
+from app.domain.errors.passage_errors import (
+    InvalidQuestionReferenceError,
+    NoQuestionsError,
+)
+from app.domain.errors.question_errors import (
+    DuplicateQuestionGroupOrderError,
+    QuestionGroupNotFoundError,
+    QuestionNumberOutOfRangeError,
+    QuestionTypeMismatchError,
+)
 
 
 class Passage(BaseModel):
@@ -50,9 +60,7 @@ class Passage(BaseModel):
         if any(
             qg.order_in_passage == group.order_in_passage for qg in self.question_groups
         ):
-            raise ValueError(
-                f"Question group with order {group.order_in_passage} already exists"
-            )
+            raise DuplicateQuestionGroupOrderError(group.order_in_passage)
 
         self.question_groups.append(group)
         self.updated_at = TimeHelper.utc_now()
@@ -69,17 +77,18 @@ class Passage(BaseModel):
         if question.question_group_id:
             group = self.get_question_group_by_id(question.question_group_id)
             if not group:
-                raise ValueError(
-                    f"Question group {question.question_group_id} not found"
-                )
+                raise QuestionGroupNotFoundError(question.question_group_id)
 
             if question.question_type != group.question_type:
-                raise ValueError("Question type must match group type")
+                raise QuestionTypeMismatchError(
+                    question.question_type.value, group.question_type.value
+                )
 
             if not group.contains_question_number(question.question_number):
-                raise ValueError(
-                    f"Question number {question.question_number} is not in group range "
-                    f"{group.start_question_number}-{group.end_question_number}"
+                raise QuestionNumberOutOfRangeError(
+                    question.question_number,
+                    group.start_question_number,
+                    group.end_question_number,
                 )
 
         self.questions.append(question)
@@ -127,12 +136,12 @@ class Passage(BaseModel):
         Should be called before persisting
         """
         if not self.questions:
-            raise ValueError("Passage must have at least one question")
+            raise NoQuestionsError()
 
         # Validate all questions in groups reference valid groups
         for question in self.questions:
             if question.question_group_id:
                 if not self.get_question_group_by_id(question.question_group_id):
-                    raise ValueError(
-                        f"Question {question.id} references non-existent group {question.question_group_id}"
+                    raise InvalidQuestionReferenceError(
+                        question.id, question.question_group_id
                     )

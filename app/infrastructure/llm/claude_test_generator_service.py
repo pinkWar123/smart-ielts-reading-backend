@@ -6,15 +6,17 @@ from anthropic import AsyncAnthropic
 
 from app.application.services.test_generator_service import ITestGeneratorService
 from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+    ExtractedCorrectAnswer,
     ExtractedOption,
     ExtractedPassage,
     ExtractedQuestion,
     ExtractedQuestionGroup,
-    ExtractedQuestionType,
     ExtractedTestResponse,
-    ExtractedTestSection,
+    TestMetadata,
 )
 from app.common.settings import Settings
+from app.domain.entities.question import QuestionType
+from app.domain.entities.test import TestType
 
 
 class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
@@ -55,62 +57,82 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
                 await asyncio.sleep(2**attempt)
 
     def _parse_response(self, data: dict) -> ExtractedTestResponse:
-        sections = []
+        """Parse Claude response into ExtractedTestResponse matching our system format"""
+        passages = []
 
-        for section_data in data.get("sections", []):
-            passage_data = section_data.get("passage", {})
-            passage = ExtractedPassage(
-                title=passage_data.get("title"),
-                content=passage_data.get("content", ""),
-                paragraphs=passage_data.get("paragraphs"),
-                word_count=passage_data.get("word_count"),
-                source_image_index=passage_data.get("source_image_index", 0),
-            )
-
+        for passage_data in data.get("passages", []):
+            # Parse question groups
             question_groups = []
-            for group_data in section_data.get("question_groups", []):
-                questions = []
-                for q_data in group_data.get("questions", []):
-                    options = None
-                    if q_data.get("options"):
-                        options = [
-                            ExtractedOption(label=opt["label"], text=opt["text"])
-                            for opt in q_data["options"]
-                        ]
-
-                    question = ExtractedQuestion(
-                        question_number=q_data["question_number"],
-                        question_type=ExtractedQuestionType(q_data["question_type"]),
-                        question_text=q_data["question_text"],
-                        options=options,
-                        correct_answer=q_data.get("correct_answer"),
-                        explanation=q_data.get("explanation"),
-                        instructions=q_data.get("instructions"),
-                    )
-                    questions.append(question)
-
+            for group_data in passage_data.get("question_groups", []):
                 question_group = ExtractedQuestionGroup(
+                    id=group_data["id"],
                     group_instructions=group_data["group_instructions"],
-                    question_type=ExtractedQuestionType(group_data["question_type"]),
-                    questions=questions,
+                    question_type=QuestionType(group_data["question_type"]),
                     start_question_number=group_data["start_question_number"],
                     end_question_number=group_data["end_question_number"],
+                    order_in_passage=group_data["order_in_passage"],
                 )
                 question_groups.append(question_group)
 
-            section = ExtractedTestSection(
-                passage=passage,
+            # Parse questions
+            questions = []
+            for q_data in passage_data.get("questions", []):
+                # Parse options if present
+                options = None
+                if q_data.get("options"):
+                    options = [
+                        ExtractedOption(label=opt["label"], text=opt["text"])
+                        for opt in q_data["options"]
+                    ]
+
+                # Parse correct answer
+                correct_answer_data = q_data.get("correct_answer", {})
+                correct_answer = ExtractedCorrectAnswer(
+                    answer=correct_answer_data.get("answer"),
+                    acceptable_answers=correct_answer_data.get(
+                        "acceptable_answers", []
+                    ),
+                )
+
+                question = ExtractedQuestion(
+                    question_number=q_data["question_number"],
+                    question_type=QuestionType(q_data["question_type"]),
+                    question_text=q_data["question_text"],
+                    options=options,
+                    correct_answer=correct_answer,
+                    explanation=q_data.get("explanation"),
+                    instructions=q_data.get("instructions"),
+                    points=q_data.get("points", 1),
+                    order_in_passage=q_data["order_in_passage"],
+                    question_group_id=q_data.get("question_group_id"),
+                )
+                questions.append(question)
+
+            # Create passage
+            passage = ExtractedPassage(
+                title=passage_data["title"],
+                content=passage_data["content"],
+                difficulty_level=passage_data.get("difficulty_level", 1),
+                topic=passage_data["topic"],
+                source=passage_data.get("source"),
                 question_groups=question_groups,
-                total_questions=section_data.get("total_questions", 0),
+                questions=questions,
             )
-            sections.append(section)
+            passages.append(passage)
+
+        # Parse test metadata
+        metadata_data = data.get("test_metadata", {})
+        test_metadata = TestMetadata(
+            title=metadata_data.get("title"),
+            description=metadata_data.get("description"),
+            total_questions=metadata_data.get("total_questions", 0),
+            estimated_time_minutes=metadata_data.get("estimated_time_minutes", 60),
+            test_type=TestType(metadata_data.get("test_type", "FULL_TEST")),
+        )
 
         return ExtractedTestResponse(
-            title=data.get("title"),
-            description=data.get("description"),
-            sections=sections,
-            total_questions=data.get("total_questions", 0),
-            estimated_time_minutes=data.get("estimated_time_minutes", 60),
-            extraction_notes=data.get("extraction_notes"),
+            passages=passages,
+            test_metadata=test_metadata,
+            extraction_notes=data.get("extraction_notes", []),
             confidence_score=data.get("confidence_score"),
         )

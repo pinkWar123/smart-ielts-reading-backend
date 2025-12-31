@@ -1,26 +1,16 @@
-from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from app.domain.entities.question import QuestionType
+from app.domain.entities.test import TestType
 
-class ExtractedQuestionType(str, Enum):
-    """IELTS Reading question types"""
 
-    MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
-    TRUE_FALSE_NOTGIVEN = "TRUE_FALSE_NOTGIVEN"
-    YES_NO_NOTGIVEN = "YES_NO_NOTGIVEN"
-    MATCHING_HEADINGS = "MATCHING_HEADINGS"
-    MATCHING_INFORMATION = "MATCHING_INFORMATION"
-    MATCHING_FEATURES = "MATCHING_FEATURES"
-    MATCHING_SENTENCE_ENDINGS = "MATCHING_SENTENCE_ENDINGS"
-    SENTENCE_COMPLETION = "SENTENCE_COMPLETION"
-    SUMMARY_COMPLETION = "SUMMARY_COMPLETION"
-    NOTE_COMPLETION = "NOTE_COMPLETION"
-    TABLE_COMPLETION = "TABLE_COMPLETION"
-    FLOW_CHART_COMPLETION = "FLOW_CHART_COMPLETION"
-    DIAGRAM_LABEL_COMPLETION = "DIAGRAM_LABEL_COMPLETION"
-    SHORT_ANSWER = "SHORT_ANSWER"
+class ExtractedCorrectAnswer(BaseModel):
+    """Correct answer structure"""
+
+    answer: Optional[str | List[str]] = None
+    acceptable_answers: List[str] = Field(default_factory=list)
 
 
 class ExtractedOption(BaseModel):
@@ -31,59 +21,60 @@ class ExtractedOption(BaseModel):
 
 
 class ExtractedQuestion(BaseModel):
-    """A single extracted question from the image"""
+    """A single extracted question - matches QuestionDTO format"""
 
     question_number: int
-    question_type: ExtractedQuestionType
+    question_type: QuestionType
     question_text: str
     options: Optional[List[ExtractedOption]] = None
-    correct_answer: Optional[Union[str, List[str]]] = (
-        None  # May be null if answer not in images
-    )
+    correct_answer: ExtractedCorrectAnswer
     explanation: Optional[str] = None
-    instructions: Optional[str] = None  # e.g., "Choose NO MORE THAN TWO WORDS"
+    instructions: Optional[str] = None
+    points: int = Field(default=1)
+    order_in_passage: int
+    question_group_id: Optional[str] = None
 
 
 class ExtractedQuestionGroup(BaseModel):
-    """A group of questions with shared instructions (common in IELTS)"""
+    """A group of questions - matches QuestionGroupDTO format"""
 
-    group_instructions: (
-        str  # e.g., "Questions 1-5: Do the following statements agree with..."
-    )
-    question_type: ExtractedQuestionType
-    questions: List[ExtractedQuestion]
+    id: str
+    group_instructions: str
+    question_type: QuestionType
     start_question_number: int
     end_question_number: int
+    order_in_passage: int
 
 
 class ExtractedPassage(BaseModel):
-    """Extracted passage/reading text"""
+    """Extracted passage - matches CreateCompletePassageRequest format"""
 
-    title: Optional[str] = None
+    title: str
     content: str
-    paragraphs: Optional[List[str]] = None  # For paragraph-labeled content (A, B, C...)
-    word_count: Optional[int] = None
-    source_image_index: int  # Which image this came from?
+    difficulty_level: int = Field(ge=1, le=5, default=1)
+    topic: str
+    source: Optional[str] = None
+    question_groups: List[ExtractedQuestionGroup] = Field(default_factory=list)
+    questions: List[ExtractedQuestion]
 
 
-class ExtractedTestSection(BaseModel):
-    """A section of the test (one passage and its questions)"""
-
-    passage: ExtractedPassage
-    question_groups: List[ExtractedQuestionGroup]
-    total_questions: int
-
-
-class ExtractedTestResponse(BaseModel):
-    """Complete extracted test ready for frontend preview"""
+class TestMetadata(BaseModel):
+    """Metadata about the extracted test"""
 
     title: Optional[str] = None
     description: Optional[str] = None
-    sections: List[ExtractedTestSection]
     total_questions: int
     estimated_time_minutes: int = Field(default=60)
-    extraction_notes: Optional[List[str]] = None  # Any issues or notes from extraction
-    confidence_score: Optional[float] = None  # Overall extraction confidence
+    test_type: TestType = Field(default=TestType.FULL_TEST)
+
+
+class ExtractedTestResponse(BaseModel):
+    """Complete extracted test response - ready to create passages and test"""
+
+    passages: List[ExtractedPassage]
+    test_metadata: TestMetadata
+    extraction_notes: Optional[List[str]] = Field(default_factory=list)
+    confidence_score: Optional[float] = None
 
 
 class ImagesExtractRequest(BaseModel):

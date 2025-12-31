@@ -6,6 +6,10 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.domain.errors.question_errors import (
+    InvalidQuestionGroupRangeError,
+    MissingOptionsError,
+)
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
 
 
@@ -49,7 +53,7 @@ class QuestionGroup(BaseModel):
             "start_question_number" in info.data
             and v < info.data["start_question_number"]
         ):
-            raise ValueError("end_question_number must be >= start_question_number")
+            raise InvalidQuestionGroupRangeError(info.data["start_question_number"], v)
         return v
 
     def contains_question_number(self, question_number: int) -> bool:
@@ -92,7 +96,7 @@ class Question(BaseModel):
         ]
 
         if needs_options and not v:
-            raise ValueError(f"{question_type} questions must have options")
+            raise MissingOptionsError(question_type.value)
 
         return v
 

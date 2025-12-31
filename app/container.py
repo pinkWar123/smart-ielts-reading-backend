@@ -13,11 +13,20 @@ from app.application.use_cases.auth.register.register_use_case import RegisterUs
 from app.application.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
+from app.application.use_cases.passages.create_complete_passage.create_complete_passage_use_case import (
+    CreateCompletePassageUseCase,
+)
 from app.application.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
 from app.application.use_cases.passages.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
+)
+from app.application.use_cases.tests.add_passage_to_test.add_passage_to_test_use_case import (
+    AddPassageToTestUseCase,
+)
+from app.application.use_cases.tests.create_test.create_test_use_case import (
+    CreateTestUseCase,
 )
 from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
@@ -32,12 +41,14 @@ from app.infrastructure.repositories.sql_passage_repository import SQLPassageRep
 from app.infrastructure.repositories.sql_refresh_token_repository import (
     SQLRefreshTokenRepository,
 )
+from app.infrastructure.repositories.sql_test_repository import SQLTestRepository
 from app.infrastructure.repositories.sql_user_repository import SqlUserRepository
 from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.controllers.ocr_controller import OcrController
 from app.presentation.controllers.passage_controller import PassageController
+from app.presentation.controllers.test_controller import TestController
 
 
 def create_anthropic_client():
@@ -62,6 +73,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     passage_repository = providers.Factory(
         SQLPassageRepository, session=database_session
     )
+    test_repository = providers.Factory(SQLTestRepository, session=database_session)
     user_repository = providers.Factory(SqlUserRepository, session=database_session)
     refresh_token_repository = providers.Factory(
         SQLRefreshTokenRepository, session=database_session
@@ -112,6 +124,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     create_passage_use_case = providers.Factory(
         CreatePassageUseCase, passage_repo=passage_repository
     )
+    create_complete_passage_use_case = providers.Factory(
+        CreateCompletePassageUseCase, passage_repository=passage_repository
+    )
 
     get_passages_use_case = providers.Factory(
         GetPassagesUseCase, passage_repo=passage_repository
@@ -126,10 +141,20 @@ class ApplicationContainer(containers.DeclarativeContainer):
     extract_test_from_images_use_case = providers.Factory(
         ExtractTestFromImagesUseCase, test_generator_service=test_generator_service
     )
+    create_test_use_case = providers.Factory(
+        CreateTestUseCase, test_repository=test_repository
+    )
+    add_passage_to_test_use_case = providers.Factory(
+        AddPassageToTestUseCase,
+        test_repository=test_repository,
+        passage_repository=passage_repository,
+    )
 
     # Controllers
     passage_controller = providers.Factory(
-        PassageController, passage_service=passage_service
+        PassageController,
+        passage_service=passage_service,
+        create_complete_passage_use_case=create_complete_passage_use_case,
     )
     auth_controller = providers.Factory(
         AuthController,
@@ -140,6 +165,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     ocr_controller = providers.Factory(
         OcrController, extract_text_use_case=extract_text_use_case
+    )
+    test_controller = providers.Factory(
+        TestController,
+        create_test_use_case=create_test_use_case,
+        add_passage_to_test_use_case=add_passage_to_test_use_case,
     )
 
 

@@ -8,6 +8,15 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from app.common.utils.time_helper import TimeHelper
+from app.domain.errors.test_errors import (
+    DuplicatePassageError,
+    InvalidTestStatusError,
+    MaxPassageCountExceededError,
+    NoPassagesError,
+    PassageCountMismatchError,
+    TestAlreadyArchivedError,
+    TestPublishedError,
+)
 
 
 class TestType(str, Enum):
@@ -78,16 +87,16 @@ class Test(BaseModel):
         - Must respect passage count limits for test type
         """
         if self.status == TestStatus.PUBLISHED:
-            raise ValueError("Cannot add passages to published test")
+            raise TestPublishedError("add passages")
 
         if self.test_type == TestType.FULL_TEST and len(self.passage_ids) >= 3:
-            raise ValueError("FULL_TEST can have maximum 3 passages")
+            raise MaxPassageCountExceededError(self.test_type.value, 3)
 
         if self.test_type == TestType.SINGLE_PASSAGE and len(self.passage_ids) >= 1:
-            raise ValueError("SINGLE_PASSAGE can have maximum 1 passage")
+            raise MaxPassageCountExceededError(self.test_type.value, 1)
 
         if passage_id in self.passage_ids:
-            raise ValueError(f"Passage {passage_id} already exists in test")
+            raise DuplicatePassageError(passage_id)
 
         self.passage_ids.append(passage_id)
         self.updated_at = TimeHelper.utc_now()
@@ -95,7 +104,7 @@ class Test(BaseModel):
     def remove_passage(self, passage_id: str) -> None:
         """Remove a passage from the test"""
         if self.status == TestStatus.PUBLISHED:
-            raise ValueError("Cannot remove passages from published test")
+            raise TestPublishedError("remove passages")
 
         self.passage_ids = [pid for pid in self.passage_ids if pid != passage_id]
         self.updated_at = TimeHelper.utc_now()
@@ -109,13 +118,12 @@ class Test(BaseModel):
         - Must be in DRAFT status
         """
         if self.status != TestStatus.DRAFT:
-            raise ValueError("Only DRAFT tests can be published")
+            raise InvalidTestStatusError(self.status.value, TestStatus.DRAFT.value)
 
         required_passages = 3 if self.test_type == TestType.FULL_TEST else 1
         if len(self.passage_ids) != required_passages:
-            raise ValueError(
-                f"{self.test_type} requires exactly {required_passages} passage(s), "
-                f"but has {len(self.passage_ids)}"
+            raise PassageCountMismatchError(
+                self.test_type.value, required_passages, len(self.passage_ids)
             )
 
         self.status = TestStatus.PUBLISHED
@@ -124,7 +132,7 @@ class Test(BaseModel):
     def archive(self) -> None:
         """Archive the test"""
         if self.status == TestStatus.ARCHIVED:
-            raise ValueError("Test is already archived")
+            raise TestAlreadyArchivedError()
 
         self.status = TestStatus.ARCHIVED
         self.updated_at = TimeHelper.utc_now()
@@ -135,7 +143,7 @@ class Test(BaseModel):
         Should be called after passages are modified
         """
         if self.status == TestStatus.PUBLISHED:
-            raise ValueError("Cannot update totals for published test")
+            raise TestPublishedError("update totals")
 
         self.total_questions = total_questions
         self.total_points = total_points
@@ -147,13 +155,13 @@ class Test(BaseModel):
         Should be called before publishing
         """
         if not self.passage_ids:
-            raise ValueError("Test must have at least one passage")
+            raise NoPassagesError()
 
         required_passages = 3 if self.test_type == TestType.FULL_TEST else 1
         if (
             self.status == TestStatus.PUBLISHED
             and len(self.passage_ids) != required_passages
         ):
-            raise ValueError(
-                f"Published {self.test_type} must have exactly {required_passages} passage(s)"
+            raise PassageCountMismatchError(
+                self.test_type.value, required_passages, len(self.passage_ids)
             )
