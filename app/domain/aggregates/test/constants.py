@@ -1,0 +1,15 @@
+"""Domain constants for Test aggregate"""
+
+# Test type constraints
+FULL_TEST_PASSAGE_COUNT = 3
+SINGLE_PASSAGE_COUNT = 1
+
+# Time limits (in minutes)
+FULL_TEST_DEFAULT_TIME_LIMIT = 60
+SINGLE_PASSAGE_DEFAULT_TIME_LIMIT = 20
+
+# Field constraints
+MAX_TITLE_LENGTH = 255
+MIN_TIME_LIMIT_MINUTES = 1
+MIN_TOTAL_QUESTIONS = 1
+MIN_TOTAL_POINTS = 1

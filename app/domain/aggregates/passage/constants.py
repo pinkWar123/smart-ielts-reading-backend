@@ -1,0 +1,15 @@
+"""Domain constants for Passage aggregate"""
+
+# Difficulty levels
+MIN_DIFFICULTY_LEVEL = 1
+MAX_DIFFICULTY_LEVEL = 5
+
+# Field constraints
+MAX_TITLE_LENGTH = 255
+MAX_TOPIC_LENGTH = 255
+MIN_CONTENT_LENGTH = 1
+MIN_WORD_COUNT = 0
+
+# Points
+DEFAULT_QUESTION_POINTS = 1
+MIN_QUESTION_POINTS = 1

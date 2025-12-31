@@ -22,4 +22,7 @@ class PassageModel(BaseModel):
     questions = relationship(
         "QuestionModel", back_populates="passage", cascade="all, delete-orphan"
     )
+    question_groups = relationship(
+        "QuestionGroupModel", back_populates="passage", cascade="all, delete-orphan"
+    )
     # Many-to-many relationship with tests will be handled through TestPassage association table
