@@ -1,14 +1,14 @@
 from dependency_injector.wiring import Provide
 from fastapi import APIRouter, Depends
 
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
-from app.presentation.controllers.passage_controller import PassageController
-from app.presentation.security.dependencies import require_auth
 from app.application.use_cases.passages.create_passage.create_passage_dtos import (
     CreatePassageRequest,
     PassageResponse,
 )
+from app.common.di import make_service_dependency
+from app.container import ApplicationContainer
+from app.presentation.controllers.passage_controller import PassageController
+from app.presentation.security.dependencies import require_auth
 
 router = APIRouter()
 

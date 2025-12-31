@@ -1,20 +1,32 @@
 import asyncio
 import base64
-from typing import Any
-from PIL import Image
 import io
+from typing import Any
+
+from PIL import Image
+
 from app.application.services.test_generator_service import ITestGeneratorService
-from app.application.use_cases.base.use_case import UseCase, RequestType, ResponseType
-from app.application.use_cases.tests.extract_test.extract_test_from_images.constants import MAX_IMAGES_NUMBER
-from app.application.use_cases.tests.extract_test.extract_test_from_images.errors import NoImagesError, \
-    ExceedingMaxImagesError
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import \
-    ImagesExtractRequest, ExtractedTestResponse
-from app.application.use_cases.tests.extract_test.extract_test_from_images.prompt import EXTRACTION_PROMPT
+from app.application.use_cases.base.use_case import RequestType, ResponseType, UseCase
+from app.application.use_cases.tests.extract_test.extract_test_from_images.constants import (
+    MAX_IMAGES_NUMBER,
+)
+from app.application.use_cases.tests.extract_test.extract_test_from_images.errors import (
+    ExceedingMaxImagesError,
+    NoImagesError,
+)
+from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+    ExtractedTestResponse,
+    ImagesExtractRequest,
+)
+from app.application.use_cases.tests.extract_test.extract_test_from_images.prompt import (
+    EXTRACTION_PROMPT,
+)
 
 
-class ExtractTestFromImagesUseCase(UseCase[ImagesExtractRequest, ExtractedTestResponse]):
-    def __init__(self, test_generator_service: ITestGeneratorService ):
+class ExtractTestFromImagesUseCase(
+    UseCase[ImagesExtractRequest, ExtractedTestResponse]
+):
+    def __init__(self, test_generator_service: ITestGeneratorService):
         self.test_generator_service = test_generator_service
 
     async def execute(self, request: ImagesExtractRequest) -> ExtractedTestResponse:
@@ -34,25 +46,27 @@ class ExtractTestFromImagesUseCase(UseCase[ImagesExtractRequest, ExtractedTestRe
 
         return response
 
-
     @staticmethod
-    async def build_prompt(self, processed_images: list[Any], request: ImagesExtractRequest) -> str:
+    async def build_prompt(
+        self, processed_images: list[Any], request: ImagesExtractRequest
+    ) -> str:
         content = []
         for i, img_data in enumerate(processed_images):
             base64_image = base64.b64encode(img_data).decode("utf-8")
-            content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/jpeg",
-                    "data": base64_image,
+            content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/jpeg",
+                        "data": base64_image,
+                    },
                 }
-            })
+            )
 
-            content.append({
-                "type": "text",
-                "text": f"[Image {i + 1} of {len(request.images)}]"
-            })
+            content.append(
+                {"type": "text", "text": f"[Image {i + 1} of {len(request.images)}]"}
+            )
 
         prompt = EXTRACTION_PROMPT
         if request.test_title:
@@ -60,10 +74,7 @@ class ExtractTestFromImagesUseCase(UseCase[ImagesExtractRequest, ExtractedTestRe
         if request.extraction_hints:
             prompt += f"\n\nAdditional Hints: {request.extraction_hints}"
 
-        content.append({
-            "type": "text",
-            "text": prompt
-        })
+        content.append({"type": "text", "text": prompt})
 
         return content
 

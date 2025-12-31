@@ -1,12 +1,19 @@
 import asyncio
-from abc import ABC
 import json
+from abc import ABC
+
 from anthropic import AsyncAnthropic
 
 from app.application.services.test_generator_service import ITestGeneratorService
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import \
-    ExtractedTestResponse, ExtractedTestSection, ExtractedQuestionGroup, ExtractedQuestionType, ExtractedPassage, \
-    ExtractedOption, ExtractedQuestion
+from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+    ExtractedOption,
+    ExtractedPassage,
+    ExtractedQuestion,
+    ExtractedQuestionGroup,
+    ExtractedQuestionType,
+    ExtractedTestResponse,
+    ExtractedTestSection,
+)
 from app.common.settings import Settings
 
 
@@ -21,7 +28,7 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
                 response = await self.client.messages.create(
                     model=self.settings.claude_model,
                     max_tokens=8000,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
 
                 response_text = response.content[0].text.strip()
@@ -42,7 +49,9 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
 
             except Exception as e:
                 if attempt == self.settings.max_retry_attempts - 1:
-                    raise Exception(f"Failed to extract test after {self.settings.max_retry_attempts} attempts: {e}")
+                    raise Exception(
+                        f"Failed to extract test after {self.settings.max_retry_attempts} attempts: {e}"
+                    )
                 await asyncio.sleep(2**attempt)
 
     def _parse_response(self, data: dict) -> ExtractedTestResponse:
@@ -105,4 +114,3 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
             extraction_notes=data.get("extraction_notes"),
             confidence_score=data.get("confidence_score"),
         )
-

@@ -2,22 +2,6 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 
 from app.application.services.passage_service import PassageService
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import \
-    ExtractTestFromImagesUseCase
-from app.common.db.engine import get_database_session
-from app.common.settings import settings
-from app.infrastructure.llm.claude_test_generator_service import ClaudeTestGeneratorService
-from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
-from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
-from app.infrastructure.repositories.sql_refresh_token_repository import (
-    SQLRefreshTokenRepository,
-)
-from app.infrastructure.repositories.sql_user_repository import SqlUserRepository
-from app.infrastructure.security.jwt_service import JwtService
-from app.infrastructure.security.password_hasher_service import PasswordHasher
-from app.presentation.controllers.auth_controller import AuthController
-from app.presentation.controllers.ocr_controller import OcrController
-from app.presentation.controllers.passage_controller import PassageController
 from app.application.use_cases.auth.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
@@ -32,7 +16,28 @@ from app.application.use_cases.images.extract_text_from_image.extract_text_from_
 from app.application.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
-from app.application.use_cases.passages.get_passages.get_passages_use_case import GetPassagesUseCase
+from app.application.use_cases.passages.get_passages.get_passages_use_case import (
+    GetPassagesUseCase,
+)
+from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
+    ExtractTestFromImagesUseCase,
+)
+from app.common.db.engine import get_database_session
+from app.common.settings import settings
+from app.infrastructure.llm.claude_test_generator_service import (
+    ClaudeTestGeneratorService,
+)
+from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
+from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
+from app.infrastructure.repositories.sql_refresh_token_repository import (
+    SQLRefreshTokenRepository,
+)
+from app.infrastructure.repositories.sql_user_repository import SqlUserRepository
+from app.infrastructure.security.jwt_service import JwtService
+from app.infrastructure.security.password_hasher_service import PasswordHasher
+from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.controllers.ocr_controller import OcrController
+from app.presentation.controllers.passage_controller import PassageController
 
 
 def create_anthropic_client():
@@ -119,8 +124,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     # Test use cases
     extract_test_from_images_use_case = providers.Factory(
-        ExtractTestFromImagesUseCase,
-        test_generator_service=test_generator_service
+        ExtractTestFromImagesUseCase, test_generator_service=test_generator_service
     )
 
     # Controllers

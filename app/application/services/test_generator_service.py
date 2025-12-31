@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import \
-    ExtractedTestResponse
+from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+    ExtractedTestResponse,
+)
 
 
 class ITestGeneratorService(ABC):

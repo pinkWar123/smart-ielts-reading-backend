@@ -2,10 +2,6 @@ from dependency_injector.wiring import Provide
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
-from app.presentation.controllers.auth_controller import AuthController
-from app.presentation.security.dependencies import require_auth
 from app.application.use_cases.auth.get_current_user.get_current_user_dto import (
     GetCurrentUserResponse,
 )
@@ -14,7 +10,14 @@ from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto impo
     RegenerateTokensRequest,
     RegenerateTokensResponse,
 )
-from app.application.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
+from app.application.use_cases.auth.register.register_dto import (
+    RegisterRequest,
+    RegisterResponse,
+)
+from app.common.di import make_service_dependency
+from app.container import ApplicationContainer
+from app.presentation.controllers.auth_controller import AuthController
+from app.presentation.security.dependencies import require_auth
 
 router = APIRouter()
 

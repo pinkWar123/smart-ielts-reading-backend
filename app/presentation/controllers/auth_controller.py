@@ -14,7 +14,10 @@ from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto impo
 from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
 )
-from app.application.use_cases.auth.register.register_dto import RegisterRequest, RegisterResponse
+from app.application.use_cases.auth.register.register_dto import (
+    RegisterRequest,
+    RegisterResponse,
+)
 from app.application.use_cases.auth.register.register_use_case import RegisterUseCase
 
 
