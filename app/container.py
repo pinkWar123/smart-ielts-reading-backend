@@ -2,8 +2,11 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 
 from app.application.services.passage_service import PassageService
+from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import \
+    ExtractTestFromImagesUseCase
 from app.common.db.engine import get_database_session
 from app.common.settings import settings
+from app.infrastructure.llm.claude_test_generator_service import ClaudeTestGeneratorService
 from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
 from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
 from app.infrastructure.repositories.sql_refresh_token_repository import (
@@ -70,6 +73,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     image_to_text_service = providers.Factory(
         ClaudeImageToTextService, settings=settings, client=claude_client
     )
+    test_generator_service = providers.Factory(
+        ClaudeTestGeneratorService, settings=settings, client=claude_client
+    )
 
     # Use Cases
     # Auth use cases
@@ -109,6 +115,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     # OCR use cases
     extract_text_use_case = providers.Factory(
         ExtractTextFromImageUseCase, image_to_text_service=image_to_text_service
+    )
+
+    # Test use cases
+    extract_test_from_images_use_case = providers.Factory(
+        ExtractTestFromImagesUseCase,
+        test_generator_service=test_generator_service
     )
 
     # Controllers
