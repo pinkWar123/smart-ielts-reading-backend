@@ -1,4 +1,5 @@
 """Passage Aggregate Root"""
+
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -35,6 +36,7 @@ class Passage(BaseModel):
     - Questions in a group must match the group's question type
     - Total questions must match the count of actual questions
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str = Field(min_length=1, max_length=MAX_TITLE_LENGTH)
     content: str = Field(min_length=MIN_CONTENT_LENGTH)
@@ -58,7 +60,9 @@ class Passage(BaseModel):
         Raises:
             DuplicateQuestionGroupOrderError: If a group with the same order exists
         """
-        if any(qg.order_in_passage == group.order_in_passage for qg in self.question_groups):
+        if any(
+            qg.order_in_passage == group.order_in_passage for qg in self.question_groups
+        ):
             raise DuplicateQuestionGroupOrderError(group.order_in_passage)
 
         self.question_groups.append(group)
@@ -85,15 +89,14 @@ class Passage(BaseModel):
 
             if question.question_type != group.question_type:
                 raise QuestionTypeMismatchError(
-                    question.question_type.value,
-                    group.question_type.value
+                    question.question_type.value, group.question_type.value
                 )
 
             if not group.contains_question_number(question.question_number):
                 raise QuestionNumberOutOfRangeError(
                     question.question_number,
                     group.start_question_number,
-                    group.end_question_number
+                    group.end_question_number,
                 )
 
         self.questions.append(question)

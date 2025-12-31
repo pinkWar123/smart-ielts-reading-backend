@@ -1,4 +1,5 @@
 """Test Aggregate Root"""
+
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -38,11 +39,14 @@ class Test(BaseModel):
     - Cannot modify passages once published
     - Total questions and points should match sum of all passages
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str = Field(min_length=1, max_length=MAX_TITLE_LENGTH)
     description: Optional[str] = None
     test_type: TestType
-    passage_ids: List[str] = Field(default_factory=list)  # References to Passage aggregates
+    passage_ids: List[str] = Field(
+        default_factory=list
+    )  # References to Passage aggregates
     time_limit_minutes: int = Field(ge=MIN_TIME_LIMIT_MINUTES)
     total_questions: int = Field(ge=MIN_TOTAL_QUESTIONS)
     total_points: int = Field(ge=MIN_TOTAL_POINTS)
@@ -52,14 +56,14 @@ class Test(BaseModel):
     updated_at: Optional[datetime] = None
     is_active: bool = True
 
-    @field_validator('passage_ids')
+    @field_validator("passage_ids")
     @classmethod
     def validate_passage_count(cls, v, info):
         """Validate passage count based on test type"""
-        if 'test_type' not in info.data:
+        if "test_type" not in info.data:
             return v
 
-        test_type = info.data['test_type']
+        test_type = info.data["test_type"]
 
         if test_type == TestType.FULL_TEST and len(v) > FULL_TEST_PASSAGE_COUNT:
             raise MaxPassageCountExceededError(test_type.value, FULL_TEST_PASSAGE_COUNT)
@@ -84,7 +88,11 @@ class Test(BaseModel):
         if self.status == TestStatus.PUBLISHED:
             raise TestPublishedError("add passages")
 
-        max_count = FULL_TEST_PASSAGE_COUNT if self.test_type == TestType.FULL_TEST else SINGLE_PASSAGE_COUNT
+        max_count = (
+            FULL_TEST_PASSAGE_COUNT
+            if self.test_type == TestType.FULL_TEST
+            else SINGLE_PASSAGE_COUNT
+        )
 
         if len(self.passage_ids) >= max_count:
             raise MaxPassageCountExceededError(self.test_type.value, max_count)
@@ -123,13 +131,15 @@ class Test(BaseModel):
         if self.status != TestStatus.DRAFT:
             raise InvalidTestStatusError(self.status.value, TestStatus.DRAFT.value)
 
-        required_passages = FULL_TEST_PASSAGE_COUNT if self.test_type == TestType.FULL_TEST else SINGLE_PASSAGE_COUNT
+        required_passages = (
+            FULL_TEST_PASSAGE_COUNT
+            if self.test_type == TestType.FULL_TEST
+            else SINGLE_PASSAGE_COUNT
+        )
 
         if len(self.passage_ids) != required_passages:
             raise PassageCountMismatchError(
-                self.test_type.value,
-                required_passages,
-                len(self.passage_ids)
+                self.test_type.value, required_passages, len(self.passage_ids)
             )
 
         self.status = TestStatus.PUBLISHED
@@ -175,11 +185,16 @@ class Test(BaseModel):
         if not self.passage_ids:
             raise NoPassagesError()
 
-        required_passages = FULL_TEST_PASSAGE_COUNT if self.test_type == TestType.FULL_TEST else SINGLE_PASSAGE_COUNT
+        required_passages = (
+            FULL_TEST_PASSAGE_COUNT
+            if self.test_type == TestType.FULL_TEST
+            else SINGLE_PASSAGE_COUNT
+        )
 
-        if self.status == TestStatus.PUBLISHED and len(self.passage_ids) != required_passages:
+        if (
+            self.status == TestStatus.PUBLISHED
+            and len(self.passage_ids) != required_passages
+        ):
             raise PassageCountMismatchError(
-                self.test_type.value,
-                required_passages,
-                len(self.passage_ids)
+                self.test_type.value, required_passages, len(self.passage_ids)
             )

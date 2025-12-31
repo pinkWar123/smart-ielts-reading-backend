@@ -1,4 +1,5 @@
 """Passage Aggregate Root"""
+
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -19,6 +20,7 @@ class Passage(BaseModel):
     - Questions in a group must match the group's question type
     - Total questions must match the count of actual questions
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str = Field(min_length=1, max_length=255)
     content: str = Field(min_length=1)
@@ -35,7 +37,7 @@ class Passage(BaseModel):
     question_groups: List[QuestionGroup] = Field(default_factory=list)
     questions: List[Question] = Field(default_factory=list)
 
-    @field_validator('questions')
+    @field_validator("questions")
     @classmethod
     def validate_questions_not_empty(cls, v):
         """Ensure passage has at least one question when being validated"""
@@ -45,8 +47,12 @@ class Passage(BaseModel):
     def add_question_group(self, group: QuestionGroup) -> None:
         """Add a question group to the passage"""
         # Validate order uniqueness
-        if any(qg.order_in_passage == group.order_in_passage for qg in self.question_groups):
-            raise ValueError(f"Question group with order {group.order_in_passage} already exists")
+        if any(
+            qg.order_in_passage == group.order_in_passage for qg in self.question_groups
+        ):
+            raise ValueError(
+                f"Question group with order {group.order_in_passage} already exists"
+            )
 
         self.question_groups.append(group)
         self.updated_at = TimeHelper.utc_now()
@@ -63,7 +69,9 @@ class Passage(BaseModel):
         if question.question_group_id:
             group = self.get_question_group_by_id(question.question_group_id)
             if not group:
-                raise ValueError(f"Question group {question.question_group_id} not found")
+                raise ValueError(
+                    f"Question group {question.question_group_id} not found"
+                )
 
             if question.question_type != group.question_type:
                 raise ValueError("Question type must match group type")

@@ -1,10 +1,13 @@
 """Value objects for Question domain"""
+
 from typing import List, Union
+
 from pydantic import BaseModel, Field
 
 
 class Option(BaseModel):
     """Option for multiple choice or matching questions - Value Object"""
+
     label: str = Field(..., description="e.g., 'A', 'B', 'C' or 'i', 'ii', 'iii'")
     text: str = Field(..., min_length=1)
 
@@ -14,7 +17,10 @@ class Option(BaseModel):
 
 class CorrectAnswer(BaseModel):
     """Correct answer(s) for a question - Value Object"""
-    value: Union[str, List[str]] = Field(..., description="Single answer or list of answers")
+
+    value: Union[str, List[str]] = Field(
+        ..., description="Single answer or list of answers"
+    )
 
     class Config:
         frozen = True  # Immutable value object

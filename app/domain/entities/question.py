@@ -1,4 +1,5 @@
 """Question domain entities - Part of Passage Aggregate"""
+
 import uuid
 from enum import Enum
 from typing import List, Optional
@@ -10,6 +11,7 @@ from app.domain.value_objects.question_value_objects import CorrectAnswer, Optio
 
 class QuestionType(str, Enum):
     """IELTS Reading question types"""
+
     MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
     TRUE_FALSE_NOTGIVEN = "TRUE_FALSE_NOTGIVEN"
     YES_NO_NOTGIVEN = "YES_NO_NOTGIVEN"
@@ -31,6 +33,7 @@ class QuestionGroup(BaseModel):
     Entity: A group of questions with shared instructions (common in IELTS)
     Part of Passage Aggregate - should not be accessed independently
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     group_instructions: str = Field(..., min_length=1)
     question_type: QuestionType
@@ -38,12 +41,15 @@ class QuestionGroup(BaseModel):
     end_question_number: int = Field(ge=1)
     order_in_passage: int = Field(ge=1)
 
-    @field_validator('end_question_number')
+    @field_validator("end_question_number")
     @classmethod
     def validate_question_range(cls, v, info):
         """Ensure end_question_number >= start_question_number"""
-        if 'start_question_number' in info.data and v < info.data['start_question_number']:
-            raise ValueError('end_question_number must be >= start_question_number')
+        if (
+            "start_question_number" in info.data
+            and v < info.data["start_question_number"]
+        ):
+            raise ValueError("end_question_number must be >= start_question_number")
         return v
 
     def contains_question_number(self, question_number: int) -> bool:
@@ -56,6 +62,7 @@ class Question(BaseModel):
     Entity: A single question in a passage
     Part of Passage Aggregate - should not be accessed independently
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     question_group_id: Optional[str] = None
     question_number: int = Field(ge=1)
@@ -68,14 +75,14 @@ class Question(BaseModel):
     points: int = Field(default=1, ge=1)
     order_in_passage: int = Field(ge=1)
 
-    @field_validator('options')
+    @field_validator("options")
     @classmethod
     def validate_options_for_type(cls, v, info):
         """Validate that options exist for question types that need them"""
-        if 'question_type' not in info.data:
+        if "question_type" not in info.data:
             return v
 
-        question_type = info.data['question_type']
+        question_type = info.data["question_type"]
         needs_options = question_type in [
             QuestionType.MULTIPLE_CHOICE,
             QuestionType.MATCHING_HEADINGS,
@@ -85,7 +92,7 @@ class Question(BaseModel):
         ]
 
         if needs_options and not v:
-            raise ValueError(f'{question_type} questions must have options')
+            raise ValueError(f"{question_type} questions must have options")
 
         return v
 

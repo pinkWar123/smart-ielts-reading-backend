@@ -1,4 +1,5 @@
 """Passage Aggregate exports"""
+
 from app.domain.aggregates.passage.constants import (
     DEFAULT_QUESTION_POINTS,
     MAX_DIFFICULTY_LEVEL,

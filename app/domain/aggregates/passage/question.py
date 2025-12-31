@@ -1,10 +1,14 @@
 """Question Entity - Part of Passage Aggregate"""
+
 import uuid
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.domain.aggregates.passage.constants import DEFAULT_QUESTION_POINTS, MIN_QUESTION_POINTS
+from app.domain.aggregates.passage.constants import (
+    DEFAULT_QUESTION_POINTS,
+    MIN_QUESTION_POINTS,
+)
 from app.domain.aggregates.passage.question_type import QuestionType
 from app.domain.errors.question_errors import MissingOptionsError
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
@@ -15,6 +19,7 @@ class Question(BaseModel):
     Entity: A single question in a passage
     Part of Passage Aggregate - should not be accessed independently
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     question_group_id: Optional[str] = None
     question_number: int = Field(ge=1)
@@ -27,14 +32,14 @@ class Question(BaseModel):
     points: int = Field(default=DEFAULT_QUESTION_POINTS, ge=MIN_QUESTION_POINTS)
     order_in_passage: int = Field(ge=1)
 
-    @field_validator('options')
+    @field_validator("options")
     @classmethod
     def validate_options_for_type(cls, v, info):
         """Validate that options exist for question types that need them"""
-        if 'question_type' not in info.data:
+        if "question_type" not in info.data:
             return v
 
-        question_type = info.data['question_type']
+        question_type = info.data["question_type"]
 
         if QuestionType.requires_options(question_type) and not v:
             raise MissingOptionsError(question_type.value)

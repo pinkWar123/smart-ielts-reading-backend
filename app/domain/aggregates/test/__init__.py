@@ -1,4 +1,5 @@
 """Test Aggregate exports"""
+
 from app.domain.aggregates.test.constants import (
     FULL_TEST_DEFAULT_TIME_LIMIT,
     FULL_TEST_PASSAGE_COUNT,

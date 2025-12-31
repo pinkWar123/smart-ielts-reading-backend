@@ -1,9 +1,11 @@
 """Question type enumeration"""
+
 from enum import Enum
 
 
 class QuestionType(str, Enum):
     """IELTS Reading question types"""
+
     MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
     TRUE_FALSE_NOTGIVEN = "TRUE_FALSE_NOTGIVEN"
     YES_NO_NOTGIVEN = "YES_NO_NOTGIVEN"
@@ -20,7 +22,7 @@ class QuestionType(str, Enum):
     SHORT_ANSWER = "SHORT_ANSWER"
 
     @classmethod
-    def requires_options(cls, question_type: 'QuestionType') -> bool:
+    def requires_options(cls, question_type: "QuestionType") -> bool:
         """Check if question type requires options"""
         return question_type in [
             cls.MULTIPLE_CHOICE,

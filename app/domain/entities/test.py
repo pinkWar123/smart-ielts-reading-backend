@@ -1,4 +1,5 @@
 """Test Aggregate Root"""
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -11,12 +12,14 @@ from app.common.utils.time_helper import TimeHelper
 
 class TestType(str, Enum):
     """IELTS Reading test types"""
+
     FULL_TEST = "FULL_TEST"  # 3 passages, ~40 questions, 60 minutes
     SINGLE_PASSAGE = "SINGLE_PASSAGE"  # 1 passage, ~13 questions, 20 minutes
 
 
 class TestStatus(str, Enum):
     """Test lifecycle status"""
+
     DRAFT = "DRAFT"  # Being created/edited
     PUBLISHED = "PUBLISHED"  # Available for students
     ARCHIVED = "ARCHIVED"  # No longer active
@@ -33,11 +36,14 @@ class Test(BaseModel):
     - Cannot modify passages once published
     - Total questions and points should match sum of all passages
     """
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
     test_type: TestType
-    passage_ids: List[str] = Field(default_factory=list)  # References to Passage aggregates
+    passage_ids: List[str] = Field(
+        default_factory=list
+    )  # References to Passage aggregates
     time_limit_minutes: int = Field(ge=1)
     total_questions: int = Field(ge=1)
     total_points: int = Field(ge=1)
@@ -47,19 +53,19 @@ class Test(BaseModel):
     updated_at: Optional[datetime] = None
     is_active: bool = True
 
-    @field_validator('passage_ids')
+    @field_validator("passage_ids")
     @classmethod
     def validate_passage_count(cls, v, info):
         """Validate passage count based on test type"""
-        if 'test_type' not in info.data:
+        if "test_type" not in info.data:
             return v
 
-        test_type = info.data['test_type']
+        test_type = info.data["test_type"]
 
         if test_type == TestType.FULL_TEST and len(v) > 3:
-            raise ValueError('FULL_TEST cannot have more than 3 passages')
+            raise ValueError("FULL_TEST cannot have more than 3 passages")
         elif test_type == TestType.SINGLE_PASSAGE and len(v) > 1:
-            raise ValueError('SINGLE_PASSAGE cannot have more than 1 passage')
+            raise ValueError("SINGLE_PASSAGE cannot have more than 1 passage")
 
         return v
 
@@ -144,7 +150,10 @@ class Test(BaseModel):
             raise ValueError("Test must have at least one passage")
 
         required_passages = 3 if self.test_type == TestType.FULL_TEST else 1
-        if self.status == TestStatus.PUBLISHED and len(self.passage_ids) != required_passages:
+        if (
+            self.status == TestStatus.PUBLISHED
+            and len(self.passage_ids) != required_passages
+        ):
             raise ValueError(
                 f"Published {self.test_type} must have exactly {required_passages} passage(s)"
             )
