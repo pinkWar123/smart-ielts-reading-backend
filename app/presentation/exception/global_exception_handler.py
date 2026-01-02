@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, Request
+from pydantic import ValidationError
 from starlette.responses import JSONResponse
 
 from app.domain.errors.domain_errors import Error
@@ -54,6 +55,36 @@ def setup_exception_handlers(app: FastAPI):
                 "message": exc.message,
                 "details": details,
             },
+        )
+
+    @app.exception_handler(ValidationError)
+    async def validation_error_handler(request: Request, exc: ValidationError):
+        logger.warning(f"Validation error: {exc}")
+
+        # Format validation errors for better readability
+        errors = []
+        for error in exc.errors():
+            field = ".".join(str(loc) for loc in error["loc"])
+            errors.append(
+                {"field": field, "message": error["msg"], "type": error["type"]}
+            )
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error_code": 400,
+                "message": "Validation failed",
+                "details": {"validation_errors": errors},
+            },
+        )
+
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        logger.warning(f"Value error: {exc}")
+
+        return JSONResponse(
+            status_code=400,
+            content={"error_code": 400, "message": str(exc), "details": None},
         )
 
     @app.exception_handler(Exception)

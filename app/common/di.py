@@ -1,71 +1,34 @@
 """Dependency injection helper functions."""
 
 import inspect
-from collections.abc import Callable
-from typing import TypeVar
+from typing import get_type_hints
 
-from dependency_injector.wiring import inject
+from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.db.engine import get_database_session
-
-T = TypeVar("T")
-
-
-async def resolve_service(
-    service_factory: Callable[..., T], session: AsyncSession | None = None
-) -> T:
-    """
-    Unified helper to resolve DI service providers that may return awaitables.
-
-    This eliminates the ugly `if hasattr(created, "__await__")` pattern
-    by providing a consistent way to handle both sync and async providers.
-
-    Args:
-        service_factory: The DI provider factory function
-        session: Optional database session to pass to the factory
-
-    Returns:
-        The resolved service instance
-
-    Example:
-        # Before (ugly):
-        try:
-            created = service_factory(session=session)
-        except TypeError:
-            created = service_factory()
-        if hasattr(created, "__await__"):
-            created = await created
-        return created
-
-        # After (clean):
-        return await resolve_service(service_factory, session)
-    """
-    try:
-        # Try to pass session first (most common case)
-        created = service_factory(session=session) if session else service_factory()
-    except TypeError:
-        # Fallback if factory doesn't accept session parameter
-        created = service_factory()
-
-    # Handle both async and sync providers uniformly
-    if inspect.isawaitable(created):
-        return await created
-
-    return created
+from app.container import container
 
 
 def make_service_dependency(provider_dependency):
     """Create a FastAPI dependency that resolves a DI provider with request-scoped session.
 
+    This function creates a FastAPI dependency that:
+    1. Gets a database session for the request
+    2. Resolves repositories with the session injected
+    3. Resolves the requested service with all nested dependencies properly injected
+
     Usage:
-        get_service = make_service_dependency(
-            Provide[Application.feature_container.some_service.provider]
+        from dependency_injector.wiring import Provide
+        from app.container import ApplicationContainer
+
+        get_controller = make_service_dependency(
+            Provide[ApplicationContainer.some_controller]
         )
 
         @router.get("/endpoint")
-        async def handler(service: SomeService = Depends(get_service)):
+        async def handler(controller: SomeController = Depends(get_controller)):
             ...
     """
 
@@ -74,19 +37,65 @@ def make_service_dependency(provider_dependency):
         session: AsyncSession = Depends(get_database_session),
         service_factory=Depends(provider_dependency),
     ):
-        # Check if service_factory is already an instance (resolved by DI container)
+        """
+        Dependency function that:
+        - Gets session from FastAPI's dependency injection
+        - Resolves repositories with session injected
+        - Resolves the service with all nested dependencies properly injected
+        """
+        # If service_factory is not callable, it's already resolved
         if not callable(service_factory):
-            # Already resolved - return the instance directly
             return service_factory
 
-        # If it's still a factory, resolve it
-        try:
-            sig = inspect.signature(service_factory)
-            if "session" in sig.parameters:
-                return service_factory(session=session)
-            else:
-                return service_factory()
-        except Exception:
+        # Inspect the factory to see what dependencies it needs
+        sig = inspect.signature(service_factory)
+        kwargs = {}
+
+        for param_name, param in sig.parameters.items():
+            # Check if this parameter is a repository that needs a session
+            if any(keyword in param_name.lower() for keyword in ["repository", "repo"]):
+                # Get the repository provider from container
+                repo_provider = getattr(container, param_name, None)
+                if repo_provider and callable(repo_provider):
+                    # Create repository instance with session
+                    kwargs[param_name] = repo_provider(session=session)
+            # Check if parameter has a default that's a provider
+            elif hasattr(param.default, "__self__"):
+                # It's a bound provider, call it to get the instance
+                provider = param.default
+                if callable(provider):
+                    # Check if the provider's factory needs repositories
+                    try:
+                        sub_instance = _resolve_provider_with_repos(provider, session)
+                        kwargs[param_name] = sub_instance
+                    except:
+                        # Fallback: just call the provider
+                        kwargs[param_name] = provider()
+
+        # Call the service factory with resolved dependencies
+        if kwargs:
+            return service_factory(**kwargs)
+        else:
             return service_factory()
+
+    def _resolve_provider_with_repos(provider, session):
+        """Recursively resolve a provider, injecting session into repositories."""
+        if not callable(provider):
+            return provider
+
+        sig = inspect.signature(provider)
+        kwargs = {}
+
+        for param_name, param in sig.parameters.items():
+            if any(keyword in param_name.lower() for keyword in ["repository", "repo"]):
+                # Get the repository provider from container
+                repo_provider = getattr(container, param_name, None)
+                if repo_provider and callable(repo_provider):
+                    kwargs[param_name] = repo_provider(session=session)
+
+        if kwargs:
+            return provider(**kwargs)
+        else:
+            return provider()
 
     return _dependency

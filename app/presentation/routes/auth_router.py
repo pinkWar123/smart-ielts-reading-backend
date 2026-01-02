@@ -1,4 +1,3 @@
-from dependency_injector.wiring import Provide
 from fastapi import APIRouter
 from fastapi.params import Depends
 
@@ -14,16 +13,11 @@ from app.application.use_cases.auth.register.register_dto import (
     RegisterRequest,
     RegisterResponse,
 )
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
+from app.common.dependencies import get_auth_controller
 from app.presentation.controllers.auth_controller import AuthController
 from app.presentation.security.dependencies import require_auth
 
 router = APIRouter()
-
-get_auth_controller = make_service_dependency(
-    Provide[ApplicationContainer.auth_controller]
-)
 
 
 @router.post(

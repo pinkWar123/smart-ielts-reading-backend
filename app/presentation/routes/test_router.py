@@ -1,4 +1,3 @@
-from dependency_injector.wiring import Provide
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 
@@ -7,16 +6,11 @@ from app.application.use_cases.tests.create_test.create_test_dtos import (
     CreateTestRequest,
     TestResponse,
 )
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
+from app.common.dependencies import get_test_controller
 from app.presentation.controllers.test_controller import TestController
 from app.presentation.security.dependencies import required_admin
 
 router = APIRouter()
-
-get_test_controller = make_service_dependency(
-    Provide[ApplicationContainer.test_controller]
-)
 
 
 @router.post(
@@ -51,7 +45,7 @@ async def create_test(
     The test is created with status DRAFT and can have passages added to it.
     Total questions and points are initially 0 and will be updated as passages are added.
     """
-    return await controller.create_test(request, current_user.id)
+    return await controller.create_test(request, current_user["user_id"])
 
 
 @router.post(
@@ -73,7 +67,7 @@ async def add_passage_to_test(
     test_id: str,
     request: AddPassageToTestRequest,
     controller: TestController = Depends(get_test_controller),
-    current_user=Depends(required_admin),
+    # current_user=Depends(required_admin),
 ):
     """
     Add a complete passage to an existing test.

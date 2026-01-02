@@ -42,7 +42,7 @@ class SQLTestRepository(TestRepositoryInterface):
 
         self.session.add(test_model)
         await self.session.commit()
-        await self.session.refresh(test_model)
+        await self.session.refresh(test_model, ["passages"])
 
         return self._to_domain_entity(test_model)
 
@@ -70,7 +70,11 @@ class SQLTestRepository(TestRepositoryInterface):
 
     async def update(self, test: Test) -> Test:
         """Update an existing test"""
-        stmt = select(TestModel).filter_by(id=test.id)
+        stmt = (
+            select(TestModel)
+            .options(selectinload(TestModel.passages))
+            .filter_by(id=test.id)
+        )
         result = await self.session.execute(stmt)
         test_model = result.scalar_one_or_none()
 
@@ -89,7 +93,7 @@ class SQLTestRepository(TestRepositoryInterface):
         test_model.is_active = test.is_active
 
         await self.session.commit()
-        await self.session.refresh(test_model)
+        await self.session.refresh(test_model, ["passages"])
 
         return self._to_domain_entity(test_model)
 

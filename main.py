@@ -15,7 +15,15 @@ from app.presentation.routes.test_router import router as test_router
 async def lifespan(app: FastAPI):
     # Startup
     await initialize_database()
-    container.wire(modules=["app.presentation.routes.passage_router", "app.common.di"])
+    container.wire(
+        modules=[
+            "app.presentation.routes.passage_router",
+            "app.presentation.routes.test_router",
+            "app.presentation.routes.auth_router",
+            "app.presentation.routes.ocr_router",
+            "app.common.di",
+        ]
+    )
     yield
     # Shutdown
     await close_database()

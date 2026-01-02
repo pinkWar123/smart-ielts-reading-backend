@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from dependency_injector.wiring import Provider
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
@@ -10,19 +9,13 @@ from app.application.use_cases.tests.extract_test.extract_test_from_images.extra
 from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
+from app.common.dependencies import (
+    get_extract_test_from_images_use_case,
+    get_ocr_controller,
+)
 from app.presentation.controllers.ocr_controller import OcrController
 
 router = APIRouter()
-
-get_ocr_controller = make_service_dependency(
-    Provider[ApplicationContainer.ocr_controller]
-)
-
-get_extract_test_from_images_use_case = make_service_dependency(
-    Provider[ApplicationContainer.extract_test_from_images_use_case]
-)
 
 
 @router.post("/extract-text")

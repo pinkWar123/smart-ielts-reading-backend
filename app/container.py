@@ -1,5 +1,6 @@
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.services.passage_service import PassageService
 from app.application.use_cases.auth.get_current_user.get_current_user_use_case import (
@@ -67,17 +68,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
         "jwt_access_token_expire_minutes", "JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
     )
 
-    database_session = providers.Resource(get_database_session)
-
-    # Repositories (session will be provided at runtime)
-    passage_repository = providers.Factory(
-        SQLPassageRepository, session=database_session
-    )
-    test_repository = providers.Factory(SQLTestRepository, session=database_session)
-    user_repository = providers.Factory(SqlUserRepository, session=database_session)
-    refresh_token_repository = providers.Factory(
-        SQLRefreshTokenRepository, session=database_session
-    )
+    # Repositories as Factories (session will be provided at call time)
+    passage_repository = providers.Factory(SQLPassageRepository)
+    test_repository = providers.Factory(SQLTestRepository)
+    user_repository = providers.Factory(SqlUserRepository)
+    refresh_token_repository = providers.Factory(SQLRefreshTokenRepository)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)

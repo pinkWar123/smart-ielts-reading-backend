@@ -11,8 +11,10 @@ class RequireRoles:
     def __init__(self, roles: List[str]):
         self.roles = roles
 
-    def __call__(self, current_user: User = Depends(verify_token)) -> User:
-        if current_user.role.value not in self.roles:
+    def __call__(self, current_user: dict = Depends(verify_token)) -> dict:
+        # current_user is a decoded JWT payload (dict), not a User object
+        user_role = current_user.get("role")
+        if user_role not in self.roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Required roles: {', '.join(self.roles)}",

@@ -1,4 +1,3 @@
-from dependency_injector.wiring import Provide
 from fastapi import APIRouter, Depends, status
 
 from app.application.use_cases.passages.create_complete_passage.create_complete_passage_dtos import (
@@ -9,16 +8,11 @@ from app.application.use_cases.passages.create_passage.create_passage_dtos impor
     CreatePassageRequest,
     PassageResponse,
 )
-from app.common.di import make_service_dependency
-from app.container import ApplicationContainer
+from app.common.dependencies import get_passage_controller
 from app.presentation.controllers.passage_controller import PassageController
 from app.presentation.security.dependencies import require_auth, required_admin
 
 router = APIRouter()
-
-get_passage_controller = make_service_dependency(
-    Provide[ApplicationContainer.passage_controller]
-)
 
 
 @router.post(
@@ -80,7 +74,7 @@ async def create_complete_passage(
     - Questions in a group must match the group's question type
     - Question numbers must fall within group range if assigned to a group
     """
-    return await controller.create_complete_passage(request, current_user.id)
+    return await controller.create_complete_passage(request, current_user["user_id"])
 
 
 @router.post(
