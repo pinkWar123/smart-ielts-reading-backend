@@ -51,6 +51,13 @@ class CreateCompletePassageUseCase(
 
         # Add question groups
         for qg_dto in request.question_groups:
+            # Convert group options if present
+            group_options = None
+            if qg_dto.options:
+                group_options = [
+                    Option(label=opt.label, text=opt.text) for opt in qg_dto.options
+                ]
+
             question_group = QuestionGroup(
                 id=qg_dto.id,
                 group_instructions=qg_dto.group_instructions,
@@ -58,6 +65,7 @@ class CreateCompletePassageUseCase(
                 start_question_number=qg_dto.start_question_number,
                 end_question_number=qg_dto.end_question_number,
                 order_in_passage=qg_dto.order_in_passage,
+                options=group_options,
             )
             passage.add_question_group(question_group)
 
@@ -71,7 +79,22 @@ class CreateCompletePassageUseCase(
                 ]
 
             # Create correct answer value object
-            correct_answer = CorrectAnswer(**q_dto.correct_answer)
+            # Transform AI response format to domain model format
+            correct_answer_data = q_dto.correct_answer
+            if "acceptable_answers" in correct_answer_data:
+                # AI response format: {'answer': 'X', 'acceptable_answers': ['X', 'Y', 'Z']}
+                # Transform to domain format: {'value': ['X', 'Y', 'Z']}
+                correct_answer = CorrectAnswer(
+                    value=correct_answer_data["acceptable_answers"]
+                )
+            elif "value" in correct_answer_data:
+                # Already in correct format
+                correct_answer = CorrectAnswer(**correct_answer_data)
+            else:
+                # Fallback: use 'answer' field as single value
+                correct_answer = CorrectAnswer(
+                    value=correct_answer_data.get("answer", "")
+                )
 
             question = Question(
                 question_group_id=q_dto.question_group_id,

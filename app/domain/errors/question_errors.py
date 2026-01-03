@@ -59,3 +59,12 @@ class MissingOptionsError(Error):
         super().__init__(
             f"{question_type} questions must have options", ErrorCode.INVALID_DATA
         )
+
+
+class InvalidQuestionOptionsError(Error):
+    def __init__(self, question_type: str):
+        super().__init__(
+            f"{question_type} questions in a group should not have individual options. "
+            "Options should be defined at the group level.",
+            ErrorCode.INVALID_DATA,
+        )

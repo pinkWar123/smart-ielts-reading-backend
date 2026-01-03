@@ -44,6 +44,9 @@ class ExtractedQuestionGroup(BaseModel):
     start_question_number: int
     end_question_number: int
     order_in_passage: int
+    options: Optional[List[ExtractedOption]] = Field(
+        None, description="Shared options for all questions in this group"
+    )
 
 
 class ExtractedPassage(BaseModel):

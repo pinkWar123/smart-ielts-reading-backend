@@ -39,16 +39,37 @@ class SQLPassageRepository(PassageRepository):
         return self._to_domain_entity_(passage_model)
 
     async def create_complete_passage(self, passage: Passage) -> Passage:
-        """Create a complete passage with questions and question groups"""
+        """
+        Persist a domain aggregate to the database.
+
+        DDD approach: The domain aggregate is already fully built in the domain layer.
+        This method only maps domain entities → persistence models and persists.
+        """
+        # Map domain aggregate to persistence model
+        passage_model = self._map_domain_to_persistence(passage)
+
+        # Persist the complete aggregate (cascade handles children)
+        self.session.add(passage_model)
+        await self.session.commit()
+
+        # Re-fetch to get DB-generated IDs and avoid lazy loading issues
+        refreshed_passage_model = await self._fetch_passage_with_relations(passage.id)
+
+        # Map back to domain entity
+        return self._to_domain_entity_with_questions(refreshed_passage_model)
+
+    def _map_domain_to_persistence(self, passage: Passage) -> DBPassageModel:
+        """
+        Map a complete domain Passage aggregate to persistence models.
+
+        This is where the domain → infrastructure boundary crossing happens.
+        """
         from app.infrastructure.persistence.models import (
             QuestionGroupModel,
             QuestionModel,
         )
 
-        # Validate passage integrity before persisting
-        passage.validate_integrity()
-
-        # Create passage model
+        # Map passage (aggregate root)
         passage_model = DBPassageModel(
             id=passage.id,
             title=passage.title,
@@ -63,25 +84,27 @@ class SQLPassageRepository(PassageRepository):
             is_active=passage.is_active,
         )
 
-        # Create question group models
+        # Map question groups and track temporary ID → model mapping
+        temp_id_to_qg_model = {}
         for qg in passage.question_groups:
             qg_model = QuestionGroupModel(
-                id=qg.id,
                 passage_id=passage.id,
                 group_instructions=qg.group_instructions,
                 question_type=qg.question_type.value,
                 start_question_number=qg.start_question_number,
                 end_question_number=qg.end_question_number,
                 order_in_passage=qg.order_in_passage,
+                options=(
+                    [opt.model_dump() for opt in qg.options] if qg.options else None
+                ),
             )
+            temp_id_to_qg_model[qg.id] = qg_model
             passage_model.question_groups.append(qg_model)
 
-        # Create question models
+        # Map questions and establish relationships using object references
         for q in passage.questions:
             q_model = QuestionModel(
-                id=q.id,
                 passage_id=passage.id,
-                question_group_id=q.question_group_id,
                 question_number=q.question_number,
                 question_type=q.question_type.value,
                 question_text=q.question_text,
@@ -92,14 +115,32 @@ class SQLPassageRepository(PassageRepository):
                 points=q.points,
                 order_in_passage=q.order_in_passage,
             )
-            passage_model.questions.append(q_model)
 
-        # Persist to database
-        self.session.add(passage_model)
-        await self.session.commit()
-        await self.session.refresh(passage_model)
+            # Resolve domain temporary ID to persistence model object reference
+            if q.question_group_id and q.question_group_id in temp_id_to_qg_model:
+                # Question belongs to a group - use object reference
+                qg_model = temp_id_to_qg_model[q.question_group_id]
+                qg_model.questions.append(q_model)
+            else:
+                # Standalone question
+                passage_model.questions.append(q_model)
 
-        return self._to_domain_entity_with_questions(passage_model)
+        return passage_model
+
+    async def _fetch_passage_with_relations(self, passage_id: str) -> DBPassageModel:
+        """Fetch passage with all relations eagerly loaded"""
+        from sqlalchemy.orm import selectinload
+
+        stmt = (
+            select(DBPassageModel)
+            .options(
+                selectinload(DBPassageModel.questions),
+                selectinload(DBPassageModel.question_groups),
+            )
+            .filter_by(id=passage_id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
 
     async def get_by_id(self, passage_id: str) -> Optional[Passage]:
         stmt = select(DBPassageModel).filter_by(id=passage_id)
@@ -112,11 +153,6 @@ class SQLPassageRepository(PassageRepository):
     async def get_by_id_with_questions(self, passage_id: str) -> Optional[Passage]:
         """Get a passage by ID with all its questions and question groups"""
         from sqlalchemy.orm import selectinload
-
-        from app.infrastructure.persistence.models import (
-            QuestionGroupModel,
-            QuestionModel,
-        )
 
         stmt = (
             select(DBPassageModel)
@@ -162,6 +198,10 @@ class SQLPassageRepository(PassageRepository):
         question_groups = []
         if passage_model.question_groups:
             for qg in passage_model.question_groups:
+                group_options = None
+                if qg.options:
+                    group_options = [Option(**opt) for opt in qg.options]
+
                 question_groups.append(
                     QuestionGroup(
                         id=qg.id,
@@ -170,6 +210,7 @@ class SQLPassageRepository(PassageRepository):
                         start_question_number=qg.start_question_number,
                         end_question_number=qg.end_question_number,
                         order_in_passage=qg.order_in_passage,
+                        options=group_options,
                     )
                 )
 

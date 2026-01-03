@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.common.db.engine import close_database, initialize_database
+from app.common.settings import settings
 from app.container import container
 from app.presentation.exception.global_exception_handler import setup_exception_handlers
 from app.presentation.routes.auth_router import router as auth_router
@@ -31,7 +33,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Middlewares
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Other Middlewares
 setup_exception_handlers(app)
 
 v1_router = APIRouter(prefix="/api/v1")

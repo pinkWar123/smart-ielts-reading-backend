@@ -36,7 +36,12 @@ Return a JSON response with this EXACT structure (matches our CreateCompletePass
           "question_type": "TRUE_FALSE_NOTGIVEN",
           "start_question_number": 1,
           "end_question_number": 5,
-          "order_in_passage": 1
+          "order_in_passage": 1,
+          "options": [
+            {"label": "TRUE", "text": "The statement agrees with the information"},
+            {"label": "FALSE", "text": "The statement contradicts the information"},
+            {"label": "NOT GIVEN", "text": "There is no information about this"}
+          ]
         }
       ],
       "questions": [
@@ -44,11 +49,7 @@ Return a JSON response with this EXACT structure (matches our CreateCompletePass
           "question_number": 1,
           "question_type": "TRUE_FALSE_NOTGIVEN",
           "question_text": "The statement text...",
-          "options": [
-            {"label": "TRUE", "text": "The statement agrees with the information"},
-            {"label": "FALSE", "text": "The statement contradicts the information"},
-            {"label": "NOT GIVEN", "text": "There is no information about this"}
-          ],
+          "options": null,
           "correct_answer": {
             "answer": "TRUE",
             "acceptable_answers": ["TRUE", "True", "T"]
@@ -75,20 +76,42 @@ Return a JSON response with this EXACT structure (matches our CreateCompletePass
 
 CRITICAL FORMATTING RULES:
 1. **Question Groups**:
-   - MUST have a unique "id" field (e.g., "qg_1", "qg_2")
+   - MUST have a unique "id" field (e.g., "qg_1", "qg_2", "qg_3")
    - This id is used to link questions to the group via "question_group_id"
+   - **Create a group even for a single question** - if there's only one MULTIPLE_CHOICE question, create a group for it
+   - Example: If question 40 is the only MULTIPLE_CHOICE question, create:
+     * question_group: {id: "qg_3", question_type: "MULTIPLE_CHOICE", start: 40, end: 40, ...}
+     * question: {question_number: 40, question_group_id: "qg_3", ...}
 
 2. **Questions**:
    - MUST include "order_in_passage" (sequential numbering within passage)
-   - If part of a group, MUST include "question_group_id" matching the group's "id"
+   - **MUST include "question_group_id"** matching a group's "id" - ALL questions must belong to a group
    - "correct_answer" MUST be an object with:
      * "answer": the main correct answer (string or array)
      * "acceptable_answers": array of alternative acceptable answers
-   - If answer not visible in images, use: {"answer": null, "acceptable_answers": []}
+   - **Answer Extraction Strategy** (in order of preference):
+     1. If an explicit answer key is visible in the images, use those answers
+     2. If no answer key is visible, **attempt to infer answers from the passage content** for:
+        - TRUE_FALSE_NOTGIVEN / YES_NO_NOTGIVEN questions
+        - SENTENCE_COMPLETION / NOTE_COMPLETION / SUMMARY_COMPLETION questions
+        - SHORT_ANSWER questions
+        - MATCHING questions where the answers are clearly stated in the passage
+     3. Only set to {"answer": null, "acceptable_answers": []} if the answer genuinely cannot be determined from the passage
+   - For completion questions, provide the exact word(s) from the passage that fill the blank
+   - For TRUE/FALSE questions, analyze the passage carefully to determine the correct answer
 
-3. **Options**:
-   - Only include for question types that need them (MULTIPLE_CHOICE, MATCHING_*, TRUE_FALSE_NOTGIVEN, YES_NO_NOTGIVEN)
+3. **Options** - CRITICAL PLACEMENT RULES:
+   - **Group-Level Options** (options in question_groups): Use for question types where ALL questions share the same options:
+     * MATCHING_HEADINGS (options are the headings: i, ii, iii...)
+     * MATCHING_INFORMATION (options are the paragraphs: A, B, C...)
+     * MATCHING_FEATURES (options are the features/categories to match)
+     * MATCHING_SENTENCE_ENDINGS (options are the sentence endings)
+     * TRUE_FALSE_NOTGIVEN (options: TRUE, FALSE, NOT GIVEN)
+     * YES_NO_NOTGIVEN (options: YES, NO, NOT GIVEN)
+   - **Question-Level Options** (options in individual questions): Use ONLY for:
+     * MULTIPLE_CHOICE (each question has different options)
    - Each option MUST have "label" and "text" fields
+   - Questions belonging to a group with group-level options should have "options": null
 
 4. **Passages**:
    - "difficulty_level": estimate 1-5 based on vocabulary and complexity
@@ -101,9 +124,11 @@ CRITICAL FORMATTING RULES:
 IMPORTANT:
 - Extract ALL text content accurately
 - Identify question types correctly based on instructions
-- Group questions that share the same instructions
+- **ALWAYS create a question group for ALL questions** - even if only one question of that type exists
+- Group questions that share the same instructions into a single group
 - Assign sequential order_in_passage numbers (1, 2, 3...)
-- Generate unique IDs for question groups (qg_1, qg_2, etc.)
+- Generate unique IDs for question groups (qg_1, qg_2, qg_3, etc.)
+- **ALL questions MUST have a question_group_id** - no standalone questions
 - Link questions to groups using question_group_id
 - Set correct_answer.answer to null if answer not provided
 - Include paragraph labels (A, B, C...) in content if present

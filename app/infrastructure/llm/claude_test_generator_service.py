@@ -64,6 +64,14 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
             # Parse question groups
             question_groups = []
             for group_data in passage_data.get("question_groups", []):
+                # Parse group-level options if present
+                group_options = None
+                if group_data.get("options"):
+                    group_options = [
+                        ExtractedOption(label=opt["label"], text=opt["text"])
+                        for opt in group_data["options"]
+                    ]
+
                 question_group = ExtractedQuestionGroup(
                     id=group_data["id"],
                     group_instructions=group_data["group_instructions"],
@@ -71,6 +79,7 @@ class ClaudeTestGeneratorService(ITestGeneratorService, ABC):
                     start_question_number=group_data["start_question_number"],
                     end_question_number=group_data["end_question_number"],
                     order_in_passage=group_data["order_in_passage"],
+                    options=group_options,
                 )
                 question_groups.append(question_group)
 

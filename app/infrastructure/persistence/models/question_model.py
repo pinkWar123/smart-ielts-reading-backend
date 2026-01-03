@@ -18,6 +18,9 @@ class QuestionGroupModel(BaseModel):
     start_question_number = Column(Integer, nullable=False)
     end_question_number = Column(Integer, nullable=False)
     order_in_passage = Column(Integer, nullable=False)
+    options = Column(
+        JSON, nullable=True
+    )  # Shared options for all questions in this group. Stores list of {label, text} objects
 
     # Relationships
     passage = relationship("PassageModel", back_populates="question_groups")

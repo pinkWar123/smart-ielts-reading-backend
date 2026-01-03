@@ -16,6 +16,9 @@ __pycache__/
 # Database
 *.db
 
+# Bruno files
+*.bru
+bruno.json
 # uv
 uv.lock.bak
 

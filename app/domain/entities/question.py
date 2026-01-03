@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.domain.errors.question_errors import (
     InvalidQuestionGroupRangeError,
+    InvalidQuestionOptionsError,
     MissingOptionsError,
 )
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
@@ -44,6 +45,9 @@ class QuestionGroup(BaseModel):
     start_question_number: int = Field(ge=1)
     end_question_number: int = Field(ge=1)
     order_in_passage: int = Field(ge=1)
+    options: Optional[List[Option]] = Field(
+        None, description="Shared options for all questions in this group"
+    )
 
     @field_validator("end_question_number")
     @classmethod
@@ -54,6 +58,27 @@ class QuestionGroup(BaseModel):
             and v < info.data["start_question_number"]
         ):
             raise InvalidQuestionGroupRangeError(info.data["start_question_number"], v)
+        return v
+
+    @field_validator("options")
+    @classmethod
+    def validate_group_options(cls, v, info):
+        """Validate that options exist for question types that need them at group level"""
+        if "question_type" not in info.data:
+            return v
+
+        question_type = info.data["question_type"]
+        # Question types that use group-level options
+        needs_group_options = question_type in [
+            QuestionType.MATCHING_HEADINGS,
+            QuestionType.MATCHING_INFORMATION,
+            QuestionType.MATCHING_FEATURES,
+            QuestionType.MATCHING_SENTENCE_ENDINGS,
+        ]
+
+        if needs_group_options and not v:
+            raise MissingOptionsError(question_type.value)
+
         return v
 
     def contains_question_number(self, question_number: int) -> bool:
@@ -87,15 +112,29 @@ class Question(BaseModel):
             return v
 
         question_type = info.data["question_type"]
-        needs_options = question_type in [
-            QuestionType.MULTIPLE_CHOICE,
+        question_group_id = info.data.get("question_group_id")
+
+        # Question types that use group-level options (not stored on individual questions)
+        uses_group_options = question_type in [
             QuestionType.MATCHING_HEADINGS,
             QuestionType.MATCHING_INFORMATION,
             QuestionType.MATCHING_FEATURES,
             QuestionType.MATCHING_SENTENCE_ENDINGS,
         ]
 
-        if needs_options and not v:
+        # Question types that need their own options (stored on each question)
+        needs_own_options = question_type in [
+            QuestionType.MULTIPLE_CHOICE,
+        ]
+
+        # If question belongs to a group and uses group-level options, it should NOT have its own options
+        if question_group_id and uses_group_options:
+            if v:
+                raise InvalidQuestionOptionsError(question_type.value)
+            return v
+
+        # If question needs its own options (like MULTIPLE_CHOICE), validate they exist
+        if needs_own_options and not v:
             raise MissingOptionsError(question_type.value)
 
         return v

@@ -44,6 +44,9 @@ class QuestionGroupDTO(BaseModel):
     start_question_number: int = Field(ge=1)
     end_question_number: int = Field(ge=1)
     order_in_passage: int = Field(ge=1)
+    options: Optional[List[QuestionOptionDTO]] = Field(
+        None, description="Shared options for all questions in this group"
+    )
 
 
 class CreateCompletePassageRequest(BaseModel):
@@ -85,6 +88,7 @@ class QuestionGroupResponseDTO(BaseModel):
     start_question_number: int
     end_question_number: int
     order_in_passage: int
+    options: Optional[List[QuestionOptionDTO]]
 
 
 class CompletePassageResponse(BaseModel):
@@ -115,6 +119,14 @@ class CompletePassageResponse(BaseModel):
                 start_question_number=qg.start_question_number,
                 end_question_number=qg.end_question_number,
                 order_in_passage=qg.order_in_passage,
+                options=(
+                    [
+                        QuestionOptionDTO(label=opt.label, text=opt.text)
+                        for opt in qg.options
+                    ]
+                    if qg.options
+                    else None
+                ),
             )
             for qg in passage.question_groups
         ]
