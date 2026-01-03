@@ -3,24 +3,8 @@ import enum
 from sqlalchemy import JSON, Column, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
+from app.domain.aggregates.passage import QuestionType
 from app.infrastructure.persistence.models.base import BaseModel
-
-
-class QuestionType(str, enum.Enum):
-    MULTIPLE_CHOICE = "multiple_choice"
-    TRUE_FALSE_NOT_GIVEN = "true_false_not_given"
-    YES_NO_NOT_GIVEN = "yes_no_not_given"
-    MATCHING_HEADINGS = "matching_headings"
-    MATCHING_INFORMATION = "matching_information"
-    MATCHING_FEATURES = "matching_features"
-    MATCHING_SENTENCE_ENDINGS = "matching_sentence_endings"
-    SENTENCE_COMPLETION = "sentence_completion"
-    SUMMARY_COMPLETION = "summary_completion"
-    NOTE_COMPLETION = "note_completion"
-    TABLE_COMPLETION = "table_completion"
-    FLOW_CHART_COMPLETION = "flow_chart_completion"
-    DIAGRAM_LABEL_COMPLETION = "diagram_label_completion"
-    SHORT_ANSWER = "short_answer"
 
 
 class QuestionGroupModel(BaseModel):

@@ -18,21 +18,28 @@ from app.presentation.controllers.test_controller import TestController
 async def get_test_controller(
     session: AsyncSession = Depends(get_database_session),
 ) -> TestController:
-    """Get TestController with session-scoped repositories."""
+    """Get TestController with session-scoped repositories and query services."""
     # Create repositories with session
     test_repo = container.test_repository(session=session)
     passage_repo = container.passage_repository(session=session)
 
-    # Create use cases with repositories
+    # Create query services with session
+    test_query_service = container.test_query_service(session=session)
+
+    # Create use cases with repositories and query services
     create_test_use_case = container.create_test_use_case(test_repository=test_repo)
     add_passage_use_case = container.add_passage_to_test_use_case(
         test_repository=test_repo, passage_repository=passage_repo
+    )
+    get_all_tests_use_case = container.get_all_tests_use_case(
+        test_query_service=test_query_service
     )
 
     # Create and return controller
     return TestController(
         create_test_use_case=create_test_use_case,
         add_passage_to_test_use_case=add_passage_use_case,
+        get_all_tests_use_case=get_all_tests_use_case,
     )
 
 

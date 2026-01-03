@@ -11,6 +11,13 @@ from app.application.use_cases.tests.create_test.create_test_dtos import (
 from app.application.use_cases.tests.create_test.create_test_use_case import (
     CreateTestUseCase,
 )
+from app.application.use_cases.tests.get_all_tests.get_all_tests_dto import (
+    GetAllTestsQueryParams,
+    GetAllTestsResponse,
+)
+from app.application.use_cases.tests.get_all_tests.get_all_tests_use_case import (
+    GetAllTestsUseCase,
+)
 from app.domain.errors.domain_errors import Error
 from app.domain.errors.error_codes import ErrorCode
 
@@ -22,9 +29,11 @@ class TestController:
         self,
         create_test_use_case: CreateTestUseCase,
         add_passage_to_test_use_case: AddPassageToTestUseCase,
+        get_all_tests_use_case: GetAllTestsUseCase,
     ):
         self.create_test_use_case = create_test_use_case
         self.add_passage_to_test_use_case = add_passage_to_test_use_case
+        self.get_all_tests_use_case = get_all_tests_use_case
 
     async def create_test(
         self, request: CreateTestRequest, user_id: str
@@ -82,6 +91,34 @@ class TestController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to add passage to test: {str(e)}",
+            )
+
+    async def get_all_tests(
+        self, query_params: GetAllTestsQueryParams
+    ) -> GetAllTestsResponse:
+        """
+        Get all tests with author information
+
+        Args:
+            query_params: Query parameters for filtering tests (status, type)
+
+        Returns:
+            GetAllTestsResponse with list of tests and author data
+
+        Raises:
+            HTTPException: If retrieval fails
+        """
+        try:
+            return await self.get_all_tests_use_case.execute(query_params)
+        except Error as e:
+            raise HTTPException(
+                status_code=self._map_error_code_to_status(e.code),
+                detail=e.message,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get tests: {str(e)}",
             )
 
     @staticmethod

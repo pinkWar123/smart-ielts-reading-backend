@@ -32,12 +32,18 @@ from app.application.use_cases.tests.create_test.create_test_use_case import (
 from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
+from app.application.use_cases.tests.get_all_tests.get_all_tests_use_case import (
+    GetAllTestsUseCase,
+)
 from app.common.db.engine import get_database_session
 from app.common.settings import settings
 from app.infrastructure.llm.claude_test_generator_service import (
     ClaudeTestGeneratorService,
 )
 from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
+from app.infrastructure.query_services.sql_test_query_service import (
+    SQLTestQueryService,
+)
 from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
 from app.infrastructure.repositories.sql_refresh_token_repository import (
     SQLRefreshTokenRepository,
@@ -73,6 +79,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     test_repository = providers.Factory(SQLTestRepository)
     user_repository = providers.Factory(SqlUserRepository)
     refresh_token_repository = providers.Factory(SQLRefreshTokenRepository)
+
+    # Query Services (for optimized reads)
+    test_query_service = providers.Factory(SQLTestQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -143,6 +152,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
         AddPassageToTestUseCase,
         test_repository=test_repository,
         passage_repository=passage_repository,
+    )
+    get_all_tests_use_case = providers.Factory(
+        GetAllTestsUseCase, test_query_service=test_query_service
     )
 
     # Controllers

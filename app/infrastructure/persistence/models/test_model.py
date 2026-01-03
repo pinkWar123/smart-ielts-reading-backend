@@ -4,19 +4,8 @@ from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Tabl
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+from app.domain.aggregates.test import TestStatus, TestType
 from app.infrastructure.persistence.models.base import Base, BaseModel
-
-
-class TestType(str, enum.Enum):
-    FULL_TEST = "full_test"  # 3 passages, ~40 questions
-    SINGLE_PASSAGE = "single_passage"  # 1 passage
-
-
-class TestStatus(str, enum.Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    ARCHIVED = "archived"
-
 
 # Association table for many-to-many relationship between tests and passages
 test_passages = Table(

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 
@@ -6,11 +8,37 @@ from app.application.use_cases.tests.create_test.create_test_dtos import (
     CreateTestRequest,
     TestResponse,
 )
+from app.application.use_cases.tests.get_all_tests.get_all_tests_dto import (
+    GetAllTestsQueryParams,
+    GetAllTestsResponse,
+)
 from app.common.dependencies import get_test_controller
+from app.domain.aggregates.test import TestStatus, TestType
 from app.presentation.controllers.test_controller import TestController
 from app.presentation.security.dependencies import required_admin
 
 router = APIRouter()
+
+
+@router.get(
+    "",
+    response_model=GetAllTestsResponse,
+    summary="Get All Tests",
+    description="Retrieve all tests (admin only)",
+    responses={
+        200: {"description": "List of tests retrieved successfully"},
+        # 401: {"description": "Authentication required"},
+        # 403: {"description": "Admin access required"},
+    },
+)
+async def get_all_tests(
+    test_status: Optional[TestStatus] = None,
+    test_type: Optional[TestType] = None,
+    controller: TestController = Depends(get_test_controller),
+    # current_user=Depends(required_admin),
+):
+    query = GetAllTestsQueryParams(status=test_status, type=test_type)
+    return await controller.get_all_tests(query)
 
 
 @router.post(
