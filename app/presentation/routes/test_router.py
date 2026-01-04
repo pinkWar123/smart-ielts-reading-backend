@@ -12,9 +12,8 @@ from app.application.use_cases.tests.get_all_tests.get_all_tests_dto import (
     GetAllTestsQueryParams,
     GetAllTestsResponse,
 )
-from app.common.dependencies import get_test_controller
+from app.common.dependencies import TestUseCases, get_test_use_cases
 from app.domain.aggregates.test import TestStatus, TestType
-from app.presentation.controllers.test_controller import TestController
 from app.presentation.security.dependencies import required_admin
 
 router = APIRouter()
@@ -34,11 +33,11 @@ router = APIRouter()
 async def get_all_tests(
     test_status: Optional[TestStatus] = None,
     test_type: Optional[TestType] = None,
-    controller: TestController = Depends(get_test_controller),
+    use_cases: TestUseCases = Depends(get_test_use_cases),
     # current_user=Depends(required_admin),
 ):
     query = GetAllTestsQueryParams(status=test_status, type=test_type)
-    return await controller.get_all_tests(query)
+    return await use_cases.get_all_tests.execute(query)
 
 
 @router.post(
@@ -57,7 +56,7 @@ async def get_all_tests(
 )
 async def create_test(
     request: CreateTestRequest,
-    controller: TestController = Depends(get_test_controller),
+    use_cases: TestUseCases = Depends(get_test_use_cases),
     current_user=Depends(required_admin),
 ):
     """
@@ -73,7 +72,7 @@ async def create_test(
     The test is created with status DRAFT and can have passages added to it.
     Total questions and points are initially 0 and will be updated as passages are added.
     """
-    return await controller.create_test(request, current_user["user_id"])
+    return await use_cases.create_test.execute(request, current_user["user_id"])
 
 
 @router.post(
@@ -94,7 +93,7 @@ async def create_test(
 async def add_passage_to_test(
     test_id: str,
     request: AddPassageToTestRequest,
-    controller: TestController = Depends(get_test_controller),
+    use_cases: TestUseCases = Depends(get_test_use_cases),
     # current_user=Depends(required_admin),
 ):
     """
@@ -114,4 +113,4 @@ async def add_passage_to_test(
 
     The test's total_questions and total_points are automatically updated based on the passage.
     """
-    return await controller.add_passage_to_test(test_id, request)
+    return await use_cases.add_passage_to_test.execute(test_id, request)

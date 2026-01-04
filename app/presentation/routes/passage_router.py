@@ -8,8 +8,7 @@ from app.application.use_cases.passages.create_passage.create_passage_dtos impor
     CreatePassageRequest,
     PassageResponse,
 )
-from app.common.dependencies import get_passage_controller
-from app.presentation.controllers.passage_controller import PassageController
+from app.common.dependencies import PassageUseCases, get_passage_use_cases
 from app.presentation.security.dependencies import require_auth, required_admin
 
 router = APIRouter()
@@ -33,7 +32,7 @@ router = APIRouter()
 )
 async def create_complete_passage(
     request: CreateCompletePassageRequest,
-    controller: PassageController = Depends(get_passage_controller),
+    use_cases: PassageUseCases = Depends(get_passage_use_cases),
     current_user=Depends(required_admin),
 ):
     """
@@ -74,7 +73,9 @@ async def create_complete_passage(
     - Questions in a group must match the group's question type
     - Question numbers must fall within group range if assigned to a group
     """
-    return await controller.create_complete_passage(request, current_user["user_id"])
+    return await use_cases.create_complete_passage.execute(
+        request, current_user["user_id"]
+    )
 
 
 @router.post(
@@ -93,7 +94,6 @@ async def create_complete_passage(
 async def create_passage(
     request: CreatePassageRequest,
     current_user=require_auth,
-    controller: PassageController = Depends(get_passage_controller),
 ):
     """
     **DEPRECATED**: This endpoint creates passages without questions, which violates
@@ -101,7 +101,7 @@ async def create_passage(
 
     Please use POST /passages/complete instead to create a complete passage with questions.
     """
-    return await controller.create_passage(request)
+    raise NotImplementedError("Create passage not yet implemented")
 
 
 @router.get(
@@ -116,7 +116,7 @@ async def create_passage(
 )
 async def get_all_passages(
     current_user=require_auth,
-    controller: PassageController = Depends(get_passage_controller),
+    use_cases: PassageUseCases = Depends(get_passage_use_cases),
 ):
     """
     Retrieve all available IELTS reading passages.
@@ -130,4 +130,4 @@ async def get_all_passages(
     This endpoint is useful for displaying available practice materials
     or for administrative purposes to manage the passage library.
     """
-    return await controller.get_all_passages()
+    return await use_cases.get_all_passages.execute()

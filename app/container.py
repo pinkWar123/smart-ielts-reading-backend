@@ -20,6 +20,9 @@ from app.application.use_cases.passages.create_complete_passage.create_complete_
 from app.application.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
+from app.application.use_cases.passages.get_all_passages.get_all_passages_use_case import (
+    GetAllPassagesUseCase,
+)
 from app.application.use_cases.passages.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
 )
@@ -52,10 +55,6 @@ from app.infrastructure.repositories.sql_test_repository import SQLTestRepositor
 from app.infrastructure.repositories.sql_user_repository import SqlUserRepository
 from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
-from app.presentation.controllers.auth_controller import AuthController
-from app.presentation.controllers.ocr_controller import OcrController
-from app.presentation.controllers.passage_controller import PassageController
-from app.presentation.controllers.test_controller import TestController
 
 
 def create_anthropic_client():
@@ -135,6 +134,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     get_passages_use_case = providers.Factory(
         GetPassagesUseCase, passage_repo=passage_repository
     )
+    get_all_passages_use_case = providers.Factory(
+        GetAllPassagesUseCase, passage_service=passage_service
+    )
 
     # OCR use cases
     extract_text_use_case = providers.Factory(
@@ -155,28 +157,6 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_all_tests_use_case = providers.Factory(
         GetAllTestsUseCase, test_query_service=test_query_service
-    )
-
-    # Controllers
-    passage_controller = providers.Factory(
-        PassageController,
-        passage_service=passage_service,
-        create_complete_passage_use_case=create_complete_passage_use_case,
-    )
-    auth_controller = providers.Factory(
-        AuthController,
-        login_use_case=login_use_case,
-        register_use_case=register_use_case,
-        get_me_use_case=get_me_use_case,
-        regenerate_tokens_use_case=regenerate_tokens_use_case,
-    )
-    ocr_controller = providers.Factory(
-        OcrController, extract_text_use_case=extract_text_use_case
-    )
-    test_controller = providers.Factory(
-        TestController,
-        create_test_use_case=create_test_use_case,
-        add_passage_to_test_use_case=add_passage_to_test_use_case,
     )
 
 
