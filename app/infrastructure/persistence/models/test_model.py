@@ -1,6 +1,16 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Table, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -33,6 +43,7 @@ class TestModel(BaseModel):
     status = Column(Enum(TestStatus), default=TestStatus.DRAFT)
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    is_deleted = Column(Boolean, default=False)
 
     # Relationships
     creator = relationship("UserModel", back_populates="created_tests")

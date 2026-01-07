@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -16,6 +16,7 @@ class PassageModel(BaseModel):
     source = Column(String(255))
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    is_deleted = Column(Boolean, default=False)
 
     # Relationships
     creator = relationship("UserModel", back_populates="created_passages")
