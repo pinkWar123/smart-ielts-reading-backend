@@ -32,7 +32,7 @@ class DeletePassageByIdUseCase(
         if test_query_model is None:
             raise TestNotFoundError(request.test_id)
 
-        test = self._convert_to_domain_entity(test_query_model)
+        test = test_query_model.to_domain_entity()
         test.remove_passage(request.passage_id)
 
         # Persist the changes to the database
@@ -45,21 +45,3 @@ class DeletePassageByIdUseCase(
         )
 
         return response
-
-    @staticmethod
-    def _convert_to_domain_entity(test: TestWithPassagesQueryModel) -> Test:
-        return Test(
-            id=test.id,
-            title=test.title,
-            description=test.description,
-            test_type=test.test_type,
-            passage_ids=test.passage_ids,
-            time_limit_minutes=test.time_limit_minutes,
-            total_questions=test.total_questions,
-            total_points=test.total_points,
-            status=test.status,
-            created_by=test.created_by,
-            created_at=test.created_at,
-            updated_at=test.updated_at,
-            is_active=test.is_active,
-        )

@@ -9,9 +9,10 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from app.domain.aggregates.passage import Passage
+from app.domain.aggregates.test import Test
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
-from app.domain.entities.passage import Passage
 
 
 class AuthorInfo(BaseModel):
@@ -65,3 +66,21 @@ class TestWithPassagesQueryModel(BaseModel):
     is_active: bool
 
     passages: list[Passage]
+
+    def to_domain_entity(self) -> Test:
+        """Convert query model to domain entity"""
+        return Test(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            test_type=self.test_type,
+            passage_ids=self.passage_ids,
+            time_limit_minutes=self.time_limit_minutes,
+            total_questions=self.total_questions,
+            total_points=self.total_points,
+            status=self.status,
+            created_by=self.created_by,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            is_active=self.is_active,
+        )

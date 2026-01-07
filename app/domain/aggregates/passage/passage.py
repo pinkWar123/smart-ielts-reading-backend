@@ -156,3 +156,6 @@ class Passage(BaseModel):
                     raise InvalidPassageDataError(
                         f"Question {question.id} references non-existent group {question.question_group_id}"
                     )
+
+    def get_reduced_content(self) -> str:
+        return self.content[:100]

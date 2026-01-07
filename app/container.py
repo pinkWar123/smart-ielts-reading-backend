@@ -29,6 +29,9 @@ from app.application.use_cases.passages.get_all_passages.get_all_passages_use_ca
 from app.application.use_cases.passages.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
 )
+from app.application.use_cases.passages.get_test_with_passages.get_test_with_passages_use_case import (
+    GetTestWithPassagesUseCase,
+)
 from app.application.use_cases.tests.add_passage_to_test.add_passage_to_test_use_case import (
     AddPassageToTestUseCase,
 )
@@ -169,6 +172,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
         DeletePassageByIdUseCase,
         test_query_service=test_query_service,
         test_repository=test_repository,
+    )
+    get_test_by_id = providers.Factory(
+        GetTestWithPassagesUseCase,
+        test_query_service=test_query_service,
     )
 
 

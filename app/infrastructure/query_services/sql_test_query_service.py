@@ -16,9 +16,9 @@ from app.application.services.query.tests.test_query_model import (
     TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
+from app.domain.aggregates.passage import Passage
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
-from app.domain.entities.passage import Passage
 from app.infrastructure.persistence.models.passage_model import PassageModel
 from app.infrastructure.persistence.models.test_model import (
     TestModel,
