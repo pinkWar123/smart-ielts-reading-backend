@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from app.application.services.query.tests.test_query_model import (
     TestWithAuthorQueryModel,
+    TestWithPassagesQueryModel,
 )
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
@@ -39,5 +40,27 @@ class TestQueryService(ABC):
 
         Returns:
             List of tests with enriched author data
+        """
+        pass
+
+    @abstractmethod
+    async def get_test_by_id_with_passages(
+        self,
+        test_id: str,
+        status: Optional[TestStatus] = None,
+        test_type: Optional[TestType] = None,
+    ) -> TestWithPassagesQueryModel:
+        """
+        Get all tests with author information using a single optimized query.
+
+        Args:
+            status: Optional filter by test status
+            test_type: Optional filter by test type
+
+        Returns:
+            List of tests with enriched author data
+            :param test_type:
+            :param status:
+            :param test_id:
         """
         pass

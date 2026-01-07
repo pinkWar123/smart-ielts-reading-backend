@@ -4,11 +4,11 @@ from app.application.use_cases.passages.create_passage.create_passage_dtos impor
     PassageResponse,
 )
 from app.domain.errors.passage_errors import InvalidPassageDataError
-from app.domain.repositories.passage_repository import PassageRepository
+from app.domain.repositories.passage_repository import PassageRepositoryInterface
 
 
 class CreatePassageUseCase(UseCase[CreatePassageRequest, PassageResponse]):
-    def __init__(self, passage_repo: PassageRepository):
+    def __init__(self, passage_repo: PassageRepositoryInterface):
         self.passage_repo = passage_repo
 
     async def execute(self, request: CreatePassageRequest) -> PassageResponse:

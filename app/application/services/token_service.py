@@ -4,7 +4,9 @@ from typing import Dict, Optional, Tuple
 from app.common.settings import Settings
 from app.domain.entities.refresh_token import RefreshToken
 from app.domain.entities.user import User
-from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
+from app.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepositoryInterface,
+)
 
 
 class TokenService(metaclass=ABCMeta):
@@ -16,7 +18,9 @@ class TokenService(metaclass=ABCMeta):
     token lifecycle, including expiration and revocation.
     """
 
-    def __init__(self, settings: Settings, refresh_token_repo: RefreshTokenRepository):
+    def __init__(
+        self, settings: Settings, refresh_token_repo: RefreshTokenRepositoryInterface
+    ):
         """
         Initialize the TokenService with configuration settings and repository.
 

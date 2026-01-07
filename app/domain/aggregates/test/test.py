@@ -23,6 +23,7 @@ from app.domain.errors.test_errors import (
     MaxPassageCountExceededError,
     NoPassagesError,
     PassageCountMismatchError,
+    PassageNotInTestError,
     TestAlreadyArchivedError,
     TestPublishedError,
 )
@@ -112,6 +113,9 @@ class Test(BaseModel):
         """
         if self.status == TestStatus.PUBLISHED:
             raise TestPublishedError("remove passages")
+
+        if passage_id not in self.passage_ids:
+            raise PassageNotInTestError(self.id, passage_id)
 
         self.passage_ids = [pid for pid in self.passage_ids if pid != passage_id]
         self.updated_at = TimeHelper.utc_now()

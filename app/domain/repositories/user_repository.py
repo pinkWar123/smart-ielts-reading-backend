@@ -6,7 +6,7 @@ from app.domain.entities.user import User
 from app.infrastructure.persistence.models import UserModel
 
 
-class UserRepository(ABC):
+class UserRepositoryInterface(ABC):
     @abstractmethod
     async def create(self, user: User) -> UserModel:
         pass

@@ -58,3 +58,10 @@ class DuplicatePassageError(Error):
 class NoPassagesError(Error):
     def __init__(self):
         super().__init__("Test must have at least one passage", ErrorCode.INVALID_DATA)
+
+
+class PassageNotInTestError(Error):
+    def __init__(self, test_id: str, passage_id: str):
+        super().__init__(
+            f"Passage {passage_id} is not in test {test_id}", ErrorCode.CONFLICT
+        )

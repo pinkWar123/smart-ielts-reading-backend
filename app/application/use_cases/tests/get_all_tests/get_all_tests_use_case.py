@@ -37,8 +37,7 @@ class GetAllTestsUseCase(UseCase[GetAllTestsQueryParams, GetAllTestsResponse]):
         """
         # Use query service to fetch tests with authors in a single query
         tests_with_authors = await self.test_query_service.get_all_with_authors(
-            status=request.status,
-            test_type=request.type,
+            status=request.status, test_type=request.type
         )
 
         # Map query models to response DTOs

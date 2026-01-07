@@ -9,7 +9,7 @@ from app.domain.errors.user_errors import (
     EmailAlreadyBeenUsedError,
     UsernameAlreadyExistsError,
 )
-from app.domain.repositories.user_repository import UserRepository
+from app.domain.repositories.user_repository import UserRepositoryInterface
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 
 
@@ -48,7 +48,7 @@ class RegisterUseCase(UseCase[RegisterRequest, RegisterResponse]):
 
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserRepositoryInterface,
         token_service: TokenService,
         password_hasher: PasswordHasher,
     ):

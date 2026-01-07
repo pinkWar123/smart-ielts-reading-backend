@@ -5,7 +5,7 @@ from app.application.use_cases.passages.create_complete_passage.create_complete_
 )
 from app.domain.entities.passage import Passage
 from app.domain.entities.question import Question, QuestionGroup
-from app.domain.repositories.passage_repository import PassageRepository
+from app.domain.repositories.passage_repository import PassageRepositoryInterface
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
 
 
@@ -14,7 +14,7 @@ class CreateCompletePassageUseCase(
 ):
     """Use case for creating a complete passage with questions and question groups"""
 
-    def __init__(self, passage_repository: PassageRepository):
+    def __init__(self, passage_repository: PassageRepositoryInterface):
         self.passage_repository = passage_repository
 
     async def execute(

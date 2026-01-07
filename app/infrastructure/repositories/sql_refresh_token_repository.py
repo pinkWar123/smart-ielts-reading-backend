@@ -4,12 +4,14 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.refresh_token import RefreshToken
-from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
+from app.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepositoryInterface,
+)
 from app.infrastructure.persistence.models import UserModel
 from app.infrastructure.persistence.models.refresh_token_model import RefreshTokenModel
 
 
-class SQLRefreshTokenRepository(RefreshTokenRepository):
+class SQLRefreshTokenRepositoryInterface(RefreshTokenRepositoryInterface):
     async def get_user_by_token(self, token: str) -> Optional[UserModel]:
         query = (
             select(UserModel)

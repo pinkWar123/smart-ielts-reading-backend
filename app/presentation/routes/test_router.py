@@ -3,6 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 
+from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_dto import (
+    DeletePassageByIdRequest,
+)
 from app.application.use_cases.tests.create_test.create_test_dtos import (
     AddPassageToTestRequest,
     CreateTestRequest,
@@ -114,3 +117,17 @@ async def add_passage_to_test(
     The test's total_questions and total_points are automatically updated based on the passage.
     """
     return await use_cases.add_passage_to_test.execute(test_id, request)
+
+
+@router.delete(
+    "/{test_id}/passages/{passage_id}",
+    summary="Delete Test",
+    description="Remove a passage from a test",
+)
+async def remove_passage_from_test(
+    test_id: str,
+    passage_id: str,
+    use_cases: TestUseCases = Depends(get_test_use_cases),
+):
+    request = DeletePassageByIdRequest(test_id=test_id, passage_id=passage_id)
+    return await use_cases.remove_passage_use_case.execute(request)

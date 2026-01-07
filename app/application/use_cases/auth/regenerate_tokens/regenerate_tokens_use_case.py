@@ -5,14 +5,18 @@ from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto impo
 )
 from app.application.use_cases.base.use_case import UseCase
 from app.domain.errors.user_errors import UserNotFoundError
-from app.domain.repositories.refresh_token_repository import RefreshTokenRepository
+from app.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepositoryInterface,
+)
 
 
 class RegenerateTokensUseCase(
     UseCase[RegenerateTokensRequest, RegenerateTokensResponse]
 ):
     def __init__(
-        self, token_service: TokenService, refresh_token_repo: RefreshTokenRepository
+        self,
+        token_service: TokenService,
+        refresh_token_repo: RefreshTokenRepositoryInterface,
     ):
         self.token_service = token_service
         self.refresh_token_repo = refresh_token_repo

@@ -19,6 +19,9 @@ from app.application.use_cases.images.extract_text_from_image.extract_text_from_
 from app.application.use_cases.passages.create_complete_passage.create_complete_passage_use_case import (
     CreateCompletePassageUseCase,
 )
+from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_use_case import (
+    DeletePassageByIdUseCase,
+)
 from app.application.use_cases.passages.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
@@ -51,6 +54,7 @@ class TestUseCases:
     create_test: CreateTestUseCase
     add_passage_to_test: AddPassageToTestUseCase
     get_all_tests: GetAllTestsUseCase
+    remove_passage_use_case: DeletePassageByIdUseCase
 
 
 @dataclass
@@ -85,6 +89,9 @@ async def get_test_use_cases(
         ),
         get_all_tests=container.get_all_tests_use_case(
             test_query_service=test_query_service
+        ),
+        remove_passage_use_case=container.remove_passage_use_case(
+            test_query_service=test_query_service, test_repository=test_repo
         ),
     )
 

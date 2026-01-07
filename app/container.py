@@ -20,6 +20,9 @@ from app.application.use_cases.passages.create_complete_passage.create_complete_
 from app.application.use_cases.passages.create_passage.create_passage_use_case import (
     CreatePassageUseCase,
 )
+from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_use_case import (
+    DeletePassageByIdUseCase,
+)
 from app.application.use_cases.passages.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
@@ -47,12 +50,16 @@ from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTex
 from app.infrastructure.query_services.sql_test_query_service import (
     SQLTestQueryService,
 )
-from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
+from app.infrastructure.repositories.sql_passage_repository import (
+    SQLPassageRepositoryInterface,
+)
 from app.infrastructure.repositories.sql_refresh_token_repository import (
-    SQLRefreshTokenRepository,
+    SQLRefreshTokenRepositoryInterface,
 )
 from app.infrastructure.repositories.sql_test_repository import SQLTestRepository
-from app.infrastructure.repositories.sql_user_repository import SqlUserRepository
+from app.infrastructure.repositories.sql_user_repository import (
+    SqlUserRepositoryInterface,
+)
 from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
 
@@ -74,10 +81,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
 
     # Repositories as Factories (session will be provided at call time)
-    passage_repository = providers.Factory(SQLPassageRepository)
+    passage_repository = providers.Factory(SQLPassageRepositoryInterface)
     test_repository = providers.Factory(SQLTestRepository)
-    user_repository = providers.Factory(SqlUserRepository)
-    refresh_token_repository = providers.Factory(SQLRefreshTokenRepository)
+    user_repository = providers.Factory(SqlUserRepositoryInterface)
+    refresh_token_repository = providers.Factory(SQLRefreshTokenRepositoryInterface)
 
     # Query Services (for optimized reads)
     test_query_service = providers.Factory(SQLTestQueryService)
@@ -157,6 +164,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_all_tests_use_case = providers.Factory(
         GetAllTestsUseCase, test_query_service=test_query_service
+    )
+    remove_passage_use_case = providers.Factory(
+        DeletePassageByIdUseCase,
+        test_query_service=test_query_service,
+        test_repository=test_repository,
     )
 
 

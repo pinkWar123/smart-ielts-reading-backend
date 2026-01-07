@@ -4,7 +4,7 @@ from typing import Optional
 from app.domain.entities.passage import Passage
 
 
-class PassageRepository(ABC):
+class PassageRepositoryInterface(ABC):
     @abstractmethod
     async def create(self, title: str, content: str, author_id: str):
         """Create a simple passage without questions (legacy method)"""

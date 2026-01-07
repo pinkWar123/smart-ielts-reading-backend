@@ -6,7 +6,7 @@ from app.infrastructure.persistence.models import UserModel
 from app.infrastructure.persistence.models.refresh_token_model import RefreshTokenModel
 
 
-class RefreshTokenRepository(ABC):
+class RefreshTokenRepositoryInterface(ABC):
     @abstractmethod
     async def find(self, token: str) -> Optional[RefreshTokenModel]:
         pass

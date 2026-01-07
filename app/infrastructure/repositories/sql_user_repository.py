@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.operators import or_
 
 from app.domain.entities.user import User
-from app.domain.repositories.user_repository import UserRepository
+from app.domain.repositories.user_repository import UserRepositoryInterface
 from app.infrastructure.persistence.models import UserModel
 
 
-class SqlUserRepository(UserRepository):
+class SqlUserRepositoryInterface(UserRepositoryInterface):
 
     async def get_by_id(self, user_id: str) -> Optional[UserModel]:
         query = select(UserModel).filter_by(id=user_id)

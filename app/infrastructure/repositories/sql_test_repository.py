@@ -92,6 +92,20 @@ class SQLTestRepository(TestRepositoryInterface):
         test_model.updated_at = test.updated_at
         test_model.is_active = test.is_active
 
+        # Sync passage relationships from domain entity
+        # Fetch passages that should be in the test based on domain entity
+        if test.passage_ids:
+            passage_stmt = select(PassageModel).where(
+                PassageModel.id.in_(test.passage_ids)
+            )
+            passage_result = await self.session.execute(passage_stmt)
+            passages = passage_result.scalars().all()
+            # Replace the passages collection with the new list
+            test_model.passages = list(passages)
+        else:
+            # Clear all passages if domain entity has no passage_ids
+            test_model.passages = []
+
         await self.session.commit()
         await self.session.refresh(test_model, ["passages"])
 

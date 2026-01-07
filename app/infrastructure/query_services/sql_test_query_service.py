@@ -4,18 +4,22 @@ This implementation uses optimized SQL queries with JOINs to fetch test data
 with author information in a single database round-trip.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.application.services.query.tests.test_query_model import (
     AuthorInfo,
     TestWithAuthorQueryModel,
+    TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
+from app.domain.entities.passage import Passage
+from app.infrastructure.persistence.models.passage_model import PassageModel
 from app.infrastructure.persistence.models.test_model import (
     TestModel,
     test_passages,
@@ -25,6 +29,49 @@ from app.infrastructure.persistence.models.user_model import UserModel
 
 class SQLTestQueryService(TestQueryService):
     """SQL implementation using JOIN for efficient data retrieval"""
+
+    async def get_test_by_id_with_passages(
+        self,
+        test_id: str,
+        status: Optional[TestStatus] = None,
+        test_type: Optional[TestType] = None,
+    ) -> TestWithPassagesQueryModel:
+        stmt = (
+            select(TestModel)
+            .options(selectinload(TestModel.passages))  # Eager load passages
+            .where(TestModel.is_active == True)
+            .where(TestModel.id == test_id)
+        )
+
+        if status:
+            stmt = stmt.where(TestModel.status == status)
+        if test_type:
+            stmt = stmt.where(TestModel.test_type == test_type)
+
+        results = await self.session.execute(stmt)
+        test: TestModel = results.scalar_one()
+
+        # Convert PassageModel instances to Passage domain entities
+        passage_entities = [self._convert_passage_to_entity(p) for p in test.passages]
+
+        response = TestWithPassagesQueryModel(
+            id=test.id,
+            title=test.title,
+            description=test.description,
+            test_type=TestType(test.test_type.value),
+            passage_ids=[passage.id for passage in test.passages],
+            time_limit_minutes=test.time_limit_minutes,
+            total_questions=test.total_questions,
+            total_points=test.total_points,
+            status=TestStatus(test.status.value),
+            created_by=test.created_by,
+            created_at=test.created_at,
+            updated_at=test.updated_at,
+            is_active=test.is_active,
+            passages=passage_entities,
+        )
+
+        return response
 
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -130,3 +177,20 @@ class SQLTestQueryService(TestQueryService):
             query_models.append(query_model)
 
         return query_models
+
+    @staticmethod
+    def _convert_passage_to_entity(passage_model: PassageModel) -> Passage:
+        """Convert PassageModel to Passage domain entity (without questions)"""
+        return Passage(
+            id=passage_model.id,
+            title=passage_model.title,
+            content=passage_model.content,
+            word_count=passage_model.word_count or 0,
+            difficulty_level=passage_model.difficulty_level or 1,
+            topic=passage_model.topic or "General",
+            source=passage_model.source,
+            created_by=passage_model.created_by,
+            created_at=passage_model.created_at,
+            updated_at=passage_model.updated_at,
+            is_active=passage_model.is_active,
+        )

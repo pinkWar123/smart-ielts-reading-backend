@@ -5,11 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.passage import Passage
-from app.domain.repositories.passage_repository import PassageRepository
+from app.domain.repositories.passage_repository import PassageRepositoryInterface
 from app.infrastructure.persistence.models import PassageModel as DBPassageModel
 
 
-class SQLPassageRepository(PassageRepository):
+class SQLPassageRepositoryInterface(PassageRepositoryInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 

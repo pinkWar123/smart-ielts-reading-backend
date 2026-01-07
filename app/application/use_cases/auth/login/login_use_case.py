@@ -3,13 +3,13 @@ from app.application.services.token_service import TokenService
 from app.application.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
 from app.application.use_cases.base.use_case import UseCase
 from app.domain.errors.user_errors import UserNotFoundError, WrongPasswordError
-from app.domain.repositories.user_repository import UserRepository
+from app.domain.repositories.user_repository import UserRepositoryInterface
 
 
 class LoginUseCase(UseCase[LoginRequest, LoginResponse]):
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserRepositoryInterface,
         jwt_service: TokenService,
         password_hasher: PasswordService,
     ):

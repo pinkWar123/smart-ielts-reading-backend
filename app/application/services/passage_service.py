@@ -1,11 +1,11 @@
 from app.application.use_cases.passages.create_passage.create_passage_dtos import (
     PassageResponse,
 )
-from app.domain.repositories.passage_repository import PassageRepository
+from app.domain.repositories.passage_repository import PassageRepositoryInterface
 
 
 class PassageService:
-    def __init__(self, passage_repo: PassageRepository):
+    def __init__(self, passage_repo: PassageRepositoryInterface):
         self.passage_repo = passage_repo
 
     async def get_all_passages(self) -> list[PassageResponse]:

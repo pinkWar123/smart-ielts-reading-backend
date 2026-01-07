@@ -5,9 +5,11 @@ from app.application.use_cases.tests.create_test.create_test_dtos import (
 )
 from app.domain.errors.passage_errors import PassageNotFoundError
 from app.domain.errors.test_errors import TestNotFoundError
-from app.domain.repositories.passage_repository import PassageRepository
+from app.domain.repositories.passage_repository import PassageRepositoryInterface
 from app.domain.repositories.test_repository import TestRepositoryInterface
-from app.infrastructure.repositories.sql_passage_repository import SQLPassageRepository
+from app.infrastructure.repositories.sql_passage_repository import (
+    SQLPassageRepositoryInterface,
+)
 from app.infrastructure.repositories.sql_test_repository import SQLTestRepository
 
 
@@ -17,7 +19,7 @@ class AddPassageToTestUseCase(UseCase[AddPassageToTestRequest, TestResponse]):
     def __init__(
         self,
         test_repository: TestRepositoryInterface,
-        passage_repository: PassageRepository,
+        passage_repository: PassageRepositoryInterface,
     ):
         self.test_repository = test_repository
         self.passage_repository = passage_repository
@@ -45,7 +47,7 @@ class AddPassageToTestUseCase(UseCase[AddPassageToTestRequest, TestResponse]):
 
         # Get the passage with questions to verify it exists and get its data
         # Use get_by_id_with_questions if the repository is SQL-based
-        if isinstance(self.passage_repository, SQLPassageRepository):
+        if isinstance(self.passage_repository, SQLPassageRepositoryInterface):
             passage = await self.passage_repository.get_by_id_with_questions(
                 request.passage_id
             )
