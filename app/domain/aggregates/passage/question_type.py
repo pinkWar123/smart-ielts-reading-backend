@@ -22,10 +22,20 @@ class QuestionType(str, Enum):
     SHORT_ANSWER = "SHORT_ANSWER"
 
     @classmethod
-    def requires_options(cls, question_type: "QuestionType") -> bool:
+    def does_question_require_options(cls, question_type: "QuestionType") -> bool:
         """Check if question type requires options"""
         return question_type in [
             cls.MULTIPLE_CHOICE,
+            # cls.MATCHING_HEADINGS,
+            # cls.MATCHING_INFORMATION,
+            # cls.MATCHING_FEATURES,
+            # cls.MATCHING_SENTENCE_ENDINGS,
+        ]
+
+    @classmethod
+    def does_question_group_require_options(cls, question_type: "QuestionType") -> bool:
+        """Check if question type requires options"""
+        return question_type in [
             cls.MATCHING_HEADINGS,
             cls.MATCHING_INFORMATION,
             cls.MATCHING_FEATURES,

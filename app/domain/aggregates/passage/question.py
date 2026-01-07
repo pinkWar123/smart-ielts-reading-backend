@@ -41,7 +41,7 @@ class Question(BaseModel):
 
         question_type = info.data["question_type"]
 
-        if QuestionType.requires_options(question_type) and not v:
+        if QuestionType.does_question_require_options(question_type) and not v:
             raise MissingOptionsError(question_type.value)
 
         return v

@@ -25,6 +25,9 @@ from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_i
 from app.application.use_cases.passages.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
+from app.application.use_cases.passages.get_test_detail.get_test_detail_use_case import (
+    GetTestDetailUseCase,
+)
 from app.application.use_cases.passages.get_test_with_passages.get_test_with_passages_use_case import (
     GetTestWithPassagesUseCase,
 )
@@ -55,6 +58,7 @@ class AuthUseCases:
 @dataclass
 class TestUseCases:
     get_test_by_id: GetTestWithPassagesUseCase
+    get_test_detail_by_id: GetTestDetailUseCase
     create_test: CreateTestUseCase
     add_passage_to_test: AddPassageToTestUseCase
     get_all_tests: GetAllTestsUseCase
@@ -98,6 +102,9 @@ async def get_test_use_cases(
             test_query_service=test_query_service, test_repository=test_repo
         ),
         get_test_by_id=container.get_test_by_id(test_query_service=test_query_service),
+        get_test_detail_by_id=container.get_test_detail_by_id(
+            test_query_service=test_query_service
+        ),
     )
 
 

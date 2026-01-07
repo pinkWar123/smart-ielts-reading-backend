@@ -6,6 +6,11 @@ from fastapi.params import Depends
 from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_dto import (
     DeletePassageByIdRequest,
 )
+from app.application.use_cases.passages.get_test_detail.get_test_detail_dto import (
+    GetTestDetailQuery,
+    GetTestDetailResponse,
+    UserView,
+)
 from app.application.use_cases.passages.get_test_with_passages.get_test_with_passages_dto import (
     GetTestWithPassagesQuery,
     GetTestWithPassagesResponse,
@@ -55,6 +60,18 @@ async def get_test_by_id(
 ):
     query = GetTestWithPassagesQuery(id=test_id)
     return await use_cases.get_test_by_id.execute(query)
+
+
+@router.get(
+    "/{test_id}/detail",
+    response_model=GetTestDetailResponse,
+    summary="Get test with passages, question groups and questions by ID",
+)
+async def get_test_detail(
+    test_id: str, use_cases: TestUseCases = Depends(get_test_use_cases)
+):
+    query = GetTestDetailQuery(id=test_id, view=UserView.ADMIN)
+    return await use_cases.get_test_detail_by_id.execute(query)
 
 
 @router.post(

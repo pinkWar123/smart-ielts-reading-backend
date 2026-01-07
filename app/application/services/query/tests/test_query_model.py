@@ -84,3 +84,11 @@ class TestWithPassagesQueryModel(BaseModel):
             updated_at=self.updated_at,
             is_active=self.is_active,
         )
+
+
+class TestWithDetailsQueryModel(TestWithPassagesQueryModel):
+    """Test query model with detailed passage and question info"""
+
+    # Additional detailed fields can be added here as needed
+    created_by: AuthorInfo
+    pass

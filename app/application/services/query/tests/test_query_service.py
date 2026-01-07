@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from app.application.services.query.tests.test_query_model import (
     TestWithAuthorQueryModel,
+    TestWithDetailsQueryModel,
     TestWithPassagesQueryModel,
 )
 from app.domain.aggregates.test.test_status import TestStatus
@@ -63,4 +64,10 @@ class TestQueryService(ABC):
             :param status:
             :param test_id:
         """
+        pass
+
+    @abstractmethod
+    async def get_test_by_id_with_details(
+        self, test_id: str
+    ) -> TestWithDetailsQueryModel:
         pass

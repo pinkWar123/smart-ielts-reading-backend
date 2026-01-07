@@ -57,7 +57,15 @@ class DuplicateQuestionGroupOrderError(Error):
 class MissingOptionsError(Error):
     def __init__(self, question_type: str):
         super().__init__(
-            f"{question_type} questions must have options", ErrorCode.INVALID_DATA
+            f"{question_type} questions must have options", ErrorCode.CONFLICT
+        )
+
+
+class MissingOptionFromGroupError(Error):
+    def __init__(self, question_type: str):
+        super().__init__(
+            f"Question group {question_type} must have group options",
+            ErrorCode.CONFLICT,
         )
 
 
