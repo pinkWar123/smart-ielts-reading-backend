@@ -29,7 +29,7 @@ from app.infrastructure.persistence.models import QuestionGroupModel
 from app.infrastructure.persistence.models.passage_model import PassageModel
 from app.infrastructure.persistence.models.test_model import (
     TestModel,
-    test_passages,
+    TestPassageAssociation,
 )
 from app.infrastructure.persistence.models.user_model import UserModel
 
@@ -49,10 +49,13 @@ class SQLTestQueryService(TestQueryService):
                 UserModel.full_name,
             )
             .options(
-                selectinload(TestModel.passages)
+                selectinload(TestModel.passage_associations)
+                .selectinload(TestPassageAssociation.passage)
                 .selectinload(PassageModel.question_groups)
                 .selectinload(QuestionGroupModel.questions),
-                selectinload(TestModel.passages).selectinload(PassageModel.questions),
+                selectinload(TestModel.passage_associations)
+                .selectinload(TestPassageAssociation.passage)
+                .selectinload(PassageModel.questions),
             )
             .join(UserModel, TestModel.created_by == UserModel.id, isouter=True)
             .where(TestModel.id == test_id)
@@ -103,7 +106,11 @@ class SQLTestQueryService(TestQueryService):
     ) -> TestWithPassagesQueryModel:
         stmt = (
             select(TestModel)
-            .options(selectinload(TestModel.passages))  # Eager load passages
+            .options(
+                selectinload(TestModel.passage_associations).selectinload(
+                    TestPassageAssociation.passage
+                )
+            )  # Eager load passages via association
             .where(TestModel.is_active == True)
             .where(TestModel.id == test_id)
         )
@@ -191,10 +198,12 @@ class SQLTestQueryService(TestQueryService):
         # Extract test IDs for passage lookup
         test_ids = [row[0].id for row in rows]
 
-        # Query 2: Fetch all passage IDs for these tests
-        passage_stmt = select(
-            test_passages.c.test_id, test_passages.c.passage_id
-        ).where(test_passages.c.test_id.in_(test_ids))
+        # Query 2: Fetch all passage IDs for these tests (ordered by passage_order)
+        passage_stmt = (
+            select(TestPassageAssociation.test_id, TestPassageAssociation.passage_id)
+            .where(TestPassageAssociation.test_id.in_(test_ids))
+            .order_by(TestPassageAssociation.passage_order)
+        )
 
         passage_result = await self.session.execute(passage_stmt)
         passage_rows = passage_result.all()

@@ -10,7 +10,6 @@ from app.domain.repositories.test_repository import TestRepositoryInterface
 from app.infrastructure.repositories.sql_passage_repository import (
     SQLPassageRepositoryInterface,
 )
-from app.infrastructure.repositories.sql_test_repository import SQLTestRepository
 
 
 class AddPassageToTestUseCase(UseCase[AddPassageToTestRequest, TestResponse]):
@@ -71,13 +70,7 @@ class AddPassageToTestUseCase(UseCase[AddPassageToTestRequest, TestResponse]):
         test.update_totals(current_total_questions, current_total_points)
 
         # Persist the updated test
+        # The update method now handles passage associations automatically
         updated_test = await self.test_repository.update(test)
-
-        # Add passage to test_passages association table
-        if isinstance(self.test_repository, SQLTestRepository):
-            passage_order = len(test.passage_ids)
-            await self.test_repository.add_passage_to_test(
-                test_id, request.passage_id, passage_order
-            )
 
         return TestResponse.from_entity(updated_test)

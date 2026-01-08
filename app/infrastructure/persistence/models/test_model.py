@@ -17,16 +17,21 @@ from sqlalchemy.sql import func
 from app.domain.aggregates.test import TestStatus, TestType
 from app.infrastructure.persistence.models.base import Base, BaseModel
 
-# Association table for many-to-many relationship between tests and passages
-test_passages = Table(
-    "test_passages",
-    Base.metadata,
-    Column("test_id", String, ForeignKey("tests.id"), primary_key=True),
-    Column("passage_id", String, ForeignKey("passages.id"), primary_key=True),
-    Column(
-        "passage_order", Integer, nullable=False
-    ),  # Order of passage in test (1, 2, 3)
-)
+
+class TestPassageAssociation(Base):
+    """Association object for many-to-many relationship between tests and passages"""
+
+    __tablename__ = "test_passages"
+
+    test_id = Column(String, ForeignKey("tests.id"), primary_key=True)
+    passage_id = Column(String, ForeignKey("passages.id"), primary_key=True)
+    passage_order = Column(
+        Integer, nullable=False
+    )  # Order of passage in test (1, 2, 3)
+
+    # Relationships to parent objects
+    test = relationship("TestModel", back_populates="passage_associations")
+    passage = relationship("PassageModel")
 
 
 class TestModel(BaseModel):
@@ -50,4 +55,14 @@ class TestModel(BaseModel):
     attempts = relationship(
         "AttemptModel", back_populates="test", cascade="all, delete-orphan"
     )
-    passages = relationship("PassageModel", secondary=test_passages, backref="tests")
+    passage_associations = relationship(
+        "TestPassageAssociation",
+        back_populates="test",
+        cascade="all, delete-orphan",
+        order_by="TestPassageAssociation.passage_order",
+    )
+
+    @property
+    def passages(self):
+        """Get passages in order"""
+        return [assoc.passage for assoc in self.passage_associations]

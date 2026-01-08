@@ -4,18 +4,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domain.entities.passage import Passage
-from app.domain.entities.question import Question, QuestionGroup, QuestionType
 from app.domain.entities.test import Test, TestStatus, TestType
+from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.repositories.test_repository import TestRepositoryInterface
 from app.infrastructure.persistence.models.passage_model import PassageModel
-from app.infrastructure.persistence.models.question_model import (
-    QuestionGroupModel,
-    QuestionModel,
-)
 from app.infrastructure.persistence.models.test_model import (
     TestModel,
-    test_passages,
+    TestPassageAssociation,
 )
 
 
@@ -42,7 +37,7 @@ class SQLTestRepository(TestRepositoryInterface):
 
         self.session.add(test_model)
         await self.session.commit()
-        await self.session.refresh(test_model, ["passages"])
+        await self.session.refresh(test_model, ["passage_associations"])
 
         return self._to_domain_entity(test_model)
 
@@ -50,7 +45,11 @@ class SQLTestRepository(TestRepositoryInterface):
         """Get a test by ID with its passages"""
         stmt = (
             select(TestModel)
-            .options(selectinload(TestModel.passages))
+            .options(
+                selectinload(TestModel.passage_associations).selectinload(
+                    TestPassageAssociation.passage
+                )
+            )
             .filter_by(id=test_id)
         )
         result = await self.session.execute(stmt)
@@ -62,7 +61,11 @@ class SQLTestRepository(TestRepositoryInterface):
 
     async def get_all(self) -> List[Test]:
         """Get all tests"""
-        stmt = select(TestModel).options(selectinload(TestModel.passages))
+        stmt = select(TestModel).options(
+            selectinload(TestModel.passage_associations).selectinload(
+                TestPassageAssociation.passage
+            )
+        )
         result = await self.session.execute(stmt)
         test_models = result.scalars().all()
 
@@ -72,14 +75,14 @@ class SQLTestRepository(TestRepositoryInterface):
         """Update an existing test"""
         stmt = (
             select(TestModel)
-            .options(selectinload(TestModel.passages))
+            .options(selectinload(TestModel.passage_associations))
             .filter_by(id=test.id)
         )
         result = await self.session.execute(stmt)
         test_model = result.scalar_one_or_none()
 
         if not test_model:
-            raise ValueError(f"Test with id {test.id} not found")
+            raise TestNotFoundError(test.id)
 
         # Update basic fields
         test_model.title = test.title
@@ -92,22 +95,31 @@ class SQLTestRepository(TestRepositoryInterface):
         test_model.updated_at = test.updated_at
         test_model.is_active = test.is_active
 
-        # Sync passage relationships from domain entity
-        # Fetch passages that should be in the test based on domain entity
+        # Sync passage associations using ORM
+        # Clear existing associations (cascade will handle deletion)
+        test_model.passage_associations.clear()
+
+        # Create new associations with proper passage_order
         if test.passage_ids:
+            # Fetch passage models to verify they exist
             passage_stmt = select(PassageModel).where(
                 PassageModel.id.in_(test.passage_ids)
             )
             passage_result = await self.session.execute(passage_stmt)
-            passages = passage_result.scalars().all()
-            # Replace the passages collection with the new list
-            test_model.passages = list(passages)
-        else:
-            # Clear all passages if domain entity has no passage_ids
-            test_model.passages = []
+            passages_dict = {p.id: p for p in passage_result.scalars().all()}
+
+            # Create association objects in the correct order
+            for index, passage_id in enumerate(test.passage_ids, start=1):
+                if passage_id in passages_dict:
+                    association = TestPassageAssociation(
+                        test_id=test.id,
+                        passage_id=passage_id,
+                        passage_order=index,
+                    )
+                    test_model.passage_associations.append(association)
 
         await self.session.commit()
-        await self.session.refresh(test_model, ["passages"])
+        await self.session.refresh(test_model, ["passage_associations"])
 
         return self._to_domain_entity(test_model)
 
@@ -128,12 +140,12 @@ class SQLTestRepository(TestRepositoryInterface):
         self, test_id: str, passage_id: str, passage_order: int
     ) -> None:
         """Add a passage to a test with specific order"""
-        from sqlalchemy import insert
-
-        stmt = insert(test_passages).values(
-            test_id=test_id, passage_id=passage_id, passage_order=passage_order
+        association = TestPassageAssociation(
+            test_id=test_id,
+            passage_id=passage_id,
+            passage_order=passage_order,
         )
-        await self.session.execute(stmt)
+        self.session.add(association)
         await self.session.commit()
 
     async def get_test_with_full_passages(self, test_id: str) -> Optional[Test]:
@@ -141,10 +153,12 @@ class SQLTestRepository(TestRepositoryInterface):
         stmt = (
             select(TestModel)
             .options(
-                selectinload(TestModel.passages).selectinload(PassageModel.questions),
-                selectinload(TestModel.passages).selectinload(
-                    PassageModel.question_groups
-                ),
+                selectinload(TestModel.passage_associations)
+                .selectinload(TestPassageAssociation.passage)
+                .selectinload(PassageModel.questions),
+                selectinload(TestModel.passage_associations)
+                .selectinload(TestPassageAssociation.passage)
+                .selectinload(PassageModel.question_groups),
             )
             .filter_by(id=test_id)
         )
