@@ -50,7 +50,7 @@ class QuestionDTO(BaseModel):
     question_group_id: Optional[str] = None
 
     @classmethod
-    def convert_to_dto(cls, question: Question) -> "QuestionDTO":
+    def convert_to_dto(cls, question: Question, view: "UserView") -> "QuestionDTO":
         return cls(
             question_number=question.question_number,
             question_type=question.question_type,
@@ -62,7 +62,7 @@ class QuestionDTO(BaseModel):
             ),
             correct_answer=(
                 CorrectAnswerDTO.convert_to_dto(question.correct_answer)
-                if question.correct_answer
+                if question.correct_answer and view == UserView.ADMIN
                 else None
             ),
             explanation=question.explanation,
@@ -90,7 +90,9 @@ class QuestionGroupDTO(BaseModel):
     )
 
     @classmethod
-    def convert_to_dto(cls, question_group: QuestionGroup) -> "QuestionGroupDTO":
+    def convert_to_dto(
+        cls, question_group: QuestionGroup, view: "UserView"
+    ) -> "QuestionGroupDTO":
         return cls(
             id=question_group.id,
             group_instructions=question_group.group_instructions,
@@ -105,7 +107,7 @@ class QuestionGroupDTO(BaseModel):
             ),
             questions=(
                 [
-                    QuestionDTO.convert_to_dto(question)
+                    QuestionDTO.convert_to_dto(question, view)
                     for question in question_group.questions
                 ]
                 if question_group.questions
@@ -125,7 +127,7 @@ class PassageDTO(BaseModel):
     question_groups: List[QuestionGroupDTO] = Field(default_factory=list)
 
     @classmethod
-    def convert_to_dto(cls, passage: Passage) -> "PassageDTO":
+    def convert_to_dto(cls, passage: Passage, view: "UserView") -> "PassageDTO":
         return cls(
             title=passage.title,
             content=passage.content,
@@ -134,7 +136,7 @@ class PassageDTO(BaseModel):
             source=passage.source,
             question_groups=(
                 [
-                    QuestionGroupDTO.convert_to_dto(question_group)
+                    QuestionGroupDTO.convert_to_dto(question_group, view)
                     for question_group in passage.question_groups
                 ]
                 if passage.question_groups

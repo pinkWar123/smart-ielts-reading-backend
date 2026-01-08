@@ -68,9 +68,9 @@ async def get_test_by_id(
     summary="Get test with passages, question groups and questions by ID",
 )
 async def get_test_detail(
-    test_id: str, use_cases: TestUseCases = Depends(get_test_use_cases)
+    test_id: str, view: UserView, use_cases: TestUseCases = Depends(get_test_use_cases)
 ):
-    query = GetTestDetailQuery(id=test_id, view=UserView.ADMIN)
+    query = GetTestDetailQuery(id=test_id, view=view)
     return await use_cases.get_test_detail_by_id.execute(query)
 
 

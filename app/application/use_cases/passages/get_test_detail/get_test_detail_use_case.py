@@ -1,6 +1,6 @@
 from app.application.services.query.tests.test_query_model import AuthorInfo
 from app.application.services.query.tests.test_query_service import TestQueryService
-from app.application.use_cases.base.use_case import RequestType, ResponseType, UseCase
+from app.application.use_cases.base.use_case import UseCase
 from app.application.use_cases.passages.get_test_detail.get_test_detail_dto import (
     GetTestDetailQuery,
     GetTestDetailResponse,
@@ -33,7 +33,10 @@ class GetTestDetailUseCase(UseCase[GetTestDetailQuery, GetTestDetailResponse]):
         response = GetTestDetailResponse(
             test_metadata=metadata,
             passages=(
-                [PassageDTO.convert_to_dto(passage) for passage in test_model.passages]
+                [
+                    PassageDTO.convert_to_dto(passage, request.view)
+                    for passage in test_model.passages
+                ]
                 if test_model.passages
                 else []
             ),
