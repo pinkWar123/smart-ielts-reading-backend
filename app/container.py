@@ -39,6 +39,9 @@ from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to
 from app.application.use_cases.tests.commands.create_test.create_test_use_case import (
     CreateTestUseCase,
 )
+from app.application.use_cases.tests.commands.publish_test.publish_test_use_case import (
+    PublishTestUseCase,
+)
 from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
@@ -192,6 +195,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_test_detail_by_id = providers.Factory(
         GetTestDetailUseCase,
+        test_query_service=test_query_service,
+    )
+    publish_test_use_case = providers.Factory(
+        PublishTestUseCase,
+        test_repository=test_repository,
         test_query_service=test_query_service,
     )
 

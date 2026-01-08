@@ -91,4 +91,21 @@ class TestWithDetailsQueryModel(TestWithPassagesQueryModel):
 
     # Additional detailed fields can be added here as needed
     created_by: AuthorInfo
-    pass
+
+    def to_domain_entity(self) -> Test:
+        """Convert query model to domain entity"""
+        return Test(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            test_type=self.test_type,
+            passage_ids=self.passage_ids,
+            time_limit_minutes=self.time_limit_minutes,
+            total_questions=self.total_questions,
+            total_points=self.total_points,
+            status=self.status,
+            created_by=self.created_by.id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            is_active=self.is_active,
+        )

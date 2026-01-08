@@ -36,6 +36,9 @@ from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to
 from app.application.use_cases.tests.commands.create_test.create_test_use_case import (
     CreateTestUseCase,
 )
+from app.application.use_cases.tests.commands.publish_test.publish_test_use_case import (
+    PublishTestUseCase,
+)
 from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
@@ -68,6 +71,7 @@ class TestUseCases:
     add_passage_to_test: AddPassageToTestUseCase
     get_all_tests: GetAllTestsUseCase
     remove_passage_use_case: DeletePassageByIdUseCase
+    publish_test: PublishTestUseCase
 
 
 @dataclass
@@ -110,6 +114,9 @@ async def get_test_use_cases(
         get_test_by_id=container.get_test_by_id(test_query_service=test_query_service),
         get_test_detail_by_id=container.get_test_detail_by_id(
             test_query_service=test_query_service
+        ),
+        publish_test=container.publish_test_use_case(
+            test_repository=test_repo, test_query_service=test_query_service
         ),
     )
 

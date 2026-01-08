@@ -65,3 +65,19 @@ class PassageNotInTestError(Error):
         super().__init__(
             f"Passage {passage_id} is not in test {test_id}", ErrorCode.CONFLICT
         )
+
+
+class InvalidFullTestQuestionCountError(Error):
+    def __init__(self, expected: int, actual: int):
+        super().__init__(
+            f"Full test must have exactly {expected} questions, but has {actual}",
+            ErrorCode.INVALID_DATA,
+        )
+
+
+class InvalidSinglePassageQuestionCountError(Error):
+    def __init__(self, min_q: int, max_q: int, actual: int):
+        super().__init__(
+            f"Single passage test must have between {min_q} and {max_q} questions, but has {actual}",
+            ErrorCode.INVALID_DATA,
+        )
