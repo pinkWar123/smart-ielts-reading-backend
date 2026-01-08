@@ -7,6 +7,7 @@ with author information in a single database round-trip.
 from typing import List, Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,6 +18,7 @@ from app.application.services.query.tests.test_query_model import (
     TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
+from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.aggregates.passage import Passage
 from app.domain.aggregates.passage.question import Question, QuestionType
 from app.domain.aggregates.passage.question_group import QuestionGroup
@@ -58,7 +60,11 @@ class SQLTestQueryService(TestQueryService):
         )
 
         resultset = await self.session.execute(stmt)
-        result = resultset.one()
+        try:
+            result = resultset.one()
+        except NoResultFound:
+            raise TestNotFoundError(test_id)
+
         test_model = result[0]
         author_id = result[1]
         author_username = result[2]
@@ -111,7 +117,10 @@ class SQLTestQueryService(TestQueryService):
             stmt = stmt.where(TestModel.test_type == test_type)
 
         results = await self.session.execute(stmt)
-        test: TestModel = results.scalar_one()
+        try:
+            test: TestModel = results.scalar_one()
+        except NoResultFound:
+            raise TestNotFoundError(test_id)
 
         # Convert PassageModel instances to Passage domain entities
         passage_entities = [self._convert_passage_to_entity(p) for p in test.passages]

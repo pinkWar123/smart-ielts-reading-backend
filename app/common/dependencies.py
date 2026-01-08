@@ -39,12 +39,9 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
 )
-from app.application.use_cases.tests.queries.get_test_detail import (
-    GetTestDetailUseCase,
-)
-from app.application.use_cases.tests.queries.get_test_with_passages import (
-    GetTestWithPassagesUseCase,
-)
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import GetTestDetailUseCase
+from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import \
+    GetTestWithPassagesUseCase
 from app.common.db.engine import get_database_session
 from app.container import container
 

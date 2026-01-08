@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 
+from app.application.use_cases.common.dtos.passage_detail_dto import UserView
 from app.application.use_cases.passages.commands.delete_passage_by_id.delete_passage_by_id_dto import (
     DeletePassageByIdRequest,
 )
@@ -15,15 +16,10 @@ from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto imp
     GetAllTestsQueryParams,
     GetAllTestsResponse,
 )
-from app.application.use_cases.tests.queries.get_test_detail import (
-    GetTestDetailQuery,
-    GetTestDetailResponse,
-    UserView,
-)
-from app.application.use_cases.tests.queries.get_test_with_passages import (
-    GetTestWithPassagesQuery,
-    GetTestWithPassagesResponse,
-)
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import GetTestDetailResponse, \
+    GetTestDetailQuery
+from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_dto import \
+    GetTestWithPassagesResponse, GetTestWithPassagesQuery
 from app.common.dependencies import TestUseCases, get_test_use_cases
 from app.domain.aggregates.test import TestStatus, TestType
 from app.presentation.security.dependencies import required_admin

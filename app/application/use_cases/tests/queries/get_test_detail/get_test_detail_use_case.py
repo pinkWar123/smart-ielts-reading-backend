@@ -1,13 +1,9 @@
 from app.application.services.query.tests.test_query_model import AuthorInfo
 from app.application.services.query.tests.test_query_service import TestQueryService
 from app.application.use_cases.base.use_case import UseCase
-from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import (
-    GetTestDetailQuery,
-    GetTestDetailResponse,
-    PassageDTO,
-    TestMetadata,
-    UserInfo,
-)
+from app.application.use_cases.common.dtos.passage_detail_dto import TestMetadata, PassageDTO, UserInfo
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import GetTestDetailQuery, \
+    GetTestDetailResponse
 
 
 class GetTestDetailUseCase(UseCase[GetTestDetailQuery, GetTestDetailResponse]):
