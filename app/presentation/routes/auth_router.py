@@ -1,17 +1,20 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from app.application.use_cases.auth.get_current_user.get_current_user_dto import (
-    GetCurrentUserResponse,
+from app.application.use_cases.auth.commands.login.login_dto import (
+    LoginRequest,
+    LoginResponse,
 )
-from app.application.use_cases.auth.login.login_dto import LoginRequest, LoginResponse
-from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_dto import (
+from app.application.use_cases.auth.commands.regenerate_tokens.regenerate_tokens_dto import (
     RegenerateTokensRequest,
     RegenerateTokensResponse,
 )
-from app.application.use_cases.auth.register.register_dto import (
+from app.application.use_cases.auth.commands.register.register_dto import (
     RegisterRequest,
     RegisterResponse,
+)
+from app.application.use_cases.auth.queries.get_current_user.get_current_user_dto import (
+    GetCurrentUserResponse,
 )
 from app.common.dependencies import AuthUseCases, get_auth_use_cases
 from app.presentation.security.dependencies import require_auth

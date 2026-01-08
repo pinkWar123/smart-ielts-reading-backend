@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_dto import (
     ExtractedTestResponse,
     ImagesExtractRequest,
 )

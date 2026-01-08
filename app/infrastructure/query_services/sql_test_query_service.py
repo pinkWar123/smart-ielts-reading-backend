@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import join, selectinload
+from sqlalchemy.orm import selectinload
 
 from app.application.services.query.tests.test_query_model import (
     AuthorInfo,
@@ -17,16 +17,13 @@ from app.application.services.query.tests.test_query_model import (
     TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
-from app.application.use_cases.passages.get_test_detail.get_test_detail_dto import (
-    UserInfo,
-)
 from app.domain.aggregates.passage import Passage
 from app.domain.aggregates.passage.question import Question, QuestionType
 from app.domain.aggregates.passage.question_group import QuestionGroup
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
-from app.infrastructure.persistence.models import QuestionGroupModel, QuestionModel
+from app.infrastructure.persistence.models import QuestionGroupModel
 from app.infrastructure.persistence.models.passage_model import PassageModel
 from app.infrastructure.persistence.models.test_model import (
     TestModel,

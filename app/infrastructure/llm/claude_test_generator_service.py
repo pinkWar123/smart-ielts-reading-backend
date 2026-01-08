@@ -5,7 +5,7 @@ from abc import ABC
 from anthropic import AsyncAnthropic
 
 from app.application.services.test_generator_service import ITestGeneratorService
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_dto import (
+from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_dto import (
     ExtractedCorrectAnswer,
     ExtractedOption,
     ExtractedPassage,

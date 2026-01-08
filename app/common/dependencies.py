@@ -5,43 +5,45 @@ from dataclasses import dataclass
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.use_cases.auth.get_current_user.get_current_user_use_case import (
-    GetCurrentUserUseCase,
-)
-from app.application.use_cases.auth.login.login_use_case import LoginUseCase
-from app.application.use_cases.auth.regenerate_tokens.regenerate_tokens_use_case import (
+from app.application.use_cases.auth.commands.login.login_use_case import LoginUseCase
+from app.application.use_cases.auth.commands.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
 )
-from app.application.use_cases.auth.register.register_use_case import RegisterUseCase
-from app.application.use_cases.images.extract_text_from_image.extract_text_from_image_use_case import (
+from app.application.use_cases.auth.commands.register.register_use_case import (
+    RegisterUseCase,
+)
+from app.application.use_cases.auth.queries.get_current_user.get_current_user_use_case import (
+    GetCurrentUserUseCase,
+)
+from app.application.use_cases.images.queries.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
-from app.application.use_cases.passages.create_complete_passage.create_complete_passage_use_case import (
+from app.application.use_cases.passages.commands.create_complete_passage.create_complete_passage_use_case import (
     CreateCompletePassageUseCase,
 )
-from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_use_case import (
+from app.application.use_cases.passages.commands.delete_passage_by_id.delete_passage_by_id_use_case import (
     DeletePassageByIdUseCase,
 )
-from app.application.use_cases.passages.get_all_passages.get_all_passages_use_case import (
+from app.application.use_cases.passages.queries.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
-from app.application.use_cases.passages.get_test_detail.get_test_detail_use_case import (
-    GetTestDetailUseCase,
-)
-from app.application.use_cases.passages.get_test_with_passages.get_test_with_passages_use_case import (
-    GetTestWithPassagesUseCase,
-)
-from app.application.use_cases.tests.add_passage_to_test.add_passage_to_test_use_case import (
+from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to_test_use_case import (
     AddPassageToTestUseCase,
 )
-from app.application.use_cases.tests.create_test.create_test_use_case import (
+from app.application.use_cases.tests.commands.create_test.create_test_use_case import (
     CreateTestUseCase,
 )
-from app.application.use_cases.tests.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
+from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
-from app.application.use_cases.tests.get_all_tests.get_all_tests_use_case import (
+from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
+)
+from app.application.use_cases.tests.queries.get_test_detail import (
+    GetTestDetailUseCase,
+)
+from app.application.use_cases.tests.queries.get_test_with_passages import (
+    GetTestWithPassagesUseCase,
 )
 from app.common.db.engine import get_database_session
 from app.container import container

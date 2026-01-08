@@ -3,26 +3,26 @@ from typing import Optional
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 
-from app.application.use_cases.passages.delete_passage_by_id.delete_passage_by_id_dto import (
+from app.application.use_cases.passages.commands.delete_passage_by_id.delete_passage_by_id_dto import (
     DeletePassageByIdRequest,
 )
-from app.application.use_cases.passages.get_test_detail.get_test_detail_dto import (
-    GetTestDetailQuery,
-    GetTestDetailResponse,
-    UserView,
-)
-from app.application.use_cases.passages.get_test_with_passages.get_test_with_passages_dto import (
-    GetTestWithPassagesQuery,
-    GetTestWithPassagesResponse,
-)
-from app.application.use_cases.tests.create_test.create_test_dtos import (
+from app.application.use_cases.tests.commands.create_test.create_test_dtos import (
     AddPassageToTestRequest,
     CreateTestRequest,
     TestResponse,
 )
-from app.application.use_cases.tests.get_all_tests.get_all_tests_dto import (
+from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto import (
     GetAllTestsQueryParams,
     GetAllTestsResponse,
+)
+from app.application.use_cases.tests.queries.get_test_detail import (
+    GetTestDetailQuery,
+    GetTestDetailResponse,
+    UserView,
+)
+from app.application.use_cases.tests.queries.get_test_with_passages import (
+    GetTestWithPassagesQuery,
+    GetTestWithPassagesResponse,
 )
 from app.common.dependencies import TestUseCases, get_test_use_cases
 from app.domain.aggregates.test import TestStatus, TestType

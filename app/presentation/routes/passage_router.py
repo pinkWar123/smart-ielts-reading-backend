@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status
 
-from app.application.use_cases.passages.create_complete_passage.create_complete_passage_dtos import (
+from app.application.use_cases.passages.commands.create_complete_passage.create_complete_passage_dtos import (
     CompletePassageResponse,
     CreateCompletePassageRequest,
 )
-from app.application.use_cases.passages.create_passage.create_passage_dtos import (
+from app.application.use_cases.passages.commands.create_passage.create_passage_dtos import (
     CreatePassageRequest,
     PassageResponse,
 )
