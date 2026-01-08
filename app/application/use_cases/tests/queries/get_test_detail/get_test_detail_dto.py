@@ -1,9 +1,13 @@
-
 from typing import List
 
 from pydantic import BaseModel
 
-from app.application.use_cases.common.dtos.passage_detail_dto import PassageDTO, TestMetadata, UserView
+from app.application.use_cases.common.dtos.passage_detail_dto import (
+    PassageDTO,
+    TestMetadata,
+    UserView,
+)
+
 
 class GetTestDetailResponse(BaseModel):
     """Complete extracted test response - ready to create passages and test"""

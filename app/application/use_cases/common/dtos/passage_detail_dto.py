@@ -1,10 +1,12 @@
 from enum import Enum
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
-from app.domain.aggregates.passage import Question, QuestionGroup, Passage, QuestionType
+
+from app.domain.aggregates.passage import Passage, Question, QuestionGroup, QuestionType
 from app.domain.entities.test import TestStatus, TestType
 from app.domain.value_objects.question_value_objects import Option
+
 
 class CorrectAnswerDTO(BaseModel):
     """Correct answer structure"""
@@ -21,6 +23,7 @@ class CorrectAnswerDTO(BaseModel):
             acceptable_answers=[],
         )
 
+
 class OptionDTO(BaseModel):
     """Option for multiple choice or matching questions"""
 
@@ -30,6 +33,7 @@ class OptionDTO(BaseModel):
     @classmethod
     def convert_to_dto(cls, option: Option) -> "OptionDTO":
         return cls(label=option.label, text=option.text)
+
 
 class QuestionDTO(BaseModel):
     """A single extracted question - matches QuestionDTO format"""
@@ -68,6 +72,7 @@ class QuestionDTO(BaseModel):
             question_group_id=question.question_group_id,
         )
 
+
 class QuestionGroupDTO(BaseModel):
     """A group of questions - matches QuestionGroupDTO format"""
 
@@ -86,7 +91,7 @@ class QuestionGroupDTO(BaseModel):
 
     @classmethod
     def convert_to_dto(
-            cls, question_group: QuestionGroup, view: "UserView"
+        cls, question_group: QuestionGroup, view: "UserView"
     ) -> "QuestionGroupDTO":
         return cls(
             id=question_group.id,
@@ -109,6 +114,7 @@ class QuestionGroupDTO(BaseModel):
                 else []
             ),
         )
+
 
 class PassageDTO(BaseModel):
     """Extracted passage - matches CreateCompletePassageRequest format"""
@@ -138,10 +144,12 @@ class PassageDTO(BaseModel):
             ),
         )
 
+
 class UserInfo(BaseModel):
     id: str
     name: str
     email: str
+
 
 class TestMetadata(BaseModel):
     """Metadata about the extracted test"""
@@ -155,6 +163,7 @@ class TestMetadata(BaseModel):
     created_by: UserInfo
     created_at: str
     updated_at: Optional[str] = None
+
 
 class UserView(Enum):
     ADMIN = "ADMIN"

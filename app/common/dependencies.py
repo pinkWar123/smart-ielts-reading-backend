@@ -27,6 +27,9 @@ from app.application.use_cases.passages.commands.delete_passage_by_id.delete_pas
 from app.application.use_cases.passages.queries.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
+from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_use_case import (
+    GetPassageDetailByIdUseCase,
+)
 from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to_test_use_case import (
     AddPassageToTestUseCase,
 )
@@ -39,9 +42,12 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
 )
-from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import GetTestDetailUseCase
-from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import \
-    GetTestWithPassagesUseCase
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import (
+    GetTestDetailUseCase,
+)
+from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import (
+    GetTestWithPassagesUseCase,
+)
 from app.common.db.engine import get_database_session
 from app.container import container
 
@@ -68,6 +74,7 @@ class TestUseCases:
 class PassageUseCases:
     create_complete_passage: CreateCompletePassageUseCase
     get_all_passages: GetAllPassagesUseCase
+    get_passage_detail_by_id: GetPassageDetailByIdUseCase
 
 
 @dataclass
@@ -117,7 +124,7 @@ async def get_passage_use_cases(
 
     # Create passage service
     passage_service = container.passage_service(passage_repo=passage_repo)
-
+    passage_query_service = container.passage_query_service(session=session)
     # Create and return use cases
     return PassageUseCases(
         create_complete_passage=container.create_complete_passage_use_case(
@@ -125,6 +132,9 @@ async def get_passage_use_cases(
         ),
         get_all_passages=container.get_all_passages_use_case(
             passage_service=passage_service
+        ),
+        get_passage_detail_by_id=container.get_passage_detail_by_id_use_case(
+            passage_query_service=passage_query_service
         ),
     )
 

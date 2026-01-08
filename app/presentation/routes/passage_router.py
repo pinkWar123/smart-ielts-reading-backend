@@ -8,6 +8,10 @@ from app.application.use_cases.passages.commands.create_passage.create_passage_d
     CreatePassageRequest,
     PassageResponse,
 )
+from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_dto import (
+    GetPassageDetailByIdQuery,
+    GetPassageDetailByIdResponse,
+)
 from app.common.dependencies import PassageUseCases, get_passage_use_cases
 from app.presentation.security.dependencies import require_auth, required_admin
 
@@ -131,3 +135,15 @@ async def get_all_passages(
     or for administrative purposes to manage the passage library.
     """
     return await use_cases.get_all_passages.execute()
+
+
+@router.get(
+    "{passage_id}",
+    response_model=GetPassageDetailByIdResponse,
+    description="Get Passage Detail by ID",
+)
+async def get_passage_by_id(
+    passage_id: str, use_cases: PassageUseCases = Depends(get_passage_use_cases)
+):
+    query = GetPassageDetailByIdQuery(id=passage_id)
+    return await use_cases.get_passage_detail_by_id.execute(query)

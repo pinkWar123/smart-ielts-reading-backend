@@ -27,6 +27,9 @@ from app.application.use_cases.passages.commands.delete_passage_by_id.delete_pas
 from app.application.use_cases.passages.queries.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
+from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_use_case import (
+    GetPassageDetailByIdUseCase,
+)
 from app.application.use_cases.passages.queries.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
 )
@@ -42,15 +45,20 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
 )
-from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import GetTestDetailUseCase
-from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import \
-    GetTestWithPassagesUseCase
-
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import (
+    GetTestDetailUseCase,
+)
+from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import (
+    GetTestWithPassagesUseCase,
+)
 from app.common.settings import settings
 from app.infrastructure.llm.claude_test_generator_service import (
     ClaudeTestGeneratorService,
 )
 from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
+from app.infrastructure.query_services.sql_passage_query_service import (
+    SqlPassageQueryService,
+)
 from app.infrastructure.query_services.sql_test_query_service import (
     SQLTestQueryService,
 )
@@ -92,6 +100,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
 
     # Query Services (for optimized reads)
     test_query_service = providers.Factory(SQLTestQueryService)
+    passage_query_service = providers.Factory(SqlPassageQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -147,6 +156,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_all_passages_use_case = providers.Factory(
         GetAllPassagesUseCase, passage_service=passage_service
+    )
+    get_passage_detail_by_id_use_case = providers.Factory(
+        GetPassageDetailByIdUseCase, passage_query_service=passage_query_service
     )
 
     # OCR use cases

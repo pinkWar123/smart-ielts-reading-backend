@@ -16,10 +16,14 @@ from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto imp
     GetAllTestsQueryParams,
     GetAllTestsResponse,
 )
-from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import GetTestDetailResponse, \
-    GetTestDetailQuery
-from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_dto import \
-    GetTestWithPassagesResponse, GetTestWithPassagesQuery
+from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import (
+    GetTestDetailQuery,
+    GetTestDetailResponse,
+)
+from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_dto import (
+    GetTestWithPassagesQuery,
+    GetTestWithPassagesResponse,
+)
 from app.common.dependencies import TestUseCases, get_test_use_cases
 from app.domain.aggregates.test import TestStatus, TestType
 from app.presentation.security.dependencies import required_admin

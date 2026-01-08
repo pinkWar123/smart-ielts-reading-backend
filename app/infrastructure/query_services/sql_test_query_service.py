@@ -18,12 +18,12 @@ from app.application.services.query.tests.test_query_model import (
     TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
-from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.aggregates.passage import Passage
 from app.domain.aggregates.passage.question import Question, QuestionType
 from app.domain.aggregates.passage.question_group import QuestionGroup
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
+from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
 from app.infrastructure.persistence.models import QuestionGroupModel
 from app.infrastructure.persistence.models.passage_model import PassageModel
@@ -71,10 +71,7 @@ class SQLTestQueryService(TestQueryService):
         author_email = result[3]
         author_full_name = result[4]
         # Convert passage models to domain entities with questions
-        passages = [
-            self._convert_passage_with_questions_to_entity(p)
-            for p in test_model.passages
-        ]
+        passages = [p.to_domain() for p in test_model.passages]
 
         return TestWithDetailsQueryModel(
             id=test_model.id,
@@ -264,70 +261,4 @@ class SQLTestQueryService(TestQueryService):
             created_at=passage_model.created_at,
             updated_at=passage_model.updated_at,
             is_active=passage_model.is_active,
-        )
-
-    @staticmethod
-    def _convert_passage_with_questions_to_entity(
-        passage_model: PassageModel,
-    ) -> Passage:
-        """Convert PassageModel to Passage domain entity with questions and question groups"""
-
-        # Convert question groups
-        question_groups = []
-        questions = []
-        if passage_model.question_groups:
-            for qg_model in passage_model.question_groups:
-                group_options = None
-                if qg_model.options:
-                    group_options = [Option(**opt) for opt in qg_model.options]
-                question_group = QuestionGroup(
-                    id=qg_model.id,
-                    group_instructions=qg_model.group_instructions,
-                    question_type=QuestionType(qg_model.question_type),
-                    start_question_number=qg_model.start_question_number,
-                    end_question_number=qg_model.end_question_number,
-                    order_in_passage=qg_model.order_in_passage,
-                    options=group_options or [],
-                    questions=[],
-                )
-
-                if qg_model.questions:
-                    current_questions = []
-                    for q_model in qg_model.questions:
-                        q_options = None
-                        if q_model.options:
-                            q_options = [Option(**opt) for opt in q_model.options]
-
-                        question = Question(
-                            id=q_model.id,
-                            question_group_id=q_model.question_group_id,
-                            question_number=q_model.question_number,
-                            question_type=QuestionType(q_model.question_type),
-                            question_text=q_model.question_text,
-                            options=q_options,
-                            correct_answer=CorrectAnswer(**q_model.correct_answer),
-                            explanation=q_model.explanation,
-                            instructions=q_model.instructions,
-                            points=q_model.points,
-                            order_in_passage=q_model.order_in_passage,
-                        )
-
-                        questions.append(question)
-                        question_group.add_question(question)
-                question_groups.append(question_group)
-
-        return Passage(
-            id=passage_model.id,
-            title=passage_model.title,
-            content=passage_model.content,
-            word_count=passage_model.word_count or 0,
-            difficulty_level=passage_model.difficulty_level or 1,
-            topic=passage_model.topic or "General",
-            source=passage_model.source,
-            created_by=passage_model.created_by,
-            created_at=passage_model.created_at,
-            updated_at=passage_model.updated_at,
-            is_active=passage_model.is_active,
-            question_groups=question_groups,
-            questions=questions,
         )
