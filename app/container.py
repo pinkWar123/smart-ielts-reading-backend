@@ -51,6 +51,9 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
 )
+from app.application.use_cases.tests.queries.get_paginated_full_tests.get_paginated_full_tests_use_case import (
+    GetPaginatedFullTestsUseCase,
+)
 from app.application.use_cases.tests.queries.get_paginated_single_tests.get_paginated_single_tests_use_case import (
     GetPaginatedSingleTestsUseCase,
 )
@@ -215,6 +218,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_paginated_single_tests_use_case = providers.Factory(
         GetPaginatedSingleTestsUseCase, test_query_service=test_query_service
+    )
+    get_paginated_full_tests_use_case = providers.Factory(
+        GetPaginatedFullTestsUseCase, test_query_service=test_query_service
     )
 
 

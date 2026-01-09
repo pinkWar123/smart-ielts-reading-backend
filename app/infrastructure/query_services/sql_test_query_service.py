@@ -4,16 +4,18 @@ This implementation uses optimized SQL queries with JOINs to fetch test data
 with author information in a single database round-trip.
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import GenerativeSelect, distinct, func, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.application.services.query.tests.test_query_model import (
     AuthorInfo,
+    PaginatedFullTestsQueryModel,
     PaginatedTestsWithQuestionTypesQueryModel,
+    SimpleFullTestDTO,
     TestWithAuthorQueryModel,
     TestWithDetailsQueryModel,
     TestWithPassagesQueryModel,
@@ -40,7 +42,50 @@ from app.infrastructure.persistence.models.user_model import UserModel
 class SQLTestQueryService(TestQueryService):
     """SQL implementation using JOIN for efficient data retrieval"""
 
-    async def get_paginated_tests_with_question_types(
+    async def get_paginated_full_tests(
+        self, page: int, page_number: int
+    ) -> PaginatedFullTestsQueryModel:
+        base_stmt = (
+            select(TestModel)
+            .where(TestModel.is_active == True)
+            .where(TestModel.test_type == TestType.FULL_TEST)
+            # .offset((page - 1) * page_number)
+            # .limit(page_number)
+        )
+
+        total_items = await self._count_items(base_stmt)
+
+        # Calculate pagination metadata
+        total_pages = (
+            (total_items + page_number - 1) // page_number if total_items > 0 else 0
+        )
+
+        stmt = base_stmt.offset((page - 1) * page_number).limit(page_number)
+        result = await self.session.execute(stmt)
+        tests = [row[0] for row in result.all()]
+        simple_tests = [
+            SimpleFullTestDTO(id=test.id, title=test.title) for test in tests
+        ]
+
+        return PaginatedFullTestsQueryModel(
+            data=simple_tests,
+            meta=PaginationMeta(
+                total_pages=total_pages,
+                total_items=total_items,
+                current_page=page,
+                page_size=page_number,
+                has_next=page < total_pages,
+                has_previous=page > 1,
+            ),
+        )
+
+    async def _count_items(self, stmt: GenerativeSelect) -> int | Any:
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.session.execute(count_stmt)
+        total_items = count_result.scalar() or 0
+        return total_items
+
+    async def get_paginated_single_tests_with_question_types(
         self, page: int, page_number: int, question_types: Optional[List[QuestionType]]
     ) -> PaginatedTestsWithQuestionTypesQueryModel:
         # Step 1: Build query to get distinct test IDs that match the filter
@@ -71,9 +116,7 @@ class SQLTestQueryService(TestQueryService):
             base_stmt = base_stmt.distinct()
 
         # Step 2: Count total matching tests
-        count_stmt = select(func.count()).select_from(base_stmt.subquery())
-        count_result = await self.session.execute(count_stmt)
-        total_items = count_result.scalar() or 0
+        total_items = await self._count_items(base_stmt)
 
         # Calculate pagination metadata
         total_pages = (

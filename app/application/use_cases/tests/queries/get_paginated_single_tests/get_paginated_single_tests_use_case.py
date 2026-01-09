@@ -18,12 +18,10 @@ class GetPaginatedSingleTestsUseCase(
     async def execute(
         self, request: GetPaginatedSingleTestsQuery
     ) -> GetPaginatedSingleTestsResponse:
-        test_query_model = (
-            await self.test_query_service.get_paginated_tests_with_question_types(
-                page=request.page,
-                page_number=request.page_size,
-                question_types=request.question_types,
-            )
+        test_query_model = await self.test_query_service.get_paginated_single_tests_with_question_types(
+            page=request.page,
+            page_number=request.page_size,
+            question_types=request.question_types,
         )
 
         test_dtos = [

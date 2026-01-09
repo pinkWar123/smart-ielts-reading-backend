@@ -123,3 +123,12 @@ class PaginatedTestsWithQuestionTypesQueryModel(
     PaginatedResponse[TestWithQuestionTypesQueryModel]
 ):
     pass
+
+
+class SimpleFullTestDTO(BaseModel):
+    id: str
+    title: str
+
+
+class PaginatedFullTestsQueryModel(PaginatedResponse[SimpleFullTestDTO]):
+    pass

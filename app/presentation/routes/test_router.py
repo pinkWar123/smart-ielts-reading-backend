@@ -19,6 +19,10 @@ from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto imp
     GetAllTestsQueryParams,
     GetAllTestsResponse,
 )
+from app.application.use_cases.tests.queries.get_paginated_full_tests.get_paginated_full_tests_dto import (
+    GetPaginatedFullTestsQuery,
+    GetPaginatedFullTestsResponse,
+)
 from app.application.use_cases.tests.queries.get_paginated_single_tests.get_paginated_single_tests_dto import (
     GetPaginatedSingleTestsQuery,
     GetPaginatedSingleTestsResponse,
@@ -76,6 +80,21 @@ async def get_paginated_single_tests(
         page=page, page_size=page_size, question_types=question_types
     )
     return await use_cases.get_paginated_single_tests.execute(query)
+
+
+@router.get(
+    "/full-tests",
+    response_model=GetPaginatedFullTestsResponse,
+    summary="Get full tests with pagination",
+    description="Retrieve paginated full tests with pagination",
+)
+async def get_paginated_full_tests(
+    page: int = 1,
+    page_size: int = 10,
+    use_cases: TestUseCases = Depends(get_test_use_cases),
+):
+    query = GetPaginatedFullTestsQuery(page=page, page_size=page_size)
+    return await use_cases.get_paginated_full_tests.execute(query)
 
 
 @router.get(
