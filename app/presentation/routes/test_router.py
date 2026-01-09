@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.params import Depends
 
 from app.application.use_cases.common.dtos.passage_detail_dto import UserView
@@ -19,6 +19,10 @@ from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto imp
     GetAllTestsQueryParams,
     GetAllTestsResponse,
 )
+from app.application.use_cases.tests.queries.get_paginated_single_tests.get_paginated_single_tests_dto import (
+    GetPaginatedSingleTestsQuery,
+    GetPaginatedSingleTestsResponse,
+)
 from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_dto import (
     GetTestDetailQuery,
     GetTestDetailResponse,
@@ -28,6 +32,7 @@ from app.application.use_cases.tests.queries.get_test_with_passages.get_test_wit
     GetTestWithPassagesResponse,
 )
 from app.common.dependencies import TestUseCases, get_test_use_cases
+from app.domain.aggregates.passage import QuestionType
 from app.domain.aggregates.test import TestStatus, TestType
 from app.presentation.security.dependencies import required_admin
 
@@ -53,6 +58,24 @@ async def get_all_tests(
 ):
     query = GetAllTestsQueryParams(status=test_status, type=test_type)
     return await use_cases.get_all_tests.execute(query)
+
+
+@router.get(
+    "/single-tests",
+    response_model=GetPaginatedSingleTestsResponse,
+    summary="Get single tests with filters and pagination",
+    description="Retrieve paginated single tests with filters",
+)
+async def get_paginated_single_tests(
+    page: int = 1,
+    page_size: int = 10,
+    question_types: Optional[List[QuestionType]] = Query(None),
+    use_cases: TestUseCases = Depends(get_test_use_cases),
+):
+    query = GetPaginatedSingleTestsQuery(
+        page=page, page_size=page_size, question_types=question_types
+    )
+    return await use_cases.get_paginated_single_tests.execute(query)
 
 
 @router.get(

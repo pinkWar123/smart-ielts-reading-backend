@@ -10,10 +10,12 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from app.application.services.query.tests.test_query_model import (
+    PaginatedTestsWithQuestionTypesQueryModel,
     TestWithAuthorQueryModel,
     TestWithDetailsQueryModel,
     TestWithPassagesQueryModel,
 )
+from app.domain.aggregates.passage.question import QuestionType
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
 
@@ -70,4 +72,10 @@ class TestQueryService(ABC):
     async def get_test_by_id_with_details(
         self, test_id: str
     ) -> TestWithDetailsQueryModel:
+        pass
+
+    @abstractmethod
+    async def get_paginated_tests_with_question_types(
+        self, page: int, page_number: int, question_types: Optional[List[QuestionType]]
+    ) -> PaginatedTestsWithQuestionTypesQueryModel:
         pass

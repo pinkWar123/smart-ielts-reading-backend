@@ -9,7 +9,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from app.common.pagination import PaginatedResponse
 from app.domain.aggregates.passage import Passage
+from app.domain.aggregates.passage.question import QuestionType
 from app.domain.aggregates.test import Test
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
@@ -109,3 +111,15 @@ class TestWithDetailsQueryModel(TestWithPassagesQueryModel):
             updated_at=self.updated_at,
             is_active=self.is_active,
         )
+
+
+class TestWithQuestionTypesQueryModel(BaseModel):
+    id: str
+    title: str
+    question_types: List[QuestionType]
+
+
+class PaginatedTestsWithQuestionTypesQueryModel(
+    PaginatedResponse[TestWithQuestionTypesQueryModel]
+):
+    pass

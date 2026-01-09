@@ -6,18 +6,21 @@ with author information in a single database round-trip.
 
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import distinct, func, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.application.services.query.tests.test_query_model import (
     AuthorInfo,
+    PaginatedTestsWithQuestionTypesQueryModel,
     TestWithAuthorQueryModel,
     TestWithDetailsQueryModel,
     TestWithPassagesQueryModel,
+    TestWithQuestionTypesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
+from app.common.pagination import PaginationMeta
 from app.domain.aggregates.passage import Passage
 from app.domain.aggregates.passage.question import Question, QuestionType
 from app.domain.aggregates.passage.question_group import QuestionGroup
@@ -36,6 +39,117 @@ from app.infrastructure.persistence.models.user_model import UserModel
 
 class SQLTestQueryService(TestQueryService):
     """SQL implementation using JOIN for efficient data retrieval"""
+
+    async def get_paginated_tests_with_question_types(
+        self, page: int, page_number: int, question_types: Optional[List[QuestionType]]
+    ) -> PaginatedTestsWithQuestionTypesQueryModel:
+        # Step 1: Build query to get distinct test IDs that match the filter
+        base_stmt = (
+            select(TestModel.id)
+            .join(
+                TestPassageAssociation, TestModel.id == TestPassageAssociation.test_id
+            )
+            .join(PassageModel, TestPassageAssociation.passage_id == PassageModel.id)
+            .join(QuestionGroupModel, PassageModel.id == QuestionGroupModel.passage_id)
+            .where(TestModel.is_active == True)
+            .where(TestModel.test_type == TestType.SINGLE_PASSAGE)
+        )
+
+        if question_types:
+            # Filter to only include tests that have ALL the specified question types
+            # Use GROUP BY with HAVING to ensure the test contains all required types
+            base_stmt = (
+                base_stmt.where(QuestionGroupModel.question_type.in_(question_types))
+                .group_by(TestModel.id)
+                .having(
+                    func.count(distinct(QuestionGroupModel.question_type))
+                    == len(question_types)
+                )
+            )
+        else:
+            # No filter - get distinct test IDs
+            base_stmt = base_stmt.distinct()
+
+        # Step 2: Count total matching tests
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        count_result = await self.session.execute(count_stmt)
+        total_items = count_result.scalar() or 0
+
+        # Calculate pagination metadata
+        total_pages = (
+            (total_items + page_number - 1) // page_number if total_items > 0 else 0
+        )
+
+        # Step 3: Get paginated test IDs
+        paginated_stmt = base_stmt.offset((page - 1) * page_number).limit(page_number)
+        result = await self.session.execute(paginated_stmt)
+        test_ids = [row[0] for row in result.all()]
+
+        if not test_ids:
+            return PaginatedTestsWithQuestionTypesQueryModel(
+                data=[],
+                meta=PaginationMeta(
+                    total_pages=0,
+                    total_items=0,
+                    current_page=page,
+                    page_size=page_number,
+                    has_next=False,
+                    has_previous=False,
+                ),
+            )
+
+        # Step 4: Fetch tests with ALL their question types (not just filtered ones)
+        tests_stmt = (
+            select(TestModel.id, TestModel.title, QuestionGroupModel.question_type)
+            .join(
+                TestPassageAssociation, TestModel.id == TestPassageAssociation.test_id
+            )
+            .join(PassageModel, TestPassageAssociation.passage_id == PassageModel.id)
+            .join(QuestionGroupModel, PassageModel.id == QuestionGroupModel.passage_id)
+            .where(TestModel.id.in_(test_ids))
+            .where(TestModel.is_active == True)
+        )
+
+        tests_result = await self.session.execute(tests_stmt)
+        rows = tests_result.all()
+
+        # Step 5: Aggregate question types per test
+        test_data = {}
+        for test_id, title, question_type in rows:
+            if test_id not in test_data:
+                test_data[test_id] = {
+                    "id": test_id,
+                    "title": title,
+                    "question_types": set(),
+                }
+            test_data[test_id]["question_types"].add(QuestionType(question_type))
+
+        # Step 6: Convert to query models, preserving order from pagination
+        tests = []
+        for test_id in test_ids:
+            if test_id in test_data:
+                data = test_data[test_id]
+                tests.append(
+                    TestWithQuestionTypesQueryModel(
+                        id=data["id"],
+                        title=data["title"],
+                        question_types=sorted(
+                            list(data["question_types"]), key=lambda qt: qt.value
+                        ),
+                    )
+                )
+
+        return PaginatedTestsWithQuestionTypesQueryModel(
+            data=tests,
+            meta=PaginationMeta(
+                total_pages=total_pages,
+                total_items=total_items,
+                current_page=page,
+                page_size=page_number,
+                has_next=page < total_pages,
+                has_previous=page > 1,
+            ),
+        )
 
     async def get_test_by_id_with_details(
         self, test_id: str

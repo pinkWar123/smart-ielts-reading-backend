@@ -48,6 +48,9 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_use_case import (
     GetAllTestsUseCase,
 )
+from app.application.use_cases.tests.queries.get_paginated_single_tests.get_paginated_single_tests_use_case import (
+    GetPaginatedSingleTestsUseCase,
+)
 from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use_case import (
     GetTestDetailUseCase,
 )
@@ -75,6 +78,7 @@ class TestUseCases:
     get_all_tests: GetAllTestsUseCase
     remove_passage_use_case: DeletePassageByIdUseCase
     publish_test: PublishTestUseCase
+    get_paginated_single_tests: GetPaginatedSingleTestsUseCase
 
 
 @dataclass
@@ -121,6 +125,9 @@ async def get_test_use_cases(
         ),
         publish_test=container.publish_test_use_case(
             test_repository=test_repo, test_query_service=test_query_service
+        ),
+        get_paginated_single_tests=container.get_paginated_single_tests_use_case(
+            test_query_service=test_query_service
         ),
     )
 
