@@ -47,6 +47,22 @@ class InvalidQuestionGroupRangeError(Error):
         )
 
 
+class InvalidQuestionCountError(Error):
+    def __init__(self, expected: int, actual: int):
+        super().__init__(
+            f"Question group must have exactly {expected} questions, but has {actual}",
+            ErrorCode.INVALID_DATA,
+        )
+
+
+class InvalidQuestionNumberError(Error):
+    def __init__(self, expected: int, actual: int):
+        super().__init__(
+            f"Question number must be {expected}, but is {actual}",
+            ErrorCode.INVALID_DATA,
+        )
+
+
 class DuplicateQuestionGroupOrderError(Error):
     def __init__(self, order: int):
         super().__init__(

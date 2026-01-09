@@ -8,6 +8,9 @@ from app.application.use_cases.passages.commands.create_passage.create_passage_d
     CreatePassageRequest,
     PassageResponse,
 )
+from app.application.use_cases.passages.commands.update_passage.update_passage_dto import (
+    UpdatePassageRequest,
+)
 from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_dto import (
     GetPassageDetailByIdQuery,
     GetPassageDetailByIdResponse,
@@ -147,3 +150,58 @@ async def get_passage_by_id(
 ):
     query = GetPassageDetailByIdQuery(id=passage_id)
     return await use_cases.get_passage_detail_by_id.execute(query)
+
+
+@router.put(
+    "/{passage_id}",
+    response_model=CompletePassageResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update Passage",
+    description="Update an existing passage with new data (admin only)",
+    responses={
+        200: {"description": "Passage updated successfully"},
+        400: {
+            "description": "Invalid request - validation errors or business rule violations"
+        },
+        401: {"description": "Authentication required"},
+        403: {"description": "Admin access required"},
+        404: {"description": "Passage not found"},
+        409: {
+            "description": "Conflict - cannot update passage that is part of a published test"
+        },
+        422: {"description": "Validation error"},
+    },
+)
+async def update_passage(
+    passage_id: str,
+    request: UpdatePassageRequest,
+    use_cases: PassageUseCases = Depends(get_passage_use_cases),
+    current_user=Depends(required_admin),
+):
+    """
+    Update an existing IELTS reading passage with new data.
+
+    **Admin only endpoint** - requires admin role.
+
+    **Important constraints:**
+    - Cannot update passages that are part of published tests
+    - Must have exactly 13-14 questions after update
+    - All validation rules from creation apply
+
+    **Updatable Fields:**
+    - Basic passage info: title, content, difficulty_level, topic, source
+    - Question groups: can add, remove, modify, or reorder
+    - Questions: can add, remove, modify, or reorder within groups
+
+    **Use cases:**
+    - Fix typos or errors in passage content
+    - Adjust question difficulty or wording
+    - Reorder questions or question groups
+    - Add or remove questions (maintaining 13-14 total)
+    - Update explanations or instructions
+
+    The entire passage structure is replaced, so you must provide the complete
+    updated passage with all questions and groups.
+    """
+    updated_passage = await use_cases.update_passage.execute(passage_id, request)
+    return CompletePassageResponse.from_entity(updated_passage)

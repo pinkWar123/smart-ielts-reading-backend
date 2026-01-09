@@ -24,6 +24,9 @@ from app.application.use_cases.passages.commands.create_passage.create_passage_u
 from app.application.use_cases.passages.commands.delete_passage_by_id.delete_passage_by_id_use_case import (
     DeletePassageByIdUseCase,
 )
+from app.application.use_cases.passages.commands.update_passage.update_passage_use_case import (
+    UpdatePassageUseCase,
+)
 from app.application.use_cases.passages.queries.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
@@ -152,6 +155,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     create_complete_passage_use_case = providers.Factory(
         CreateCompletePassageUseCase, passage_repository=passage_repository
+    )
+    update_passage_use_case = providers.Factory(
+        UpdatePassageUseCase,
+        passage_repository=passage_repository,
+        test_repository=test_repository,
     )
 
     get_passages_use_case = providers.Factory(

@@ -26,3 +26,8 @@ class TestRepositoryInterface(ABC):
     @abstractmethod
     async def delete(self, test_id: str) -> bool:
         pass
+
+    @abstractmethod
+    async def is_passage_in_published_test(self, passage_id: str) -> bool:
+        """Check if a passage is part of any published test"""
+        pass

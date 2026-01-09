@@ -24,6 +24,9 @@ from app.application.use_cases.passages.commands.create_complete_passage.create_
 from app.application.use_cases.passages.commands.delete_passage_by_id.delete_passage_by_id_use_case import (
     DeletePassageByIdUseCase,
 )
+from app.application.use_cases.passages.commands.update_passage.update_passage_use_case import (
+    UpdatePassageUseCase,
+)
 from app.application.use_cases.passages.queries.get_all_passages.get_all_passages_use_case import (
     GetAllPassagesUseCase,
 )
@@ -77,6 +80,7 @@ class TestUseCases:
 @dataclass
 class PassageUseCases:
     create_complete_passage: CreateCompletePassageUseCase
+    update_passage: UpdatePassageUseCase
     get_all_passages: GetAllPassagesUseCase
     get_passage_detail_by_id: GetPassageDetailByIdUseCase
 
@@ -126,8 +130,9 @@ async def get_passage_use_cases(
     session: AsyncSession = Depends(get_database_session),
 ) -> PassageUseCases:
     """Get PassageUseCases with session-scoped repositories."""
-    # Create repository with session
+    # Create repositories with session
     passage_repo = container.passage_repository(session=session)
+    test_repo = container.test_repository(session=session)
 
     # Create passage service
     passage_service = container.passage_service(passage_repo=passage_repo)
@@ -136,6 +141,9 @@ async def get_passage_use_cases(
     return PassageUseCases(
         create_complete_passage=container.create_complete_passage_use_case(
             passage_repository=passage_repo
+        ),
+        update_passage=container.update_passage_use_case(
+            passage_repository=passage_repo, test_repository=test_repo
         ),
         get_all_passages=container.get_all_passages_use_case(
             passage_service=passage_service

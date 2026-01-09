@@ -172,6 +172,21 @@ class SQLTestRepository(TestRepositoryInterface):
         test = self._to_domain_entity(test_model)
         return test
 
+    async def is_passage_in_published_test(self, passage_id: str) -> bool:
+        """Check if a passage is part of any published test"""
+        stmt = (
+            select(TestPassageAssociation)
+            .join(TestModel)
+            .where(
+                TestPassageAssociation.passage_id == passage_id,
+                TestModel.status == TestStatus.PUBLISHED,
+            )
+        )
+        result = await self.session.execute(stmt)
+        association = result.scalar_one_or_none()
+
+        return association is not None
+
     def _to_domain_entity(self, test_model: TestModel) -> Test:
         """Convert TestModel to Test domain entity"""
         passage_ids = [p.id for p in test_model.passages] if test_model.passages else []

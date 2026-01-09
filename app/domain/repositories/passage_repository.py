@@ -28,3 +28,8 @@ class PassageRepositoryInterface(ABC):
     @abstractmethod
     async def get_all(self) -> list[Passage]:
         pass
+
+    @abstractmethod
+    async def update_passage(self, passage: Passage) -> Passage:
+        """Update an existing passage with new data"""
+        pass

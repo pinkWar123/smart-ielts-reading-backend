@@ -184,6 +184,102 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
             updated_at=passage_model.updated_at,
         )
 
+    async def update_passage(self, passage: Passage) -> Passage:
+        """
+        Update an existing passage with new data.
+
+        This method:
+        1. Fetches the existing passage
+        2. Deletes all existing questions and question groups
+        3. Updates the passage fields
+        4. Adds new questions and question groups
+
+        This approach is more efficient than doing a complex diff and update.
+        """
+        from sqlalchemy import delete
+
+        # Fetch existing passage
+        stmt = select(DBPassageModel).filter_by(id=passage.id)
+        result = await self.session.execute(stmt)
+        passage_model = result.scalar_one_or_none()
+
+        if not passage_model:
+            from app.domain.errors.passage_errors import PassageNotFoundError
+
+            raise PassageNotFoundError(passage.id)
+
+        # Delete all existing question groups and questions for this passage
+        # (cascade will handle orphaned questions)
+        from app.infrastructure.persistence.models import (
+            QuestionGroupModel,
+            QuestionModel,
+        )
+
+        await self.session.execute(
+            delete(QuestionGroupModel).where(
+                QuestionGroupModel.passage_id == passage.id
+            )
+        )
+        await self.session.execute(
+            delete(QuestionModel).where(QuestionModel.passage_id == passage.id)
+        )
+
+        # Update passage fields
+        passage_model.title = passage.title
+        passage_model.content = passage.content
+        passage_model.word_count = passage.word_count
+        passage_model.difficulty_level = passage.difficulty_level
+        passage_model.topic = passage.topic
+        passage_model.source = passage.source
+        passage_model.updated_at = passage.updated_at
+
+        # Add new question groups and questions using existing mapping logic
+        temp_id_to_qg_model = {}
+        for qg in passage.question_groups:
+            qg_model = QuestionGroupModel(
+                passage_id=passage.id,
+                group_instructions=qg.group_instructions,
+                question_type=qg.question_type.value,
+                start_question_number=qg.start_question_number,
+                end_question_number=qg.end_question_number,
+                order_in_passage=qg.order_in_passage,
+                options=(
+                    [opt.model_dump() for opt in qg.options] if qg.options else None
+                ),
+            )
+            temp_id_to_qg_model[qg.id] = qg_model
+            passage_model.question_groups.append(qg_model)
+
+        # Add questions
+        for q in passage.questions:
+            q_model = QuestionModel(
+                passage_id=passage.id,
+                question_number=q.question_number,
+                question_type=q.question_type.value,
+                question_text=q.question_text,
+                options=[opt.model_dump() for opt in q.options] if q.options else None,
+                correct_answer=q.correct_answer.model_dump(),
+                explanation=q.explanation,
+                instructions=q.instructions,
+                points=q.points,
+                order_in_passage=q.order_in_passage,
+            )
+
+            # Resolve domain temporary ID to persistence model object reference
+            if q.question_group_id and q.question_group_id in temp_id_to_qg_model:
+                qg_model = temp_id_to_qg_model[q.question_group_id]
+                qg_model.questions.append(q_model)
+            else:
+                passage_model.questions.append(q_model)
+
+        # Commit changes
+        await self.session.commit()
+
+        # Re-fetch to get updated state
+        refreshed_passage_model = await self._fetch_passage_with_relations(passage.id)
+
+        return self._to_domain_entity_with_questions(refreshed_passage_model)
+
     def _to_domain_entity_with_questions(
         self, passage_model: DBPassageModel
     ) -> Passage:

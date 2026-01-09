@@ -25,3 +25,11 @@ class InvalidQuestionReferenceError(Error):
             f"Question {question_id} references non-existent group {group_id}",
             ErrorCode.INVALID_DATA,
         )
+
+
+class PassageInPublishedTestError(Error):
+    def __init__(self, passage_id: str):
+        super().__init__(
+            f"Cannot update passage {passage_id} because it is part of a published test",
+            ErrorCode.CONFLICT,
+        )

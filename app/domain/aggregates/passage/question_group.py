@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field, field_validator
 from app.domain.aggregates.passage.question import Question
 from app.domain.aggregates.passage.question_type import QuestionType
 from app.domain.errors.question_errors import (
+    InvalidQuestionCountError,
     InvalidQuestionGroupRangeError,
+    InvalidQuestionNumberError,
     MissingOptionFromGroupError,
 )
 from app.domain.value_objects.question_value_objects import Option
@@ -38,6 +40,36 @@ class QuestionGroup(BaseModel):
         ):
             start = info.data["start_question_number"]
             raise InvalidQuestionGroupRangeError(start, v)
+        return v
+
+    @field_validator("questions")
+    @classmethod
+    def validate_question_numbers(cls, v, info):
+        if "questions" not in info.data or not info.data["questions"]:
+            return v
+
+        questions: list[Question] = v
+        expected_len = (
+            info.data["end_question_number"] - info.data["start_question_number"]
+        )
+        actual_len = len(questions)
+
+        if actual_len == 0:
+            return v
+
+        if actual_len != expected_len:
+            raise InvalidQuestionCountError(expected=expected_len, actual=actual_len)
+
+        questions.sort(key=lambda q: q.question_number)
+        current_number = info.data["start_question_number"]
+
+        for q in questions:
+            if q.question_number != current_number:
+                raise InvalidQuestionNumberError(
+                    expected=current_number, actual=q.question_number
+                )
+            current_number += 1
+
         return v
 
     @field_validator("options")
