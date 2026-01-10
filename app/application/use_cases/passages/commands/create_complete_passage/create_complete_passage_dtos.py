@@ -3,8 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.domain.entities.passage import Passage
-from app.domain.entities.question import QuestionType
+from app.domain.aggregates.passage import Passage, QuestionType
 
 
 class QuestionOptionDTO(BaseModel):

@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.domain.entities.question import QuestionType
-from app.domain.entities.test import TestType
+from app.domain.aggregates.passage import QuestionType
+from app.domain.aggregates.test import TestType
 
 
 class ExtractedCorrectAnswer(BaseModel):

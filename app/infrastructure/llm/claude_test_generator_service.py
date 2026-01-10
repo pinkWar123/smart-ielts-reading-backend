@@ -15,8 +15,8 @@ from app.application.use_cases.tests.queries.extract_test.extract_test_from_imag
     TestMetadata,
 )
 from app.common.settings import Settings
-from app.domain.entities.question import QuestionType
-from app.domain.entities.test import TestType
+from app.domain.aggregates.passage import QuestionType
+from app.domain.aggregates.test import TestType
 
 
 class ClaudeTestGeneratorService(ITestGeneratorService, ABC):

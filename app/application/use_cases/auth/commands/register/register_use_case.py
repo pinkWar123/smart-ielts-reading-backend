@@ -4,7 +4,7 @@ from app.application.use_cases.auth.commands.register.register_dto import (
     RegisterResponse,
 )
 from app.application.use_cases.base.use_case import UseCase
-from app.domain.entities.user import User
+from app.domain.aggregates.users.user import User
 from app.domain.errors.user_errors import (
     EmailAlreadyBeenUsedError,
     UsernameAlreadyExistsError,

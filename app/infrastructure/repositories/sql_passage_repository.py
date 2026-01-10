@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.passage import Passage
+from app.domain.aggregates.passage import Passage, Question, QuestionGroup, QuestionType
 from app.domain.repositories.passage_repository import PassageRepositoryInterface
 from app.infrastructure.persistence.models import PassageModel as DBPassageModel
 
@@ -95,7 +95,7 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
                 end_question_number=qg.end_question_number,
                 order_in_passage=qg.order_in_passage,
                 options=(
-                    [opt.model_dump() for opt in qg.options] if qg.options else None
+                    [opt.model_dump() for opt in qg.options] if qg.options else []
                 ),
             )
             temp_id_to_qg_model[qg.id] = qg_model
@@ -290,7 +290,6 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
         self, passage_model: DBPassageModel
     ) -> Passage:
         """Convert passage model to domain entity with questions and groups"""
-        from app.domain.entities.question import Question, QuestionGroup, QuestionType
         from app.domain.value_objects.question_value_objects import (
             CorrectAnswer,
             Option,
@@ -300,7 +299,7 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
         question_groups = []
         if passage_model.question_groups:
             for qg in passage_model.question_groups:
-                group_options = None
+                group_options = []
                 if qg.options:
                     group_options = [Option(**opt) for opt in qg.options]
 
@@ -313,6 +312,7 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
                         end_question_number=qg.end_question_number,
                         order_in_passage=qg.order_in_passage,
                         options=group_options,
+                        questions=[],
                     )
                 )
 

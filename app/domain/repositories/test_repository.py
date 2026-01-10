@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from app.domain.entities.test import Test
+from app.domain.aggregates.test import Test
 from app.infrastructure.persistence.models import TestModel
 
 

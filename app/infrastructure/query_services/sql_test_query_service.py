@@ -43,7 +43,10 @@ class SQLTestQueryService(TestQueryService):
     """SQL implementation using JOIN for efficient data retrieval"""
 
     async def get_paginated_full_tests(
-        self, page: int, page_number: int, status: Optional[TestStatus] = TestStatus.PUBLISHED
+        self,
+        page: int,
+        page_number: int,
+        status: Optional[TestStatus] = TestStatus.PUBLISHED,
     ) -> PaginatedFullTestsQueryModel:
         base_stmt = (
             select(TestModel)
@@ -87,7 +90,11 @@ class SQLTestQueryService(TestQueryService):
         return total_items
 
     async def get_paginated_single_tests_with_question_types(
-        self, page: int, page_number: int, question_types: Optional[List[QuestionType]], status: Optional[TestStatus] = TestStatus.PUBLISHED
+        self,
+        page: int,
+        page_number: int,
+        question_types: Optional[List[QuestionType]],
+        status: Optional[TestStatus] = TestStatus.PUBLISHED,
     ) -> PaginatedTestsWithQuestionTypesQueryModel:
         # Step 1: Build query to get distinct test IDs that match the filter
         base_stmt = (

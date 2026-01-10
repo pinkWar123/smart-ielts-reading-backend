@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from app.domain.entities.refresh_token import RefreshToken
+from app.domain.aggregates.users.refresh_token import RefreshToken
 from app.infrastructure.persistence.models import UserModel
 from app.infrastructure.persistence.models.refresh_token_model import RefreshTokenModel
 

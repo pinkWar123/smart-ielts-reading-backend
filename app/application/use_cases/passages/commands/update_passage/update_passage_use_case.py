@@ -124,7 +124,10 @@ class UpdatePassageUseCase:
             # Create correct answer value object
             # Transform request format to domain model format
             correct_answer_data = q_dto.correct_answer
-            if "acceptable_answers" in correct_answer_data and correct_answer_data["acceptable_answers"]:
+            if (
+                "acceptable_answers" in correct_answer_data
+                and correct_answer_data["acceptable_answers"]
+            ):
                 # Request format: {'answer': 'X', 'acceptable_answers': ['X', 'Y', 'Z']}
                 # Transform to domain format: {'value': ['X', 'Y', 'Z']}
                 correct_answer = CorrectAnswer(

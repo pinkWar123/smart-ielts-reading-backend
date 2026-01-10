@@ -3,7 +3,7 @@ from app.application.use_cases.tests.commands.create_test.create_test_dtos impor
     CreateTestRequest,
     TestResponse,
 )
-from app.domain.entities.test import Test, TestStatus
+from app.domain.aggregates.test import Test, TestStatus
 from app.domain.repositories.test_repository import TestRepositoryInterface
 
 

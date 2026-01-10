@@ -78,7 +78,10 @@ async def get_paginated_single_tests(
     use_cases: TestUseCases = Depends(get_test_use_cases),
 ):
     query = GetPaginatedSingleTestsQuery(
-        page=page, page_size=page_size, question_types=question_types, status=test_status
+        page=page,
+        page_size=page_size,
+        question_types=question_types,
+        status=test_status,
     )
     return await use_cases.get_paginated_single_tests.execute(query)
 
@@ -95,7 +98,9 @@ async def get_paginated_full_tests(
     test_status: Optional[TestStatus] = TestStatus.PUBLISHED,
     use_cases: TestUseCases = Depends(get_test_use_cases),
 ):
-    query = GetPaginatedFullTestsQuery(page=page, page_size=page_size, status=test_status)
+    query = GetPaginatedFullTestsQuery(
+        page=page, page_size=page_size, status=test_status
+    )
     return await use_cases.get_paginated_full_tests.execute(query)
 
 

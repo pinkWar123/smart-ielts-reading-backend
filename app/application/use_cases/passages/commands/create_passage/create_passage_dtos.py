@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.domain.entities.passage import Passage
+from app.domain.aggregates.passage import Passage
 
 
 class CreatePassageRequest(BaseModel):

@@ -3,7 +3,7 @@ from typing import List
 from fastapi import Depends, HTTPException
 from starlette import status
 
-from app.domain.entities.user import User, UserRole
+from app.domain.aggregates.users.user import UserRole
 from app.presentation.security.auth_security import verify_token
 
 

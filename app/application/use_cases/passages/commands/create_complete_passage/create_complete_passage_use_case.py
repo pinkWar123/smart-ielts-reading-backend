@@ -3,8 +3,7 @@ from app.application.use_cases.passages.commands.create_complete_passage.create_
     CompletePassageResponse,
     CreateCompletePassageRequest,
 )
-from app.domain.entities.passage import Passage
-from app.domain.entities.question import Question, QuestionGroup
+from app.domain.aggregates.passage import Passage, Question, QuestionGroup
 from app.domain.repositories.passage_repository import PassageRepositoryInterface
 from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
 

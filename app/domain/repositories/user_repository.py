@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from app.domain.entities.passage import Passage
-from app.domain.entities.user import User
+from app.domain.aggregates.users.user import User
 from app.infrastructure.persistence.models import UserModel
 
 

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domain.entities.test import Test, TestStatus, TestType
+from app.domain.aggregates.test import Test, TestStatus, TestType
 from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.repositories.test_repository import TestRepositoryInterface
 from app.infrastructure.persistence.models.passage_model import PassageModel

@@ -7,8 +7,8 @@ from jose import jwt
 
 from app.application.services.token_service import TokenService
 from app.common.utils.time_helper import TimeHelper
-from app.domain.entities.refresh_token import RefreshToken
-from app.domain.entities.user import User
+from app.domain.aggregates.users.refresh_token import RefreshToken
+from app.domain.aggregates.users.user import User
 from app.domain.errors.jwt_errors import (
     JwtTokenExpiredError,
     JwtTokenInvalidError,

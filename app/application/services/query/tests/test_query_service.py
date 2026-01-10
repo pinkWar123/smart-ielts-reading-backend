@@ -77,12 +77,19 @@ class TestQueryService(ABC):
 
     @abstractmethod
     async def get_paginated_single_tests_with_question_types(
-        self, page: int, page_number: int, question_types: Optional[List[QuestionType]], status: Optional[TestStatus] = TestStatus.PUBLISHED
+        self,
+        page: int,
+        page_number: int,
+        question_types: Optional[List[QuestionType]],
+        status: Optional[TestStatus] = TestStatus.PUBLISHED,
     ) -> PaginatedTestsWithQuestionTypesQueryModel:
         pass
 
     @abstractmethod
     async def get_paginated_full_tests(
-        self, page: int, page_number: int, status: Optional[TestStatus] = TestStatus.PUBLISHED
+        self,
+        page: int,
+        page_number: int,
+        status: Optional[TestStatus] = TestStatus.PUBLISHED,
     ) -> PaginatedFullTestsQueryModel:
         pass

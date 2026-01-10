@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from app.domain.aggregates.passage import Passage, Question, QuestionGroup, QuestionType
-from app.domain.entities.test import TestStatus, TestType
+from app.domain.aggregates.test import TestStatus, TestType
 from app.domain.value_objects.question_value_objects import Option
 
 

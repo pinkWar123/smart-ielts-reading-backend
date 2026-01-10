@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, Enum, String
 from sqlalchemy.orm import relationship
 
-from app.domain.entities.user import User, UserRole
+from app.domain.aggregates.users.user import User, UserRole
 from app.infrastructure.persistence.models.base import BaseModel
 
 

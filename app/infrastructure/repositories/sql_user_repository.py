@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.operators import or_
 
-from app.domain.entities.user import User
+from app.domain.aggregates.users.user import User
 from app.domain.repositories.user_repository import UserRepositoryInterface
 from app.infrastructure.persistence.models import UserModel
 

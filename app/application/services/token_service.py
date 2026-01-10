@@ -2,8 +2,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Optional, Tuple
 
 from app.common.settings import Settings
-from app.domain.entities.refresh_token import RefreshToken
-from app.domain.entities.user import User
+from app.domain.aggregates.users.refresh_token import RefreshToken
+from app.domain.aggregates.users.user import User
 from app.domain.repositories.refresh_token_repository import (
     RefreshTokenRepositoryInterface,
 )

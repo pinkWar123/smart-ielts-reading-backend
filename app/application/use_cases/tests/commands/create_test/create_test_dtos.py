@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.domain.entities.test import Test, TestStatus, TestType
+from app.domain.aggregates.test import Test, TestStatus, TestType
 
 
 class CreateTestRequest(BaseModel):
