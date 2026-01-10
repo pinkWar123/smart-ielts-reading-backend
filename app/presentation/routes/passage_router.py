@@ -141,7 +141,7 @@ async def get_all_passages(
 
 
 @router.get(
-    "{passage_id}",
+    "/{passage_id}",
     response_model=GetPassageDetailByIdResponse,
     description="Get Passage Detail by ID",
 )

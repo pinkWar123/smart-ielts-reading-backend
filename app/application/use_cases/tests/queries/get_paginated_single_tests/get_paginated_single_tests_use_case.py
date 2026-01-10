@@ -22,6 +22,7 @@ class GetPaginatedSingleTestsUseCase(
             page=request.page,
             page_number=request.page_size,
             question_types=request.question_types,
+            status=request.status
         )
 
         test_dtos = [

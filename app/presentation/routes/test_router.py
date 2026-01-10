@@ -73,11 +73,12 @@ async def get_all_tests(
 async def get_paginated_single_tests(
     page: int = 1,
     page_size: int = 10,
+    test_status: Optional[TestStatus] = TestStatus.PUBLISHED,
     question_types: Optional[List[QuestionType]] = Query(None),
     use_cases: TestUseCases = Depends(get_test_use_cases),
 ):
     query = GetPaginatedSingleTestsQuery(
-        page=page, page_size=page_size, question_types=question_types
+        page=page, page_size=page_size, question_types=question_types, status=test_status
     )
     return await use_cases.get_paginated_single_tests.execute(query)
 
@@ -91,9 +92,10 @@ async def get_paginated_single_tests(
 async def get_paginated_full_tests(
     page: int = 1,
     page_size: int = 10,
+    test_status: Optional[TestStatus] = TestStatus.PUBLISHED,
     use_cases: TestUseCases = Depends(get_test_use_cases),
 ):
-    query = GetPaginatedFullTestsQuery(page=page, page_size=page_size)
+    query = GetPaginatedFullTestsQuery(page=page, page_size=page_size, status=test_status)
     return await use_cases.get_paginated_full_tests.execute(query)
 
 

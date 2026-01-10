@@ -4,10 +4,12 @@ from pydantic import BaseModel
 
 from app.common.pagination import PaginatedResponse, PaginationParams
 from app.domain.aggregates.passage import QuestionType
+from app.domain.aggregates.test import TestStatus
 
 
 class GetPaginatedSingleTestsQuery(PaginationParams):
     question_types: Optional[List[QuestionType]]
+    status: TestStatus
 
 
 class TestDTO(BaseModel):

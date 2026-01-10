@@ -93,7 +93,7 @@ class UpdatePassageUseCase:
 
         # Create question groups
         for qg_dto in request.question_groups:
-            options = None
+            options = []
             if qg_dto.options:
                 options = [
                     Option(label=opt.label, text=opt.text) for opt in qg_dto.options
@@ -121,13 +121,31 @@ class UpdatePassageUseCase:
                     Option(label=opt.label, text=opt.text) for opt in q_dto.options
                 ]
 
+            # Create correct answer value object
+            # Transform request format to domain model format
+            correct_answer_data = q_dto.correct_answer
+            if "acceptable_answers" in correct_answer_data and correct_answer_data["acceptable_answers"]:
+                # Request format: {'answer': 'X', 'acceptable_answers': ['X', 'Y', 'Z']}
+                # Transform to domain format: {'value': ['X', 'Y', 'Z']}
+                correct_answer = CorrectAnswer(
+                    value=correct_answer_data["acceptable_answers"]
+                )
+            elif "value" in correct_answer_data:
+                # Already in correct format
+                correct_answer = CorrectAnswer(**correct_answer_data)
+            else:
+                # Fallback: use 'answer' field as single value
+                correct_answer = CorrectAnswer(
+                    value=correct_answer_data.get("answer", "")
+                )
+
             question = Question(
                 question_group_id=q_dto.question_group_id,
                 question_number=q_dto.question_number,
                 question_type=q_dto.question_type,
                 question_text=q_dto.question_text,
                 options=options,
-                correct_answer=CorrectAnswer(**q_dto.correct_answer),
+                correct_answer=correct_answer,
                 explanation=q_dto.explanation,
                 instructions=q_dto.instructions,
                 points=q_dto.points,

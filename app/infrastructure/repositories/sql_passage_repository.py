@@ -224,6 +224,12 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
             delete(QuestionModel).where(QuestionModel.passage_id == passage.id)
         )
 
+        # Flush to ensure deletions are executed before we add new items
+        await self.session.flush()
+
+        # Expire the collections so they're reloaded as empty
+        await self.session.refresh(passage_model, ["question_groups", "questions"])
+
         # Update passage fields
         passage_model.title = passage.title
         passage_model.content = passage.content

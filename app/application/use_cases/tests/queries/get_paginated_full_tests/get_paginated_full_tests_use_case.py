@@ -17,7 +17,7 @@ class GetPaginatedFullTestsUseCase(
         self, request: GetPaginatedFullTestsQuery
     ) -> GetPaginatedFullTestsResponse:
         tests = await self.test_query_service.get_paginated_full_tests(
-            page=request.page, page_number=request.page_size
+            page=request.page, page_number=request.page_size, status=request.status
         )
 
         test_dtos = [FullTestDTO(id=test.id, title=test.title) for test in tests.data]
