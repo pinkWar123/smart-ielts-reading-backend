@@ -1,8 +1,10 @@
 from .attempt_model import AttemptModel, AttemptStatus
 from .base import Base, BaseModel
+from .class_model import ClassModel
 from .passage_model import PassageModel
 from .question_model import QuestionGroupModel, QuestionModel, QuestionType
 from .refresh_token_model import RefreshTokenModel
+from .session_model import SessionModel
 from .test_model import TestModel, TestPassageAssociation, TestStatus, TestType
 from .user_model import UserModel, UserRole
 
@@ -11,6 +13,8 @@ __all__ = [
     "Base",
     "UserModel",
     "UserRole",
+    "ClassModel",
+    "SessionModel",
     "PassageModel",
     "QuestionModel",
     "QuestionGroupModel",
