@@ -3,7 +3,7 @@ from app.domain.errors.error_codes import ErrorCode
 
 
 class ApplicationError(Error):
-    """Base class for application-layer errors (HTTP-level concerns)"""
+    """Base class_ for application-layer errors (HTTP-level concerns)"""
 
     pass
 

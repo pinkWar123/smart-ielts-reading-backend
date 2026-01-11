@@ -121,5 +121,5 @@ async def close_database():
         _session_factory = None
 
 
-# Base class for SQLAlchemy models
+# Base class_ for SQLAlchemy models
 Base = declarative_base()

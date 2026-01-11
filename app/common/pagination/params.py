@@ -53,7 +53,7 @@ class SortableParams(PaginationParams):
     """
     Pagination with sorting support.
 
-    Extend this class and override sort_by field with specific Enum for your use case.
+    Extend this class_ and override sort_by field with specific Enum for your use case.
     """
 
     sort_by: Optional[str] = Field(

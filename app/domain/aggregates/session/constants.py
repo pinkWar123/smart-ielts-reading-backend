@@ -1,0 +1,9 @@
+"""Session aggregate constants"""
+
+# Session title constraints
+MIN_SESSION_TITLE_LENGTH = 1
+MAX_SESSION_TITLE_LENGTH = 200
+
+# Connection status
+CONNECTION_STATUS_CONNECTED = "CONNECTED"
+CONNECTION_STATUS_DISCONNECTED = "DISCONNECTED"

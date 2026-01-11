@@ -11,7 +11,7 @@ from app.domain.repositories.refresh_token_repository import (
 
 class TokenService(metaclass=ABCMeta):
     """
-    Abstract base class for token management services.
+    Abstract base class_ for token management services.
 
     This service handles the creation, validation, revocation, and regeneration of access
     and refresh tokens. Implementations should support token encoding/decoding and manage
