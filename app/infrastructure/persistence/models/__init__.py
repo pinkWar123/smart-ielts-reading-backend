@@ -1,6 +1,7 @@
 from .attempt_model import AttemptModel, AttemptStatus
 from .base import Base, BaseModel
 from .class_model import ClassModel
+from .class_student_association import ClassStudentAssociation
 from .passage_model import PassageModel
 from .question_model import QuestionGroupModel, QuestionModel, QuestionType
 from .refresh_token_model import RefreshTokenModel
@@ -14,6 +15,7 @@ __all__ = [
     "UserModel",
     "UserRole",
     "ClassModel",
+    "ClassStudentAssociation",
     "SessionModel",
     "PassageModel",
     "QuestionModel",

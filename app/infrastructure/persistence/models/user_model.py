@@ -28,6 +28,17 @@ class UserModel(BaseModel):
     )
     attempts = relationship("AttemptModel", back_populates="student")
     refresh_tokens = relationship("RefreshTokenModel", back_populates="user")
+    class_associations = relationship(
+        "ClassStudentAssociation",
+        back_populates="student",
+        cascade="all, delete-orphan",
+    )
+    enrolled_classes = relationship(
+        "ClassModel",
+        secondary="class_students",
+        back_populates="students",
+        viewonly=True,
+    )
 
     def to_domain(self):
         return User(

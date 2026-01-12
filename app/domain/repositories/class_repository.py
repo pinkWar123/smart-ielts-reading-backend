@@ -92,14 +92,14 @@ class ClassRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def is_student_enrolled_in_any_class(self, student_id: str) -> bool:
+    async def is_class_name_already_used(self, class_name: str) -> bool:
         """
-        Check if a student is enrolled in any class_
+        Check if a class name is already used
 
         Args:
-            student_id: The student ID
+            class_name: The class name to check
 
         Returns:
-            True if enrolled in at least one class_, False otherwise
+            True if the class name is already used, False otherwise
         """
         pass
