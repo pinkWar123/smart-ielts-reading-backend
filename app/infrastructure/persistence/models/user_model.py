@@ -28,6 +28,17 @@ class UserModel(BaseModel):
     )
     attempts = relationship("AttemptModel", back_populates="student")
     refresh_tokens = relationship("RefreshTokenModel", back_populates="user")
+    teaching_associations = relationship(
+        "ClassTeacherAssociation",
+        back_populates="teacher",
+        cascade="all, delete-orphan",
+    )
+    taught_classes = relationship(
+        "ClassModel",
+        secondary="class_teachers",
+        back_populates="teachers",
+        viewonly=True,
+    )
     class_associations = relationship(
         "ClassStudentAssociation",
         back_populates="student",

@@ -12,8 +12,8 @@ class ClassModel(BaseModel):
     SQLAlchemy model for teaching classes
 
     Relationships:
+    - Many-to-many with teachers via class_teachers association table
     - Many-to-many with students via class_students association table
-    - Indexed on teacher_id for fast teacher queries
     - Indexed on status for filtering active/archived classes
     """
 
@@ -21,16 +21,23 @@ class ClassModel(BaseModel):
 
     name = Column(String(100), nullable=False, index=True)
     description = Column(Text)
-    teacher_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     status = Column(
         Enum(ClassStatus), default=ClassStatus.ACTIVE, nullable=False, index=True
     )
     updated_at = Column(DateTime(timezone=True))
 
     # Relationships
-    teacher = relationship("UserModel", foreign_keys=[teacher_id])
     sessions = relationship(
         "SessionModel", back_populates="class_", cascade="all, delete-orphan"
+    )
+    teacher_associations = relationship(
+        "ClassTeacherAssociation", back_populates="class_", cascade="all, delete-orphan"
+    )
+    teachers = relationship(
+        "UserModel",
+        secondary="class_teachers",
+        back_populates="taught_classes",
+        viewonly=True,
     )
     student_associations = relationship(
         "ClassStudentAssociation", back_populates="class_", cascade="all, delete-orphan"
@@ -50,7 +57,7 @@ class ClassModel(BaseModel):
             id=self.id,
             name=self.name,
             description=self.description,
-            teacher_id=self.teacher_id,
+            teacher_ids=[assoc.teacher_id for assoc in self.teacher_associations],
             student_ids=[assoc.student_id for assoc in self.student_associations],
             status=self.status,
             created_at=self.created_at,

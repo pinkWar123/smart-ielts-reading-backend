@@ -9,6 +9,7 @@ from app.common.utils.time_helper import TimeHelper
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
+    TEACHER = "TEACHER"
     STUDENT = "STUDENT"
 
 
