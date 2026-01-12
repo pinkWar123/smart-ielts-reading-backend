@@ -32,6 +32,26 @@ class StudentNotInClassError(Error):
         )
 
 
+class NoPermissionToCreateClassError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to create a class",
+            ErrorCode.FORBIDDEN,
+        )
+
+
+class NotATeacherError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} is neither a teacher nor an admin", ErrorCode.FORBIDDEN
+        )
+
+
+class NotAStudent(Error):
+    def __init__(self, user_id: str):
+        super().__init__(f"User {user_id} is not a student", ErrorCode.FORBIDDEN)
+
+
 class ClassAlreadyArchivedError(Error):
     def __init__(self, class_id: str):
         super().__init__(f"Class {class_id} is already archived", ErrorCode.CONFLICT)

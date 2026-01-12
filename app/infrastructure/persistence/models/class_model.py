@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.domain.aggregates.class_.class_status import ClassStatus
 from app.infrastructure.persistence.models.base import BaseModel
@@ -24,7 +25,9 @@ class ClassModel(BaseModel):
     status = Column(
         Enum(ClassStatus), default=ClassStatus.ACTIVE, nullable=False, index=True
     )
-    updated_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True))
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
     sessions = relationship(
@@ -61,5 +64,6 @@ class ClassModel(BaseModel):
             student_ids=[assoc.student_id for assoc in self.student_associations],
             status=self.status,
             created_at=self.created_at,
+            created_by=self.created_by,
             updated_at=self.updated_at,
         )

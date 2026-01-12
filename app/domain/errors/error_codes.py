@@ -8,6 +8,7 @@ class ErrorCode(Enum):
     CONFLICT = "CONFLICT"
     BAD_REQUEST = "BAD_REQUEST"
     INTERNAL_ERROR = "INTERNAL_ERROR"
+    FORBIDDEN = "FORBIDDEN"
 
     def __init__(self, code: str):
         self.code = code

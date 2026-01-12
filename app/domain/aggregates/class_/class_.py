@@ -51,6 +51,7 @@ class Class(BaseModel):
     status: ClassStatus = Field(default=ClassStatus.ACTIVE)
     created_at: datetime = Field(default_factory=TimeHelper.utc_now)
     updated_at: Optional[datetime] = None
+    created_by: str
 
     def enroll_student(self, student_id: str) -> None:
         """

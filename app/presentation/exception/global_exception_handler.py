@@ -17,6 +17,7 @@ HTTP_STATUS_MAPPINGS: Dict[ErrorCode, int] = {
     ErrorCode.UNAUTHORIZED: 401,
     ErrorCode.CONFLICT: 409,
     ErrorCode.BAD_REQUEST: 400,
+    ErrorCode.FORBIDDEN: 403,
     ErrorCode.INTERNAL_ERROR: 500,
 }
 
