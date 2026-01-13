@@ -158,7 +158,7 @@ async def create_test(
     The test is created with status DRAFT and can have passages added to it.
     Total questions and points are initially 0 and will be updated as passages are added.
     """
-    return await use_cases.create_test.execute(request, current_user["user_id"])
+    return await use_cases.create_test.execute(request)
 
 
 @router.post(
@@ -199,7 +199,7 @@ async def add_passage_to_test(
 
     The test's total_questions and total_points are automatically updated based on the passage.
     """
-    return await use_cases.add_passage_to_test.execute(test_id, request)
+    return await use_cases.add_passage_to_test.execute(test_id)
 
 
 @router.post(

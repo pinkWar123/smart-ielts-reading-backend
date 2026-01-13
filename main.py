@@ -8,6 +8,7 @@ from app.common.settings import settings
 from app.container import container
 from app.presentation.exception.global_exception_handler import setup_exception_handlers
 from app.presentation.routes.auth_router import router as auth_router
+from app.presentation.routes.class_router import router as class_router
 from app.presentation.routes.ocr_router import router as ocr_router
 from app.presentation.routes.passage_router import router as passage_router
 from app.presentation.routes.test_router import router as test_router
@@ -57,6 +58,7 @@ v1_router.include_router(passage_router, prefix="/passages", tags=["Passages"])
 v1_router.include_router(test_router, prefix="/tests", tags=["Tests"])
 v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 v1_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
+v1_router.include_router(class_router, prefix="/classes", tags=["Classes"])
 
 app.include_router(v1_router)
 

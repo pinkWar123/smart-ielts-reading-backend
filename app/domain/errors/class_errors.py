@@ -1,5 +1,7 @@
 """Domain errors for Class aggregate"""
 
+from typing import List
+
 from app.domain.errors.domain_errors import Error
 from app.domain.errors.error_codes import ErrorCode
 
@@ -44,6 +46,20 @@ class NotATeacherError(Error):
     def __init__(self, user_id: str):
         super().__init__(
             f"User {user_id} is neither a teacher nor an admin", ErrorCode.FORBIDDEN
+        )
+
+
+class NoTeachersError(Error):
+    def __init__(self, teacher_ids: List[str]):
+        super().__init__(
+            f"None of users with ids {teacher_ids} are teachers", ErrorCode.BAD_REQUEST
+        )
+
+
+class NoStudentsError(Error):
+    def __init__(self, student_ids: List[str]):
+        super().__init__(
+            f"None of users with ids {student_ids} are students", ErrorCode.BAD_REQUEST
         )
 
 

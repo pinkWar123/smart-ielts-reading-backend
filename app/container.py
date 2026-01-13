@@ -12,6 +12,9 @@ from app.application.use_cases.auth.commands.register.register_use_case import (
 from app.application.use_cases.auth.queries.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
+from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
+    CreateClassUseCase,
+)
 from app.application.use_cases.images.queries.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
@@ -74,6 +77,8 @@ from app.infrastructure.query_services.sql_passage_query_service import (
 from app.infrastructure.query_services.sql_test_query_service import (
     SQLTestQueryService,
 )
+from app.infrastructure.query_services.sql_user_query_service import SQLUserQueryService
+from app.infrastructure.repositories.sql_class_repository import SQLClassRepository
 from app.infrastructure.repositories.sql_passage_repository import (
     SQLPassageRepositoryInterface,
 )
@@ -109,10 +114,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     test_repository = providers.Factory(SQLTestRepository)
     user_repository = providers.Factory(SqlUserRepositoryInterface)
     refresh_token_repository = providers.Factory(SQLRefreshTokenRepositoryInterface)
+    class_repository = providers.Factory(SQLClassRepository)
 
     # Query Services (for optimized reads)
     test_query_service = providers.Factory(SQLTestQueryService)
     passage_query_service = providers.Factory(SqlPassageQueryService)
+    user_query_service = providers.Factory(SQLUserQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -221,6 +228,14 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     get_paginated_full_tests_use_case = providers.Factory(
         GetPaginatedFullTestsUseCase, test_query_service=test_query_service
+    )
+
+    # class use cases
+    create_class_use_case = providers.Factory(
+        CreateClassUseCase,
+        user_repo=user_repository,
+        class_repo=class_repository,
+        user_query_service=user_query_service,
     )
 
 

@@ -23,6 +23,12 @@ class SimpleUseCase(ABC):
         pass
 
 
+class AuthenticatedUseCase(ABC, Generic[RequestType, ResponseType]):
+    @abstractmethod
+    def execute(self, request: RequestType, user_id: str) -> ResponseType:
+        pass
+
+
 class QueryUseCase(ABC, Generic[ResponseType]):
     """Use case interface for query operations that return data but take no input."""
 
