@@ -1,11 +1,16 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 
 from app.application.services.query.classes.class_query_model import ClassSortField
 from app.application.use_cases.classes.commands.create_class.create_class_dto import (
     CreateClassRequest,
     CreateClassResponse,
+)
+from app.application.use_cases.classes.commands.enroll_student.enroll_student_dto import (
+    EnrollStudentRequest,
+    EnrollStudentResponse,
 )
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_dto import (
     GetClassByIdQuery,
@@ -100,8 +105,38 @@ async def create_class(
         student_ids=request.student_ids,
     )
 
-    print(current_user)
-
     return await use_cases.create_class_use_case.execute(
         create_class_request, user_id=current_user["user_id"]
+    )
+
+
+class EnrollRequest(BaseModel):
+    student_id: str
+
+
+@router.post(
+    "{class_id}/enroll",
+    response_model=EnrollStudentResponse,
+    summary="Enroll Student in Class",
+    description="""
+    Enroll a student in a class.
+    The creator must be either an ADMIN or a teacher.
+    If he is a teacher, he must be in the list of teachers who are teaching that class
+    """,
+    responses={
+        400: {"description": "Invalid request"},
+        404: {"description": "Not found"},
+        422: {"description": "Validation error"},
+        403: {"description": "Forbidden"},
+    },
+)
+async def enroll_student(
+    class_id: str,
+    request: EnrollRequest,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    command = EnrollStudentRequest(class_id=class_id, student_id=request.student_id)
+    return await use_cases.enroll_student_use_case.execute(
+        request=command, user_id=current_user["user_id"]
     )

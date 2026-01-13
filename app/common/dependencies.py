@@ -18,6 +18,9 @@ from app.application.use_cases.auth.queries.get_current_user.get_current_user_us
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
+from app.application.use_cases.classes.commands.enroll_student.enroll_student_use_case import (
+    EnrollStudentUseCase,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
 )
@@ -113,6 +116,7 @@ class ClassUseCases:
     create_class_use_case: CreateClassUseCase
     list_classes_use_case: ListClassesUseCase
     get_class_by_id_use_case: GetClassByIdUseCase
+    enroll_student_use_case: EnrollStudentUseCase
 
 
 # Test-related dependencies
@@ -243,6 +247,11 @@ async def get_class_use_cases(
         ),
         get_class_by_id_use_case=container.get_class_by_id_use_case(
             class_query_service=class_query_service
+        ),
+        enroll_student_use_case=container.enroll_student_use_case(
+            class_query_service=class_query_service,
+            class_repo=class_repo,
+            user_repo=user_repo,
         ),
     )
 

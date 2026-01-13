@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from app.application.services.common.user_dto import UserDto
-from app.domain.aggregates.class_ import ClassStatus
+from app.domain.aggregates.class_ import Class, ClassStatus
 from app.domain.aggregates.users.user import User
 
 
@@ -42,3 +42,15 @@ class ClassDetailQueryModel(BaseModel):
     created_by: UserDto | None
     students: list[UserDto]
     teachers: list[UserDto]
+
+    def to_domain(self):
+        return Class(
+            id=self.id,
+            name=self.name,
+            description=self.description,
+            status=self.status,
+            created_at=self.created_at,
+            created_by=self.created_by.id,
+            student_ids=[student.id for student in self.students],
+            teacher_ids=[teacher.id for teacher in self.teachers],
+        )

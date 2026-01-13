@@ -42,6 +42,14 @@ class NoPermissionToCreateClassError(Error):
         )
 
 
+class NoPermissionToAddStudentError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to add a student to a class",
+            ErrorCode.FORBIDDEN,
+        )
+
+
 class NotATeacherError(Error):
     def __init__(self, user_id: str):
         super().__init__(

@@ -15,6 +15,9 @@ from app.application.use_cases.auth.queries.get_current_user.get_current_user_us
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
+from app.application.use_cases.classes.commands.enroll_student.enroll_student_use_case import (
+    EnrollStudentUseCase,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
 )
@@ -254,6 +257,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     get_class_by_id_use_case = providers.Factory(
         GetClassByIdUseCase,
         class_query_service=class_query_service,
+    )
+    enroll_student_use_case = providers.Factory(
+        EnrollStudentUseCase,
+        class_query_service=class_query_service,
+        class_repo=class_repository,
+        user_repo=user_repository,
     )
 
 
