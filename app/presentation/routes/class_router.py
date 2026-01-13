@@ -1,14 +1,69 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
 
+from fastapi import APIRouter, Depends, Query
+
+from app.application.services.query.classes.class_query_model import ClassSortField
 from app.application.use_cases.classes.commands.create_class.create_class_dto import (
     CreateClassRequest,
     CreateClassResponse,
 )
+from app.application.use_cases.classes.queries.list_classes.list_classes_dto import (
+    ListClassesQuery,
+    ListClassesResponse,
+)
 from app.common.dependencies import ClassUseCases, get_class_use_cases
+from app.common.pagination import SortOrder
 from app.domain.aggregates.users.user import UserRole
 from app.presentation.security.dependencies import RequireRoles
 
 router = APIRouter()
+
+
+@router.get(
+    "",
+    response_model=ListClassesResponse,
+    summary="List Classes",
+    description="""
+    Retrieve classes with pagination, sorting, and filtering options.
+
+    Filters:
+    - `teacher_id`: Filter classes taught by a specific teacher
+    - `name`: Search classes by name (case-insensitive partial match)
+
+    Sorting:
+    - `sort_by`: Field to sort by (name, created_at, created_by, status)
+    - `sort_order`: Sort direction (asc or desc)
+
+    Pagination:
+    - `page`: Page number (1-indexed)
+    - `page_size`: Number of items per page (max 100)
+    """,
+)
+async def list_classes(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    sort_by: ClassSortField = Query(
+        ClassSortField.CREATED_AT, description="Field to sort by"
+    ),
+    sort_order: SortOrder = Query(
+        SortOrder.DESC, description="Sort order (asc or desc)"
+    ),
+    name: Optional[str] = Query(
+        None, description="Filter by class name (partial match)"
+    ),
+    teacher_id: Optional[str] = Query(None, description="Filter by teacher ID"),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    query = ListClassesQuery(
+        teacher_id=teacher_id,
+        name=name,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+
+    return await use_cases.list_classes_use_case.execute(query)
 
 
 @router.post(

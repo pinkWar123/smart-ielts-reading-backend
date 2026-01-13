@@ -18,6 +18,9 @@ from app.application.use_cases.auth.queries.get_current_user.get_current_user_us
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
+from app.application.use_cases.classes.queries.list_classes.list_classes_use_case import (
+    ListClassesUseCase,
+)
 from app.application.use_cases.images.queries.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
@@ -105,6 +108,7 @@ class OcrUseCases:
 @dataclass
 class ClassUseCases:
     create_class_use_case: CreateClassUseCase
+    list_classes_use_case: ListClassesUseCase
 
 
 # Test-related dependencies
@@ -223,12 +227,16 @@ async def get_class_use_cases(
     user_repo = container.user_repository(session=session)
     class_repo = container.class_repository(session=session)
     user_query_service = container.user_query_service(session=session)
+    class_query_service = container.class_query_service(session=session)
     return ClassUseCases(
         create_class_use_case=container.create_class_use_case(
             user_query_service=user_query_service,
             user_repo=user_repo,
             class_repo=class_repo,
-        )
+        ),
+        list_classes_use_case=container.list_classes_use_case(
+            class_query_service=class_query_service
+        ),
     )
 
 

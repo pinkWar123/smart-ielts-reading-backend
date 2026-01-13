@@ -15,6 +15,9 @@ from app.application.use_cases.auth.queries.get_current_user.get_current_user_us
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
+from app.application.use_cases.classes.queries.list_classes.list_classes_use_case import (
+    ListClassesUseCase,
+)
 from app.application.use_cases.images.queries.extract_text_from_image.extract_text_from_image_use_case import (
     ExtractTextFromImageUseCase,
 )
@@ -71,6 +74,9 @@ from app.infrastructure.llm.claude_test_generator_service import (
     ClaudeTestGeneratorService,
 )
 from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
+from app.infrastructure.query_services.sql_class_query_service import (
+    SqlClassQueryService,
+)
 from app.infrastructure.query_services.sql_passage_query_service import (
     SqlPassageQueryService,
 )
@@ -120,6 +126,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     test_query_service = providers.Factory(SQLTestQueryService)
     passage_query_service = providers.Factory(SqlPassageQueryService)
     user_query_service = providers.Factory(SQLUserQueryService)
+    class_query_service = providers.Factory(SqlClassQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -236,6 +243,10 @@ class ApplicationContainer(containers.DeclarativeContainer):
         user_repo=user_repository,
         class_repo=class_repository,
         user_query_service=user_query_service,
+    )
+    list_classes_use_case = providers.Factory(
+        ListClassesUseCase,
+        class_query_service=class_query_service,
     )
 
 
