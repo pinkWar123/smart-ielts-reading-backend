@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from app.application.services.query.classes.class_query_model import (
+    ClassDetailQueryModel,
     ClassSortField,
     ListClassesQueryModel,
 )
@@ -19,4 +20,8 @@ class ClassQueryService(ABC):
         teacher_id: Optional[str] = None,
         name: Optional[str] = None,
     ) -> PaginatedResponse[ListClassesQueryModel]:
+        pass
+
+    @abstractmethod
+    async def get_class_by_id(self, class_id: str) -> Optional[ClassDetailQueryModel]:
         pass

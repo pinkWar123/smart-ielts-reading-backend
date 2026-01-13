@@ -7,6 +7,10 @@ from app.application.use_cases.classes.commands.create_class.create_class_dto im
     CreateClassRequest,
     CreateClassResponse,
 )
+from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_dto import (
+    GetClassByIdQuery,
+    GetClassByIdResponse,
+)
 from app.application.use_cases.classes.queries.list_classes.list_classes_dto import (
     ListClassesQuery,
     ListClassesResponse,
@@ -64,6 +68,18 @@ async def list_classes(
     )
 
     return await use_cases.list_classes_use_case.execute(query)
+
+
+@router.get(
+    "/{class_id}",
+    response_model=GetClassByIdResponse,
+    summary="Get Class by ID",
+)
+async def get_class_by_id(
+    class_id: str, use_cases: ClassUseCases = Depends(get_class_use_cases)
+):
+    query = GetClassByIdQuery(id=class_id)
+    return await use_cases.get_class_by_id_use_case.execute(query)
 
 
 @router.post(

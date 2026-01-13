@@ -3,6 +3,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
+from app.application.services.common.user_dto import UserDto
 from app.domain.aggregates.class_ import ClassStatus
 from app.domain.aggregates.users.user import User
 
@@ -30,3 +31,14 @@ class ListClassesQueryModel(BaseModel):
     created_at: datetime
     created_by: User
     students: list[ListClassStudentsQueryModel]
+
+
+class ClassDetailQueryModel(BaseModel):
+    id: str
+    name: str
+    description: str
+    status: ClassStatus
+    created_at: datetime
+    created_by: UserDto | None
+    students: list[UserDto]
+    teachers: list[UserDto]

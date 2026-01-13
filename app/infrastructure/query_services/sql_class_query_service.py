@@ -1,10 +1,12 @@
 import math
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.services.common.user_dto import UserDto
 from app.application.services.query.classes.class_query_model import (
+    ClassDetailQueryModel,
     ClassSortField,
     ListClassesQueryModel,
     ListClassStudentsQueryModel,
@@ -22,8 +24,104 @@ from app.infrastructure.persistence.models.class_teacher_association import (
 
 
 class SqlClassQueryService(ClassQueryService):
+
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def get_class_by_id(self, class_id: str) -> Optional[ClassDetailQueryModel]:
+        stmt = (
+            select(
+                ClassModel.id,
+                ClassModel.name,
+                ClassModel.description,
+                ClassModel.status,
+                ClassModel.created_at,
+                UserModel,
+            )
+            .select_from(ClassModel)
+            .outerjoin(ClassStudentAssociation)
+            .outerjoin(UserModel, UserModel.id == ClassStudentAssociation.student_id)
+            .where(ClassModel.id == class_id)
+            .where(ClassModel.is_active == True)
+        )
+
+        result = await self.session.execute(stmt)
+        rows = result.fetchall()
+
+        if not rows:
+            return None
+        first_row = rows[0]
+        students: List[UserDto] = []
+
+        for row in rows:
+            user_model = row[5]
+            if user_model is not None:
+                dto = UserDto(
+                    id=user_model.id,
+                    username=user_model.username,
+                    email=user_model.email,
+                    full_name=user_model.full_name,
+                    role=user_model.role.value,
+                )
+                students.append(dto)
+
+        teacher_stmt = (
+            select(UserModel)
+            .select_from(ClassTeacherAssociation)
+            .join(UserModel, UserModel.id == ClassTeacherAssociation.teacher_id)
+            .where(ClassTeacherAssociation.class_id == class_id)
+        )
+
+        teacher_result = await self.session.execute(teacher_stmt)
+        teacher_rows = teacher_result.fetchall()
+        teachers = (
+            [
+                UserDto(
+                    id=row[0].id,
+                    username=row[0].username,
+                    email=row[0].email,
+                    full_name=row[0].full_name,
+                    role=row[0].role.value,
+                )
+                for row in teacher_rows
+            ]
+            if teacher_rows
+            else []
+        )
+
+        creator_stmt = (
+            select(UserModel)
+            .select_from(ClassModel)
+            .join(UserModel, UserModel.id == ClassModel.created_by)
+            .where(ClassModel.id == class_id)
+            .where(ClassModel.is_active == True)
+        )
+
+        creator_result = await self.session.execute(creator_stmt)
+        creator_row = creator_result.scalar_one_or_none()
+
+        if creator_row is None:
+            creator_dto = None
+        else:
+            creator = creator_row.to_domain()
+            creator_dto = UserDto(
+                id=creator.id,
+                username=creator.username,
+                email=creator.email,
+                full_name=creator.full_name,
+                role=creator.role.value,
+            )
+
+        return ClassDetailQueryModel(
+            id=first_row.id,
+            name=first_row.name,
+            description=first_row.description,
+            status=first_row.status,
+            created_at=first_row.created_at,
+            created_by=creator_dto,
+            students=students,
+            teachers=teachers,
+        )
 
     async def list_classes(
         self,
