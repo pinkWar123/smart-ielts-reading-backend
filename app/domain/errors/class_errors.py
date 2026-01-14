@@ -140,3 +140,11 @@ class CannotRemoveLastTeacherError(Error):
             f"Cannot remove the last teacher from class {class_id}. At least one teacher is required",
             ErrorCode.INVALID_DATA,
         )
+
+
+class NoPermissionToUpdateClassError(Error):
+    def __init__(self, user_id: str, class_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to update class {class_id}",
+            ErrorCode.FORBIDDEN,
+        )

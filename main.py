@@ -11,6 +11,7 @@ from app.presentation.routes.auth_router import router as auth_router
 from app.presentation.routes.class_router import router as class_router
 from app.presentation.routes.ocr_router import router as ocr_router
 from app.presentation.routes.passage_router import router as passage_router
+from app.presentation.routes.session_router import router as session_router
 from app.presentation.routes.test_router import router as test_router
 
 
@@ -59,6 +60,7 @@ v1_router.include_router(test_router, prefix="/tests", tags=["Tests"])
 v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 v1_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
 v1_router.include_router(class_router, prefix="/classes", tags=["Classes"])
+v1_router.include_router(session_router, prefix="/sessions", tags=["Sessions"])
 
 app.include_router(v1_router)
 

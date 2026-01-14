@@ -11,6 +11,7 @@ dependencies = [
     "bcrypt==5.0.0",
     "datetime>=6.0",
     "dependency-injector==4.48.3",
+    "email-validator>=2.3.0",
     "fastapi>=0.124.4",
     "greenlet>=3.3.0",
     "httpx>=0.28.1",
@@ -19,8 +20,11 @@ dependencies = [
     "psycopg>=3.3.2",
     "psycopg2-binary>=2.9.9",
     "pydantic-settings>=2.12.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "python-dotenv>=1.0.0",
     "python-jose>=3.5.0",
+    "python-multipart>=0.0.21",
     "sqlalchemy>=2.0.45",
     "uvicorn>=0.38.0",
 ]
@@ -48,3 +52,9 @@ multi_line_output = 3
 line_length = 88
 known_first_party = ["app"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[dependency-groups]
+dev = [
+    "black>=25.12.0",
+    "isort>=7.0.0",
+]

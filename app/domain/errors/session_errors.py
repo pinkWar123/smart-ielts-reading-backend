@@ -52,3 +52,11 @@ class StudentNotInSessionError(Error):
 class InvalidSessionDataError(Error):
     def __init__(self, message: str):
         super().__init__(message, ErrorCode.INVALID_DATA)
+
+
+class NoPermissionToCreateSessionError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to create sessions",
+            ErrorCode.FORBIDDEN,
+        )

@@ -27,6 +27,9 @@ from app.application.use_cases.classes.commands.remove_student.remove_student_us
 from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_use_case import (
     RemoveTeacherUseCase,
 )
+from app.application.use_cases.classes.commands.update_class.update_class_use_case import (
+    UpdateClassUseCase,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
 )
@@ -56,6 +59,18 @@ from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_pas
 )
 from app.application.use_cases.passages.queries.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
+)
+from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
+    CreateSessionUseCase,
+)
+from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_use_case import (
+    GetMySessionsUseCase,
+)
+from app.application.use_cases.sessions.queries.get_session_by_id.get_session_by_id_use_case import (
+    GetSessionByIdUseCase,
+)
+from app.application.use_cases.sessions.queries.list_sessions.list_sessions_use_case import (
+    ListSessionsUseCase,
 )
 from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to_test_use_case import (
     AddPassageToTestUseCase,
@@ -106,6 +121,7 @@ from app.infrastructure.repositories.sql_passage_repository import (
 from app.infrastructure.repositories.sql_refresh_token_repository import (
     SQLRefreshTokenRepositoryInterface,
 )
+from app.infrastructure.repositories.sql_session_repository import SQLSessionRepository
 from app.infrastructure.repositories.sql_test_repository import SQLTestRepository
 from app.infrastructure.repositories.sql_user_repository import (
     SqlUserRepositoryInterface,
@@ -136,6 +152,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     user_repository = providers.Factory(SqlUserRepositoryInterface)
     refresh_token_repository = providers.Factory(SQLRefreshTokenRepositoryInterface)
     class_repository = providers.Factory(SQLClassRepository)
+    session_repository = providers.Factory(SQLSessionRepository)
 
     # Query Services (for optimized reads)
     test_query_service = providers.Factory(SQLTestQueryService)
@@ -290,6 +307,33 @@ class ApplicationContainer(containers.DeclarativeContainer):
         class_query_service=class_query_service,
         class_repo=class_repository,
         user_repo=user_repository,
+    )
+    update_class_use_case = providers.Factory(
+        UpdateClassUseCase,
+        class_query_service=class_query_service,
+        class_repo=class_repository,
+        user_repo=user_repository,
+    )
+
+    # Session use cases
+    create_session_use_case = providers.Factory(
+        CreateSessionUseCase,
+        session_repo=session_repository,
+        class_repo=class_repository,
+        test_repo=test_repository,
+        user_repo=user_repository,
+    )
+    list_sessions_use_case = providers.Factory(
+        ListSessionsUseCase,
+        session_repo=session_repository,
+    )
+    get_session_by_id_use_case = providers.Factory(
+        GetSessionByIdUseCase,
+        session_repo=session_repository,
+    )
+    get_my_sessions_use_case = providers.Factory(
+        GetMySessionsUseCase,
+        session_repo=session_repository,
     )
 
 

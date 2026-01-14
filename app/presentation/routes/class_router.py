@@ -22,6 +22,10 @@ from app.application.use_cases.classes.commands.remove_student.remove_student_dt
 from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_dto import (
     RemoveTeacherRequest,
 )
+from app.application.use_cases.classes.commands.update_class.update_class_dto import (
+    UpdateClassRequest,
+    UpdateClassResponse,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_dto import (
     GetClassByIdQuery,
     GetClassByIdResponse,
@@ -32,6 +36,7 @@ from app.application.use_cases.classes.queries.list_classes.list_classes_dto imp
 )
 from app.common.dependencies import ClassUseCases, get_class_use_cases
 from app.common.pagination import SortOrder
+from app.domain.aggregates.class_.class_status import ClassStatus
 from app.domain.aggregates.users.user import UserRole
 from app.presentation.security.dependencies import RequireRoles
 
@@ -117,6 +122,47 @@ async def create_class(
 
     return await use_cases.create_class_use_case.execute(
         create_class_request, user_id=current_user["user_id"]
+    )
+
+
+class UpdateClassRequestBody(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[ClassStatus] = None
+
+
+@router.put(
+    "/{class_id}",
+    response_model=UpdateClassResponse,
+    summary="Update Class",
+    description="""
+    Update a class's name, description, or status.
+    The user must be either an ADMIN or a teacher in that class.
+    All fields are optional - only provide the fields you want to update.
+    """,
+    responses={
+        400: {"description": "Invalid request"},
+        404: {"description": "Class not found"},
+        422: {"description": "Validation error"},
+        403: {
+            "description": "Forbidden - User does not have permission to update this class"
+        },
+    },
+)
+async def update_class(
+    class_id: str,
+    request: UpdateClassRequestBody,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    command = UpdateClassRequest(
+        class_id=class_id,
+        name=request.name,
+        description=request.description,
+        status=request.status,
+    )
+    return await use_cases.update_class_use_case.execute(
+        request=command, user_id=current_user["user_id"]
     )
 
 

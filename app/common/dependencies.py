@@ -30,6 +30,9 @@ from app.application.use_cases.classes.commands.remove_student.remove_student_us
 from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_use_case import (
     RemoveTeacherUseCase,
 )
+from app.application.use_cases.classes.commands.update_class.update_class_use_case import (
+    UpdateClassUseCase,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
 )
@@ -53,6 +56,18 @@ from app.application.use_cases.passages.queries.get_all_passages.get_all_passage
 )
 from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_use_case import (
     GetPassageDetailByIdUseCase,
+)
+from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
+    CreateSessionUseCase,
+)
+from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_use_case import (
+    GetMySessionsUseCase,
+)
+from app.application.use_cases.sessions.queries.get_session_by_id.get_session_by_id_use_case import (
+    GetSessionByIdUseCase,
+)
+from app.application.use_cases.sessions.queries.list_sessions.list_sessions_use_case import (
+    ListSessionsUseCase,
 )
 from app.application.use_cases.tests.commands.add_passage_to_test.add_passage_to_test_use_case import (
     AddPassageToTestUseCase,
@@ -129,6 +144,15 @@ class ClassUseCases:
     remove_student_use_case: RemoveStudentUseCase
     assign_teacher_use_case: AssignTeacherUseCase
     remove_teacher_use_case: RemoveTeacherUseCase
+    update_class_use_case: UpdateClassUseCase
+
+
+@dataclass
+class SessionUseCases:
+    create_session_use_case: CreateSessionUseCase
+    list_sessions_use_case: ListSessionsUseCase
+    get_session_by_id_use_case: GetSessionByIdUseCase
+    get_my_sessions_use_case: GetMySessionsUseCase
 
 
 # Test-related dependencies
@@ -279,6 +303,39 @@ async def get_class_use_cases(
             class_query_service=class_query_service,
             class_repo=class_repo,
             user_repo=user_repo,
+        ),
+        update_class_use_case=container.update_class_use_case(
+            class_query_service=class_query_service,
+            class_repo=class_repo,
+            user_repo=user_repo,
+        ),
+    )
+
+
+async def get_session_use_cases(
+    session: AsyncSession = Depends(get_database_session),
+) -> SessionUseCases:
+    """Get SessionUseCases with session-scoped repositories."""
+    session_repo = container.session_repository(session=session)
+    class_repo = container.class_repository(session=session)
+    test_repo = container.test_repository(session=session)
+    user_repo = container.user_repository(session=session)
+
+    return SessionUseCases(
+        create_session_use_case=container.create_session_use_case(
+            session_repo=session_repo,
+            class_repo=class_repo,
+            test_repo=test_repo,
+            user_repo=user_repo,
+        ),
+        list_sessions_use_case=container.list_sessions_use_case(
+            session_repo=session_repo
+        ),
+        get_session_by_id_use_case=container.get_session_by_id_use_case(
+            session_repo=session_repo
+        ),
+        get_my_sessions_use_case=container.get_my_sessions_use_case(
+            session_repo=session_repo
         ),
     )
 
