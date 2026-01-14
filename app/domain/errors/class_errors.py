@@ -50,6 +50,14 @@ class NoPermissionToAddStudentError(Error):
         )
 
 
+class NoPermissionToRemoveStudentError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to remove a student from a class",
+            ErrorCode.FORBIDDEN,
+        )
+
+
 class NotATeacherError(Error):
     def __init__(self, user_id: str):
         super().__init__(

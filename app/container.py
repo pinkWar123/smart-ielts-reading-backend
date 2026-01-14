@@ -18,6 +18,9 @@ from app.application.use_cases.classes.commands.create_class.create_class_use_ca
 from app.application.use_cases.classes.commands.enroll_student.enroll_student_use_case import (
     EnrollStudentUseCase,
 )
+from app.application.use_cases.classes.commands.remove_student.remove_student_use_case import (
+    RemoveStudentUseCase,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
 )
@@ -260,6 +263,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     enroll_student_use_case = providers.Factory(
         EnrollStudentUseCase,
+        class_query_service=class_query_service,
+        class_repo=class_repository,
+        user_repo=user_repository,
+    )
+    remove_student_use_case = providers.Factory(
+        RemoveStudentUseCase,
         class_query_service=class_query_service,
         class_repo=class_repository,
         user_repo=user_repository,

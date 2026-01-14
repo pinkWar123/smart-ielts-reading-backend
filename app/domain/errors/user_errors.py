@@ -7,6 +7,11 @@ class UserNotFoundError(Error):
         super().__init__(message, ErrorCode.NOT_FOUND)
 
 
+class StudentNotFoundError(Error):
+    def __init__(self, message: str = "Student not found"):
+        super().__init__(message, ErrorCode.NOT_FOUND)
+
+
 class UsernameAlreadyExistsError(Error):
     def __init__(self, message: str = "User already exists"):
         super().__init__(message, ErrorCode.CONFLICT)

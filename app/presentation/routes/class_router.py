@@ -12,6 +12,9 @@ from app.application.use_cases.classes.commands.enroll_student.enroll_student_dt
     EnrollStudentRequest,
     EnrollStudentResponse,
 )
+from app.application.use_cases.classes.commands.remove_student.remove_student_dto import (
+    RemoveStudentRequest,
+)
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_dto import (
     GetClassByIdQuery,
     GetClassByIdResponse,
@@ -138,5 +141,30 @@ async def enroll_student(
 ):
     command = EnrollStudentRequest(class_id=class_id, student_id=request.student_id)
     return await use_cases.enroll_student_use_case.execute(
+        request=command, user_id=current_user["user_id"]
+    )
+
+
+class DisenrollRequest(BaseModel):
+    student_id: str
+
+
+@router.delete(
+    "/{class_id}/students",
+    summary="Remove Student from Class",
+    description="""
+        Remove a student from a class.
+        The creator must be either an ADMIN or a teacher.
+    If he is a teacher, he must be in the list of teachers who are teaching that class
+    """,
+)
+async def disenroll_student(
+    class_id: str,
+    request: DisenrollRequest,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    command = RemoveStudentRequest(class_id=class_id, student_id=request.student_id)
+    return await use_cases.remove_student_use_case.execute(
         request=command, user_id=current_user["user_id"]
     )
