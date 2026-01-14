@@ -1038,3 +1038,917 @@ Key features:
 - ✅ Full audit trail
 
 The implementation is broken into 5 clear phases, with each phase building on the previous one, making it easy to implement incrementally and test as you go.
+
+---
+
+# ADDENDUM: Session Management REST APIs + WebSocket Implementation
+
+## Overview
+
+This addendum details the implementation for 4 admin session management REST endpoints with real-time WebSocket broadcasting for efficient session state updates.
+
+**New Endpoints to Implement:**
+- `POST /api/v1/sessions/{session_id}/start-waiting` - Open waiting room (Admin/Teacher)
+- `POST /api/v1/sessions/{session_id}/start` - Start countdown (Admin/Teacher)
+- `POST /api/v1/sessions/{session_id}/complete` - Force complete (Admin/Teacher)
+- `DELETE /api/v1/sessions/{session_id}` - Delete session (Admin only)
+
+**New WebSocket Endpoint:**
+- `WS /api/v1/sessions/{session_id}/ws` - Real-time session updates
+
+## Architecture Decisions
+
+### Permissions Strategy
+- **State transitions** (start-waiting, start, complete): `RequireRoles([ADMIN, TEACHER])`
+  - Teachers can manage sessions for their classes (validated: user teaches the class)
+  - Admins have unrestricted access
+- **DELETE**: Admin-only to prevent accidental data loss
+- **IN_PROGRESS sessions**: Cannot be deleted (protect data integrity)
+
+### WebSocket Architecture
+- **Location**: `/app/infrastructure/websocket/` (infrastructure concern)
+- **Broadcasting**: Direct calls from use cases (hybrid approach)
+  - Use cases receive `ConnectionManager` via DI
+  - Broadcast after successful domain operation + persistence
+  - WebSocket is optional (no-op if no connections)
+- **Authentication**: JWT token in query parameter
+- **Auto-join**: Students auto-join session on WebSocket connect
+
+### Integration Pattern
+```
+REST Endpoint → Use Case → Domain Method → Repository.update()
+                    ↓
+            ConnectionManager.broadcast() → All WebSocket clients
+```
+
+---
+
+## Implementation Steps
+
+### Step 1: Domain Layer - Add New Errors
+
+**File**: `/app/domain/errors/session_errors.py`
+
+Add two new error classes:
+
+```python
+class NoPermissionToManageSessionError(Error):
+    """Raised when user doesn't have permission to manage a session"""
+    def __init__(self, user_id: str, session_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to manage session {session_id}",
+            ErrorCode.FORBIDDEN
+        )
+
+class CannotDeleteInProgressSessionError(Error):
+    """Raised when trying to delete an IN_PROGRESS session"""
+    def __init__(self, session_id: str):
+        super().__init__(
+            f"Cannot delete session {session_id}: session is currently IN_PROGRESS",
+            ErrorCode.CONFLICT
+        )
+```
+
+---
+
+### Step 2: Infrastructure - WebSocket Components
+
+#### 2.1 Create ConnectionManager
+
+**File**: `/app/infrastructure/websocket/connection_manager.py`
+
+```python
+import asyncio
+import logging
+from typing import Dict
+from fastapi import WebSocket
+
+logger = logging.getLogger(__name__)
+
+class ConnectionManager:
+    """
+    Manages WebSocket connections grouped by session_id
+
+    Responsibilities:
+    - Track active connections per session
+    - Broadcast messages to all clients in a session
+    - Handle connection cleanup
+    """
+
+    def __init__(self):
+        # Structure: {session_id: {user_id: WebSocket}}
+        self.active_connections: Dict[str, Dict[str, WebSocket]] = {}
+        self._lock = asyncio.Lock()
+
+    async def connect(self, session_id: str, user_id: str, websocket: WebSocket):
+        """Add a new WebSocket connection to a session"""
+        async with self._lock:
+            if session_id not in self.active_connections:
+                self.active_connections[session_id] = {}
+            self.active_connections[session_id][user_id] = websocket
+            logger.info(f"User {user_id} connected to session {session_id}")
+
+    async def disconnect(self, session_id: str, user_id: str):
+        """Remove a WebSocket connection from a session"""
+        async with self._lock:
+            if session_id in self.active_connections:
+                if user_id in self.active_connections[session_id]:
+                    del self.active_connections[session_id][user_id]
+                    logger.info(f"User {user_id} disconnected from session {session_id}")
+
+                # Clean up empty session
+                if not self.active_connections[session_id]:
+                    del self.active_connections[session_id]
+
+    async def broadcast_to_session(self, session_id: str, message: dict):
+        """Broadcast message to all connected clients in a session"""
+        if session_id not in self.active_connections:
+            return  # No one is listening - that's OK
+
+        disconnected = []
+        for user_id, websocket in self.active_connections[session_id].items():
+            try:
+                await websocket.send_json(message)
+            except Exception as e:
+                logger.warning(f"Failed to send to {user_id}: {e}")
+                disconnected.append(user_id)
+
+        # Cleanup failed connections
+        for user_id in disconnected:
+            await self.disconnect(session_id, user_id)
+
+    async def send_personal_message(self, session_id: str, user_id: str, message: dict):
+        """Send message to a specific user in a session"""
+        if session_id not in self.active_connections:
+            return
+
+        if user_id not in self.active_connections[session_id]:
+            return
+
+        try:
+            await self.active_connections[session_id][user_id].send_json(message)
+        except Exception as e:
+            logger.warning(f"Failed to send personal message to {user_id}: {e}")
+            await self.disconnect(session_id, user_id)
+
+    def get_connected_users(self, session_id: str) -> list[str]:
+        """Get list of connected user IDs in a session"""
+        if session_id not in self.active_connections:
+            return []
+        return list(self.active_connections[session_id].keys())
+
+    def is_user_connected(self, session_id: str, user_id: str) -> bool:
+        """Check if a user is connected to a session"""
+        if session_id not in self.active_connections:
+            return False
+        return user_id in self.active_connections[session_id]
+```
+
+#### 2.2 Create Message Types
+
+**File**: `/app/infrastructure/websocket/message_types.py`
+
+```python
+from datetime import datetime
+from typing import List, Literal, Optional
+from pydantic import BaseModel
+from app.domain.aggregates.session.session_status import SessionStatus
+
+# ===== Client → Server Messages =====
+
+class HeartbeatMessage(BaseModel):
+    type: Literal["heartbeat"] = "heartbeat"
+
+class DisconnectMessage(BaseModel):
+    type: Literal["disconnect"] = "disconnect"
+    reason: Optional[str] = None
+
+# ===== Server → Client Messages =====
+
+class ConnectedMessage(BaseModel):
+    type: Literal["connected"] = "connected"
+    session_id: str
+    timestamp: datetime
+
+class SessionStatusChangedMessage(BaseModel):
+    type: Literal["session_status_changed"] = "session_status_changed"
+    session_id: str
+    status: SessionStatus
+    timestamp: datetime
+
+class ParticipantJoinedMessage(BaseModel):
+    type: Literal["participant_joined"] = "participant_joined"
+    session_id: str
+    student_id: str
+    connected_count: int
+    timestamp: datetime
+
+class ParticipantDisconnectedMessage(BaseModel):
+    type: Literal["participant_disconnected"] = "participant_disconnected"
+    session_id: str
+    student_id: str
+    connected_count: int
+    timestamp: datetime
+
+class WaitingRoomOpenedMessage(BaseModel):
+    type: Literal["waiting_room_opened"] = "waiting_room_opened"
+    session_id: str
+    timestamp: datetime
+
+class SessionStartedMessage(BaseModel):
+    type: Literal["session_started"] = "session_started"
+    session_id: str
+    started_at: datetime
+    connected_students: List[str]
+    timestamp: datetime
+
+class SessionCompletedMessage(BaseModel):
+    type: Literal["session_completed"] = "session_completed"
+    session_id: str
+    completed_at: datetime
+    timestamp: datetime
+
+class ErrorMessage(BaseModel):
+    type: Literal["error"] = "error"
+    code: str
+    message: str
+```
+
+#### 2.3 WebSocket Authentication Helper
+
+**File**: `/app/infrastructure/websocket/websocket_auth.py`
+
+```python
+from typing import Optional
+from app.infrastructure.security.jwt_service import JwtService
+from app.domain.aggregates.users.user import UserRole
+from app.domain.aggregates.session.session import Session
+
+async def validate_websocket_access(
+    user_id: str,
+    role: UserRole,
+    session: Session,
+    class_repo,
+) -> bool:
+    """
+    Validate that a user has access to a session's WebSocket
+
+    Rules:
+    - Students: Must be participant in session
+    - Teachers: Must teach the class
+    - Admins: Always allowed
+    """
+    if role == UserRole.ADMIN:
+        return True
+
+    if role == UserRole.TEACHER:
+        # Check if teacher teaches the class
+        class_entity = await class_repo.get_by_id(session.class_id)
+        if class_entity and user_id in class_entity.teacher_ids:
+            return True
+        return False
+
+    if role == UserRole.STUDENT:
+        # Check if student is participant
+        return session.is_student_in_session(user_id)
+
+    return False
+```
+
+#### 2.4 WebSocket Package Init
+
+**File**: `/app/infrastructure/websocket/__init__.py`
+
+```python
+from .connection_manager import ConnectionManager
+from .message_types import (
+    ConnectedMessage,
+    SessionStatusChangedMessage,
+    ParticipantJoinedMessage,
+    ParticipantDisconnectedMessage,
+    WaitingRoomOpenedMessage,
+    SessionStartedMessage,
+    SessionCompletedMessage,
+    ErrorMessage,
+)
+
+__all__ = [
+    "ConnectionManager",
+    "ConnectedMessage",
+    "SessionStatusChangedMessage",
+    "ParticipantJoinedMessage",
+    "ParticipantDisconnectedMessage",
+    "WaitingRoomOpenedMessage",
+    "SessionStartedMessage",
+    "SessionCompletedMessage",
+    "ErrorMessage",
+]
+```
+
+---
+
+### Step 3: Application Layer - Use Cases
+
+#### 3.1 Start Waiting Phase Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/start_waiting/`
+
+**File**: `start_waiting_dto.py`
+
+```python
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
+from app.domain.aggregates.session.session_status import SessionStatus
+
+@dataclass
+class StartWaitingPhaseRequest:
+    session_id: str
+
+@dataclass
+class ParticipantDTO:
+    student_id: str
+    attempt_id: Optional[str]
+    joined_at: Optional[datetime]
+    connection_status: str
+    last_activity: Optional[datetime]
+
+@dataclass
+class StartWaitingPhaseResponse:
+    id: str
+    class_id: str
+    test_id: str
+    title: str
+    scheduled_at: datetime
+    started_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    status: SessionStatus
+    participants: List[ParticipantDTO]
+    created_by: str
+    created_at: datetime
+    updated_at: Optional[datetime]
+```
+
+**File**: `start_waiting_use_case.py`
+
+```python
+from datetime import datetime, timezone
+from app.application.use_cases.authenticated_use_case import AuthenticatedUseCase
+from app.domain.aggregates.users.user import UserRole
+from app.domain.errors.session_errors import (
+   SessionNotFoundError,
+   NoPermissionToManageSessionError,
+)
+from app.domain.errors.class_errors import ClassNotFoundError
+from app.infrastructure.web_socket import ConnectionManager, WaitingRoomOpenedMessage
+from .start_waiting_dto import (
+   StartWaitingPhaseRequest,
+   StartWaitingPhaseResponse,
+   ParticipantDTO,
+)
+
+
+class StartWaitingPhaseUseCase(
+   AuthenticatedUseCase[StartWaitingPhaseRequest, StartWaitingPhaseResponse]
+):
+   def __init__(
+           self,
+           session_repo,
+           class_repo,
+           user_repo,
+           connection_manager: ConnectionManager,
+   ):
+      self.session_repo = session_repo
+      self.class_repo = class_repo
+      self.user_repo = user_repo
+      self.connection_manager = connection_manager
+
+   async def execute(
+           self, request: StartWaitingPhaseRequest, user_id: str
+   ) -> StartWaitingPhaseResponse:
+      # 1. Validate user permissions
+      user = await self.user_repo.get_by_id(user_id)
+      if not user:
+         raise UserNotFoundError(user_id)
+
+      # 2. Get session
+      session = await self.session_repo.get_by_id(request.session_id)
+      if not session:
+         raise SessionNotFoundError(request.session_id)
+
+      # 3. Verify teacher access if not admin
+      if user.role == UserRole.TEACHER:
+         await self._validate_teacher_access(user_id, session.class_id)
+      elif user.role not in [UserRole.ADMIN, UserRole.TEACHER]:
+         raise NoPermissionToManageSessionError(user_id, request.session_id)
+
+      # 4. Execute domain method
+      session.start_waiting_phase()
+
+      # 5. Persist changes
+      updated_session = await self.session_repo.update(session)
+
+      # 6. Broadcast to WebSocket clients
+      await self.connection_manager.broadcast_to_session(
+         request.session_id,
+         WaitingRoomOpenedMessage(
+            type="waiting_room_opened",
+            session_id=request.session_id,
+            timestamp=datetime.now(timezone.utc),
+         ).dict(),
+      )
+
+      # 7. Return response DTO
+      return StartWaitingPhaseResponse(
+         id=updated_session.id,
+         class_id=updated_session.class_id,
+         test_id=updated_session.test_id,
+         title=updated_session.title,
+         scheduled_at=updated_session.scheduled_at,
+         started_at=updated_session.started_at,
+         completed_at=updated_session.completed_at,
+         status=updated_session.status,
+         participants=[
+            ParticipantDTO(
+               student_id=p.student_id,
+               attempt_id=p.attempt_id,
+               joined_at=p.joined_at,
+               connection_status=p.connection_status,
+               last_activity=p.last_activity,
+            )
+            for p in updated_session.participants
+         ],
+         created_by=updated_session.created_by,
+         created_at=updated_session.created_at,
+         updated_at=updated_session.updated_at,
+      )
+
+   async def _validate_teacher_access(self, teacher_id: str, class_id: str):
+      """Validate that teacher teaches this class"""
+      class_entity = await self.class_repo.get_by_id(class_id)
+      if not class_entity:
+         raise ClassNotFoundError(class_id)
+      if teacher_id not in class_entity.teacher_ids:
+         raise NoPermissionToManageSessionError(teacher_id, "session")
+```
+
+#### 3.2 Start Session Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/start_session/`
+
+**Files**: Similar structure to Start Waiting, but:
+- Calls `session.start_session()` which returns connected student IDs
+- Broadcasts `SessionStartedMessage` with `started_at` and `connected_students`
+- Response includes connected student count
+
+#### 3.3 Complete Session Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/complete_session/`
+
+**Files**: Similar structure, but:
+- Calls `session.complete_session()`
+- Broadcasts `SessionCompletedMessage`
+
+#### 3.4 Delete Session Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/delete_session/`
+
+**File**: `delete_session_use_case.py`
+
+```python
+from app.application.use_cases.authenticated_use_case import AuthenticatedUseCase
+from app.domain.aggregates.users.user import UserRole
+from app.domain.aggregates.session.session_status import SessionStatus
+from app.domain.errors.session_errors import (
+    SessionNotFoundError,
+    CannotDeleteInProgressSessionError,
+)
+from app.domain.errors.common_errors import ForbiddenError
+from .delete_session_dto import DeleteSessionRequest, DeleteSessionResponse
+
+class DeleteSessionUseCase(
+    AuthenticatedUseCase[DeleteSessionRequest, DeleteSessionResponse]
+):
+    def __init__(self, session_repo, user_repo, connection_manager):
+        self.session_repo = session_repo
+        self.user_repo = user_repo
+        self.connection_manager = connection_manager
+
+    async def execute(
+        self, request: DeleteSessionRequest, user_id: str
+    ) -> DeleteSessionResponse:
+        # 1. Validate user is ADMIN
+        user = await self.user_repo.get_by_id(user_id)
+        if not user or user.role != UserRole.ADMIN:
+            raise ForbiddenError("Only admins can delete sessions")
+
+        # 2. Get session
+        session = await self.session_repo.get_by_id(request.session_id)
+        if not session:
+            raise SessionNotFoundError(request.session_id)
+
+        # 3. Validate session is not IN_PROGRESS
+        if session.status == SessionStatus.IN_PROGRESS:
+            raise CannotDeleteInProgressSessionError(request.session_id)
+
+        # 4. Delete from repository
+        await self.session_repo.delete(request.session_id)
+
+        # 5. Return success
+        return DeleteSessionResponse(success=True)
+```
+
+#### 3.5 Join Session Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/join_session/`
+
+**Purpose**: Called when student WebSocket connects
+
+**Logic**:
+1. Validate student is participant in session
+2. Call `session.student_join(student_id)`
+3. Persist
+4. Broadcast `ParticipantJoinedMessage` with connected count
+
+#### 3.6 Disconnect Session Use Case
+
+**Directory**: `/app/application/use_cases/sessions/commands/disconnect_session/`
+
+**Purpose**: Called when student WebSocket disconnects
+
+**Logic**:
+1. Get session
+2. Call `session.student_disconnect(student_id)`
+3. Persist
+4. Broadcast `ParticipantDisconnectedMessage`
+
+---
+
+### Step 4: Presentation Layer - Routes
+
+#### 4.1 Add REST Endpoints
+
+**File**: `/app/presentation/routes/session_router.py`
+
+Add these endpoints to the existing router:
+
+```python
+from fastapi import APIRouter, Depends, status
+from app.presentation.security.dependencies import RequireRoles
+from app.domain.aggregates.users.user import UserRole
+
+@router.post(
+    "/{session_id}/start-waiting",
+    response_model=StartWaitingPhaseResponse,
+    summary="Open Waiting Room",
+    description="Transition session to WAITING_FOR_STUDENTS status. "
+                "Students can join once waiting room is open.",
+)
+async def start_waiting_room(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = StartWaitingPhaseRequest(session_id=session_id)
+    return await use_cases.start_waiting_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+@router.post(
+    "/{session_id}/start",
+    response_model=StartSessionResponse,
+    summary="Start Session Countdown",
+    description="Start the session and begin countdown for all connected students.",
+)
+async def start_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = StartSessionRequest(session_id=session_id)
+    return await use_cases.start_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+@router.post(
+    "/{session_id}/complete",
+    response_model=CompleteSessionResponse,
+    summary="Complete Session",
+    description="Force complete the session. Useful for ending early.",
+)
+async def complete_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = CompleteSessionRequest(session_id=session_id)
+    return await use_cases.complete_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+@router.delete(
+    "/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete Session",
+    description="Delete a session. Admin only. Cannot delete IN_PROGRESS sessions.",
+)
+async def delete_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = DeleteSessionRequest(session_id=session_id)
+    await use_cases.delete_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+    return None
+```
+
+#### 4.2 Create WebSocket Router
+
+**File**: `/app/presentation/routes/websocket_router.py`
+
+```python
+import logging
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends, status
+from app.infrastructure.security.jwt_service import JwtService
+from app.infrastructure.web_socket import ConnectionManager, ConnectedMessage, ErrorMessage
+from app.infrastructure.web_socket.websocket_auth import validate_websocket_access
+from app.domain.aggregates.users.user import UserRole
+from app.common.dependencies import (
+   get_jwt_service,
+   get_connection_manager,
+   get_session_use_cases,
+   get_class_use_cases,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/sessions", tags=["WebSocket"])
+
+
+@router.websocket("/{session_id}/ws")
+async def session_websocket_endpoint(
+        websocket: WebSocket,
+        session_id: str,
+        token: str = Query(...),
+        jwt_service: JwtService = Depends(get_jwt_service),
+        manager: ConnectionManager = Depends(get_connection_manager),
+        session_use_cases=Depends(get_session_use_cases),
+        class_use_cases=Depends(get_class_use_cases),
+):
+   # 1. Validate token before accepting
+   try:
+      payload = jwt_service.decode(token)
+      user_id = payload["user_id"]
+      role = UserRole(payload["role"])
+   except Exception as e:
+      logger.error(f"WebSocket auth failed: {e}")
+      await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+      return
+
+   # 2. Get session and validate access
+   try:
+      session = await session_use_cases.get_session_by_id_use_case.execute(
+         GetSessionByIdRequest(session_id=session_id)
+      )
+
+      has_access = await validate_websocket_access(
+         user_id=user_id,
+         role=role,
+         session=session,
+         class_repo=class_use_cases.class_repository,
+      )
+
+      if not has_access:
+         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+         return
+   except Exception as e:
+      logger.error(f"Session validation failed: {e}")
+      await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+      return
+
+   # 3. Accept connection
+   await websocket.accept()
+   await manager.connect(session_id, user_id, websocket)
+
+   # 4. Auto-join if student
+   if role == UserRole.STUDENT:
+      try:
+         await session_use_cases.join_session_use_case.execute(
+            JoinSessionRequest(session_id=session_id),
+            user_id=user_id,
+         )
+      except Exception as e:
+         logger.error(f"Auto-join failed: {e}")
+
+   # 5. Send confirmation
+   await websocket.send_json(
+      ConnectedMessage(
+         type="connected",
+         session_id=session_id,
+         timestamp=datetime.now(timezone.utc),
+      ).dict()
+   )
+
+   try:
+      # 6. Message loop
+      while True:
+         data = await websocket.receive_json()
+         # Handle heartbeat, etc.
+         if data.get("type") == "heartbeat":
+            await websocket.send_json({"type": "pong"})
+   except WebSocketDisconnect:
+      logger.info(f"WebSocket disconnected: {user_id}")
+   except Exception as e:
+      logger.error(f"WebSocket error: {e}")
+   finally:
+      # 7. Cleanup
+      await manager.disconnect(session_id, user_id)
+      if role == UserRole.STUDENT:
+         try:
+            await session_use_cases.disconnect_session_use_case.execute(
+               DisconnectSessionRequest(session_id=session_id),
+               user_id=user_id,
+            )
+         except Exception as e:
+            logger.error(f"Disconnect cleanup failed: {e}")
+```
+
+---
+
+### Step 5: Dependency Injection
+
+#### 5.1 Update Container
+
+**File**: `/app/container.py`
+
+Add providers:
+
+```python
+from app.infrastructure.web_socket import ConnectionManager
+
+
+class ApplicationContainer(containers.DeclarativeContainer):
+   # ... existing providers ...
+
+   # WebSocket
+   connection_manager = providers.Singleton(ConnectionManager)
+
+   # New use cases (Factory pattern)
+   start_waiting_use_case = providers.Factory(
+      StartWaitingUseCase,
+      session_repo=session_repository,
+      class_repo=class_repository,
+      user_repo=user_repository,
+      connection_manager=connection_manager,
+   )
+
+   start_session_use_case = providers.Factory(
+      StartSessionUseCase,
+      session_repo=session_repository,
+      class_repo=class_repository,
+      user_repo=user_repository,
+      connection_manager=connection_manager,
+   )
+
+   complete_session_use_case = providers.Factory(
+      CompleteSessionUseCase,
+      session_repo=session_repository,
+      class_repo=class_repository,
+      user_repo=user_repository,
+      connection_manager=connection_manager,
+   )
+
+   delete_session_use_case = providers.Factory(
+      DeleteSessionUseCase,
+      session_repo=session_repository,
+      user_repo=user_repository,
+      connection_manager=connection_manager,
+   )
+
+   join_session_use_case = providers.Factory(
+      JoinSessionUseCase,
+      session_repo=session_repository,
+      connection_manager=connection_manager,
+   )
+
+   disconnect_session_use_case = providers.Factory(
+      DisconnectSessionUseCase,
+      session_repo=session_repository,
+      connection_manager=connection_manager,
+   )
+```
+
+#### 5.2 Update Dependencies
+
+**File**: `/app/common/dependencies.py`
+
+Update `SessionUseCases` dataclass:
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class SessionUseCases:
+    # Existing
+    create_session_use_case: CreateSessionUseCase
+    list_sessions_use_case: ListSessionsUseCase
+    get_session_by_id_use_case: GetSessionByIdUseCase
+    get_my_sessions_use_case: GetMySessionsUseCase
+
+    # New
+    start_waiting_use_case: StartWaitingUseCase
+    start_session_use_case: StartSessionUseCase
+    complete_session_use_case: CompleteSessionUseCase
+    delete_session_use_case: DeleteSessionUseCase
+    join_session_use_case: JoinSessionUseCase
+    disconnect_session_use_case: DisconnectSessionUseCase
+
+def get_connection_manager() -> ConnectionManager:
+    """Get ConnectionManager singleton"""
+    return container.connection_manager()
+```
+
+#### 5.3 Register WebSocket Router
+
+**File**: `/app/main.py`
+
+```python
+from app.presentation.routes import websocket_router
+
+app.include_router(websocket_router.router, prefix="/api/v1")
+```
+
+---
+
+## Testing Guide
+
+### Manual Testing Flow
+
+1. **Create session** (existing):
+   ```bash
+   POST /api/v1/sessions
+   # Returns session_id in SCHEDULED status
+   ```
+
+2. **Connect WebSocket as student**:
+   ```javascript
+   ws = new WebSocket(`ws://localhost:8000/api/v1/sessions/{session_id}/ws?token={jwt}`)
+   // Should receive: {"type": "connected"}
+   ```
+
+3. **Start waiting room**:
+   ```bash
+   POST /api/v1/sessions/{session_id}/start-waiting
+   # All WebSocket clients receive: {"type": "waiting_room_opened"}
+   ```
+
+4. **Start session**:
+   ```bash
+   POST /api/v1/sessions/{session_id}/start
+   # All clients receive: {"type": "session_started", "started_at": "..."}
+   ```
+
+5. **Complete session**:
+   ```bash
+   POST /api/v1/sessions/{session_id}/complete
+   # All clients receive: {"type": "session_completed"}
+   ```
+
+6. **Delete session**:
+   ```bash
+   DELETE /api/v1/sessions/{session_id}
+   # Should return 204 No Content (only if not IN_PROGRESS)
+   ```
+
+---
+
+## Performance Benefits
+
+**Polling (REST only)**:
+- 30 students × 1 request every 2 seconds = 900 requests/minute per session
+- High database load
+- 2-second delay in updates
+
+**WebSocket**:
+- 30 persistent connections
+- 0 polling requests
+- Instant updates on state changes
+- Significantly lower server load
+
+---
+
+## Summary
+
+This addendum provides the complete implementation details for:
+- ✅ 4 new REST endpoints for session management
+- ✅ WebSocket infrastructure for real-time updates
+- ✅ 6 new use cases with proper permissions
+- ✅ Message protocol for WebSocket communication
+- ✅ ConnectionManager for WebSocket lifecycle
+- ✅ Auto-join/disconnect handling
+- ✅ Authentication and authorization
+- ✅ Backward compatibility (REST works without WebSocket)
+
+The WebSocket implementation follows the hybrid approach where use cases directly call the ConnectionManager after successful domain operations, ensuring that broadcasts only happen when data is successfully persisted.

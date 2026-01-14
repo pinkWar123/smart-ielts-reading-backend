@@ -60,3 +60,19 @@ class NoPermissionToCreateSessionError(Error):
             f"User {user_id} does not have permission to create sessions",
             ErrorCode.FORBIDDEN,
         )
+
+
+class NoPermissionToManageSessionError(Error):
+    def __init__(self, user_id: str, session_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to manage session {session_id}",
+            ErrorCode.FORBIDDEN,
+        )
+
+
+class CannotDeleteInProgressSessionError(Error):
+    def __init__(self, session_id: str):
+        super().__init__(
+            f"Cannot delete session {session_id}: session is currently IN_PROGRESS",
+            ErrorCode.CONFLICT,
+        )
