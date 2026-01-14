@@ -1,0 +1,87 @@
+from app.application.services.connection_manager_service import (
+    ConnectionManagerServiceInterface,
+)
+from app.application.use_cases.base.use_case import (
+    AuthenticatedUseCase,
+    RequestType,
+    ResponseType,
+)
+from app.application.use_cases.sessions.commands.cancel_session.cancel_session_dto import (
+    CancelSessionRequest,
+    CancelSessionResponse,
+)
+from app.domain.aggregates.session import Session, SessionStatus
+from app.domain.aggregates.users.user import User, UserRole
+from app.domain.errors.session_errors import (
+    CannotDeleteSessionError,
+    NoPermissionToManageSessionError,
+    SessionNotFoundError,
+)
+from app.domain.errors.user_errors import UserNotFoundError
+from app.domain.repositories.class_repository import ClassRepositoryInterface
+from app.domain.repositories.session_repository import SessionRepositoryInterface
+from app.domain.repositories.user_repository import UserRepositoryInterface
+
+
+class CancelledSessionUseCase(
+    AuthenticatedUseCase[CancelSessionRequest, CancelSessionResponse]
+):
+    def __init__(
+        self,
+        session_repo: SessionRepositoryInterface,
+        user_repo: UserRepositoryInterface,
+        class_repo: ClassRepositoryInterface,
+        connection_manager: ConnectionManagerServiceInterface,
+    ):
+        self.session_repo = session_repo
+        self.user_repo = user_repo
+        self.class_repo = class_repo
+        self.connection_manager = connection_manager
+
+    async def execute(
+        self, request: CancelSessionRequest, user_id: str
+    ) -> CancelSessionResponse:
+        user = await self._validate_and_fetch_user(user_id)
+        session = await self._validate_and_fetch_session(request.session_id)
+
+        await self._validate_user_permission(user, session)
+        session.cancel_session()
+
+        updated_session = await self.session_repo.update(session)
+
+        return CancelSessionResponse(
+            session_id=updated_session.id,
+            success=True,
+            cancelled_at=updated_session.updated_at,
+            cancelled_by=user_id,
+        )
+
+    async def _validate_and_fetch_user(self, user_id: str) -> User:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError()
+        return user.to_domain()
+
+    async def _validate_and_fetch_session(self, session_id: str) -> Session:
+        session = await self.session_repo.get_by_id(session_id)
+        if not session:
+            raise SessionNotFoundError(session_id)
+
+        return session
+
+    # If the user is not a teacher or admin, raise the error
+    # If user is a teacher, check if they are a teacher in the class
+    # If the user is either an admin or a teacher in the class, he can delete the session
+    async def _validate_user_permission(self, user: User, session: Session):
+        if user.role not in [UserRole.TEACHER, UserRole.ADMIN]:
+            raise NoPermissionToManageSessionError(
+                user_id=user.id, session_id=session.id
+            )
+
+        if user.role == UserRole.TEACHER:
+            # Fetch the class to check if teacher is authorized
+            class_entity = await self.class_repo.get_by_id(session.class_id)
+            if not class_entity or user.id not in class_entity.teacher_ids:
+                raise NoPermissionToManageSessionError(
+                    user_id=user.id, session_id=session.id
+                )

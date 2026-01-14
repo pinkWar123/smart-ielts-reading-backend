@@ -60,8 +60,20 @@ from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_pas
 from app.application.use_cases.passages.queries.get_passages.get_passages_use_case import (
     GetPassagesUseCase,
 )
+from app.application.use_cases.sessions.commands.cancel_session.cancel_session_use_case import (
+    CancelledSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.complete_session.complete_session_use_case import (
+    CompleteSessionUseCase,
+)
 from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
     CreateSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.start_session.start_session_use_case import (
+    StartSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.start_waiting.start_waiting_use_case import (
+    StartWaitingUseCase,
 )
 from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_use_case import (
     GetMySessionsUseCase,
@@ -128,6 +140,9 @@ from app.infrastructure.repositories.sql_user_repository import (
 )
 from app.infrastructure.security.jwt_service import JwtService
 from app.infrastructure.security.password_hasher_service import PasswordHasher
+from app.infrastructure.web_socket.in_memory_connection_manager import (
+    InMemoryConnectionManagerService,
+)
 
 
 def create_anthropic_client():
@@ -166,6 +181,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         JwtService, settings=settings, refresh_token_repo=refresh_token_repository
     )
     password_hasher = providers.Singleton(PasswordHasher)
+    connection_manager = providers.Singleton(InMemoryConnectionManagerService)
 
     claude_client = providers.Factory(create_anthropic_client)
     image_to_text_service = providers.Factory(
@@ -334,6 +350,34 @@ class ApplicationContainer(containers.DeclarativeContainer):
     get_my_sessions_use_case = providers.Factory(
         GetMySessionsUseCase,
         session_repo=session_repository,
+    )
+    start_session_use_case = providers.Factory(
+        StartSessionUseCase,
+        session_repo=session_repository,
+        class_repo=class_repository,
+        user_repo=user_repository,
+        connection_manager=connection_manager,
+    )
+    start_waiting_use_case = providers.Factory(
+        StartWaitingUseCase,
+        session_repo=session_repository,
+        class_repo=class_repository,
+        user_repo=user_repository,
+        connection_manager=connection_manager,
+    )
+    cancel_session_use_case = providers.Factory(
+        CancelledSessionUseCase,
+        session_repo=session_repository,
+        user_repo=user_repository,
+        class_repo=class_repository,
+        connection_manager=connection_manager,
+    )
+    complete_session_use_case = providers.Factory(
+        CompleteSessionUseCase,
+        session_repo=session_repository,
+        user_repo=user_repository,
+        class_repo=class_repository,
+        connection_manager=connection_manager,
     )
 
 

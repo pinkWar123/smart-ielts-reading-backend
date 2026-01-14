@@ -2,9 +2,25 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
+from app.application.use_cases.sessions.commands.cancel_session.cancel_session_dto import (
+    CancelSessionRequest,
+    CancelSessionResponse,
+)
+from app.application.use_cases.sessions.commands.complete_session.complete_session_dto import (
+    CompleteSessionRequest,
+    CompleteSessionResponse,
+)
 from app.application.use_cases.sessions.commands.create_session.create_session_dto import (
     CreateSessionRequest,
     CreateSessionResponse,
+)
+from app.application.use_cases.sessions.commands.start_session.start_session_dto import (
+    StartSessionRequest,
+    StartSessionResponse,
+)
+from app.application.use_cases.sessions.commands.start_waiting.start_wating_dto import (
+    StartWaitingPhaseRequest,
+    StartWaitingPhaseResponse,
 )
 from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_dto import (
     GetMySessionsQuery,
@@ -133,3 +149,131 @@ async def get_session_by_id(
 ):
     query = GetSessionByIdQuery(session_id=session_id)
     return await use_cases.get_session_by_id_use_case.execute(query)
+
+
+@router.post(
+    "/{session_id}/start-waiting",
+    response_model=StartWaitingPhaseResponse,
+    summary="Start Waiting Phase",
+    description="""
+    Start the waiting phase for a session.
+
+    This transitions the session from SCHEDULED to WAITING_FOR_STUDENTS status,
+    allowing students to connect to the waiting room.
+
+    Requirements:
+    - Must be an ADMIN or TEACHER
+    - If TEACHER, must be teaching the session's class
+    - Session must exist and be in SCHEDULED status
+    """,
+    responses={
+        400: {"description": "Invalid session state"},
+        403: {"description": "Forbidden - User does not have permission"},
+        404: {"description": "Session not found"},
+    },
+)
+async def start_waiting_phase(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = StartWaitingPhaseRequest(session_id=session_id)
+    return await use_cases.start_waiting_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+
+@router.post(
+    "/{session_id}/start",
+    response_model=StartSessionResponse,
+    summary="Start Session",
+    description="""
+    Start a session, transitioning it from WAITING_FOR_STUDENTS to IN_PROGRESS.
+
+    This begins the actual test/exercise session. All connected students will
+    be notified via WebSocket that the session has started.
+
+    Requirements:
+    - Must be an ADMIN or TEACHER
+    - If TEACHER, must be teaching the session's class
+    - Session must exist and be in WAITING_FOR_STUDENTS status
+    """,
+    responses={
+        400: {"description": "Invalid session state"},
+        403: {"description": "Forbidden - User does not have permission"},
+        404: {"description": "Session not found"},
+    },
+)
+async def start_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = StartSessionRequest(session_id=session_id)
+    return await use_cases.start_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+
+@router.post(
+    "/{session_id}/cancel",
+    response_model=CancelSessionResponse,
+    summary="Cancel Session",
+    description="""
+    Cancel a session, transitioning it to CANCELLED status.
+
+    This can be used to cancel sessions that haven't started yet or are in progress.
+    All connected students will be notified via WebSocket (if implemented).
+
+    Requirements:
+    - Must be an ADMIN or TEACHER
+    - If TEACHER, must be teaching the session's class
+    - Session must exist
+    """,
+    responses={
+        400: {"description": "Invalid request"},
+        403: {"description": "Forbidden - User does not have permission"},
+        404: {"description": "Session not found"},
+    },
+)
+async def cancel_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = CancelSessionRequest(session_id=session_id)
+    return await use_cases.cancel_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+
+@router.post(
+    "/{session_id}/complete",
+    response_model=CompleteSessionResponse,
+    summary="Complete Session",
+    description="""
+    Complete a session, transitioning it to COMPLETED status.
+
+    This is used when a test times out or when an admin/teacher manually stops
+    the test before the timeout. All connected students will be notified via WebSocket.
+
+    Requirements:
+    - Must be an ADMIN or TEACHER
+    - If TEACHER, must be teaching the session's class
+    - Session must exist and be in IN_PROGRESS status
+    """,
+    responses={
+        400: {"description": "Invalid session state"},
+        403: {"description": "Forbidden - User does not have permission"},
+        404: {"description": "Session not found"},
+    },
+)
+async def complete_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = CompleteSessionRequest(session_id=session_id)
+    return await use_cases.complete_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )

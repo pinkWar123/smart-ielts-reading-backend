@@ -57,8 +57,20 @@ from app.application.use_cases.passages.queries.get_all_passages.get_all_passage
 from app.application.use_cases.passages.queries.get_passage_detail_by_id.get_passage_detail_use_case import (
     GetPassageDetailByIdUseCase,
 )
+from app.application.use_cases.sessions.commands.cancel_session.cancel_session_use_case import (
+    CancelledSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.complete_session.complete_session_use_case import (
+    CompleteSessionUseCase,
+)
 from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
     CreateSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.start_session.start_session_use_case import (
+    StartSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.start_waiting.start_waiting_use_case import (
+    StartWaitingUseCase,
 )
 from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_use_case import (
     GetMySessionsUseCase,
@@ -153,6 +165,10 @@ class SessionUseCases:
     list_sessions_use_case: ListSessionsUseCase
     get_session_by_id_use_case: GetSessionByIdUseCase
     get_my_sessions_use_case: GetMySessionsUseCase
+    start_session_use_case: StartSessionUseCase
+    start_waiting_use_case: StartWaitingUseCase
+    cancel_session_use_case: CancelledSessionUseCase
+    complete_session_use_case: CompleteSessionUseCase
 
 
 # Test-related dependencies
@@ -320,6 +336,7 @@ async def get_session_use_cases(
     class_repo = container.class_repository(session=session)
     test_repo = container.test_repository(session=session)
     user_repo = container.user_repository(session=session)
+    connection_manager = container.connection_manager()
 
     return SessionUseCases(
         create_session_use_case=container.create_session_use_case(
@@ -336,6 +353,30 @@ async def get_session_use_cases(
         ),
         get_my_sessions_use_case=container.get_my_sessions_use_case(
             session_repo=session_repo
+        ),
+        start_session_use_case=container.start_session_use_case(
+            session_repo=session_repo,
+            class_repo=class_repo,
+            user_repo=user_repo,
+            connection_manager=connection_manager,
+        ),
+        start_waiting_use_case=container.start_waiting_use_case(
+            session_repo=session_repo,
+            class_repo=class_repo,
+            user_repo=user_repo,
+            connection_manager=connection_manager,
+        ),
+        cancel_session_use_case=container.cancel_session_use_case(
+            session_repo=session_repo,
+            user_repo=user_repo,
+            class_repo=class_repo,
+            connection_manager=connection_manager,
+        ),
+        complete_session_use_case=container.complete_session_use_case(
+            session_repo=session_repo,
+            user_repo=user_repo,
+            class_repo=class_repo,
+            connection_manager=connection_manager,
         ),
     )
 

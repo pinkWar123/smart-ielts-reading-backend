@@ -1,5 +1,6 @@
 """Domain errors for Session aggregate"""
 
+from app.domain.aggregates.session.session_status import SessionStatus
 from app.domain.errors.domain_errors import Error
 from app.domain.errors.error_codes import ErrorCode
 
@@ -70,9 +71,9 @@ class NoPermissionToManageSessionError(Error):
         )
 
 
-class CannotDeleteInProgressSessionError(Error):
-    def __init__(self, session_id: str):
+class CannotDeleteSessionError(Error):
+    def __init__(self, session_id: str, current_status: SessionStatus):
         super().__init__(
-            f"Cannot delete session {session_id}: session is currently IN_PROGRESS",
+            f"Cannot delete session {session_id}: session is currently {current_status}",
             ErrorCode.CONFLICT,
         )

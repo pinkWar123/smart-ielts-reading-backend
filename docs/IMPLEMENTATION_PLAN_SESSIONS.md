@@ -1100,7 +1100,7 @@ class NoPermissionToManageSessionError(Error):
             ErrorCode.FORBIDDEN
         )
 
-class CannotDeleteInProgressSessionError(Error):
+class CannotDeleteSessionError(Error):
     """Raised when trying to delete an IN_PROGRESS session"""
     def __init__(self, session_id: str):
         super().__init__(
@@ -1520,42 +1520,43 @@ from app.application.use_cases.authenticated_use_case import AuthenticatedUseCas
 from app.domain.aggregates.users.user import UserRole
 from app.domain.aggregates.session.session_status import SessionStatus
 from app.domain.errors.session_errors import (
-    SessionNotFoundError,
-    CannotDeleteInProgressSessionError,
+   SessionNotFoundError,
+   CannotDeleteSessionError,
 )
 from app.domain.errors.common_errors import ForbiddenError
 from .delete_session_dto import DeleteSessionRequest, DeleteSessionResponse
 
+
 class DeleteSessionUseCase(
-    AuthenticatedUseCase[DeleteSessionRequest, DeleteSessionResponse]
+   AuthenticatedUseCase[DeleteSessionRequest, DeleteSessionResponse]
 ):
-    def __init__(self, session_repo, user_repo, connection_manager):
-        self.session_repo = session_repo
-        self.user_repo = user_repo
-        self.connection_manager = connection_manager
+   def __init__(self, session_repo, user_repo, connection_manager):
+      self.session_repo = session_repo
+      self.user_repo = user_repo
+      self.connection_manager = connection_manager
 
-    async def execute(
-        self, request: DeleteSessionRequest, user_id: str
-    ) -> DeleteSessionResponse:
-        # 1. Validate user is ADMIN
-        user = await self.user_repo.get_by_id(user_id)
-        if not user or user.role != UserRole.ADMIN:
-            raise ForbiddenError("Only admins can delete sessions")
+   async def execute(
+           self, request: DeleteSessionRequest, user_id: str
+   ) -> DeleteSessionResponse:
+      # 1. Validate user is ADMIN
+      user = await self.user_repo.get_by_id(user_id)
+      if not user or user.role != UserRole.ADMIN:
+         raise ForbiddenError("Only admins can delete sessions")
 
-        # 2. Get session
-        session = await self.session_repo.get_by_id(request.session_id)
-        if not session:
-            raise SessionNotFoundError(request.session_id)
+      # 2. Get session
+      session = await self.session_repo.get_by_id(request.session_id)
+      if not session:
+         raise SessionNotFoundError(request.session_id)
 
-        # 3. Validate session is not IN_PROGRESS
-        if session.status == SessionStatus.IN_PROGRESS:
-            raise CannotDeleteInProgressSessionError(request.session_id)
+      # 3. Validate session is not IN_PROGRESS
+      if session.status == SessionStatus.IN_PROGRESS:
+         raise CannotDeleteSessionError(request.session_id)
 
-        # 4. Delete from repository
-        await self.session_repo.delete(request.session_id)
+      # 4. Delete from repository
+      await self.session_repo.delete(request.session_id)
 
-        # 5. Return success
-        return DeleteSessionResponse(success=True)
+      # 5. Return success
+      return DeleteSessionResponse(success=True)
 ```
 
 #### 3.5 Join Session Use Case

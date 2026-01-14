@@ -507,3 +507,638 @@ async def test_get_my_sessions_fails_for_non_student(test_client, teacher_token)
     )
 
     assert response.status_code == 403  # Forbidden
+
+
+@pytest.mark.asyncio
+async def test_start_waiting_phase_as_admin(
+    test_client, admin_token, test_class, test_entity, test_db_session, admin_user
+):
+    """Test starting waiting phase as admin."""
+    # Create a scheduled session first
+    from app.domain.aggregates.session import Session, SessionParticipant, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.SCHEDULED,
+        participants=[
+            SessionParticipant(
+                student_id="student-1",
+                connection_status="DISCONNECTED",
+            )
+        ],
+        created_by=admin_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    # Start waiting phase
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start-waiting",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["id"] == created_session.id
+    assert data["status"] == "WAITING_FOR_STUDENTS"
+
+
+@pytest.mark.asyncio
+async def test_start_waiting_phase_as_teacher(
+    test_client, teacher_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test starting waiting phase as teacher of the class."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Teacher's Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.SCHEDULED,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start-waiting",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "WAITING_FOR_STUDENTS"
+
+
+@pytest.mark.asyncio
+async def test_start_waiting_phase_fails_as_student(
+    test_client, student_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test starting waiting phase fails for student role."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.SCHEDULED,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start-waiting",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403  # Forbidden
+
+
+@pytest.mark.asyncio
+async def test_start_waiting_phase_session_not_found(test_client, admin_token):
+    """Test starting waiting phase fails for non-existent session."""
+    response = await test_client.post(
+        "/api/v1/sessions/non-existent-id/start-waiting",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_start_session_as_admin(
+    test_client, admin_token, test_class, test_entity, test_db_session, admin_user
+):
+    """Test starting session as admin."""
+    # Create a session in WAITING_FOR_STUDENTS status
+    from app.domain.aggregates.session import Session, SessionParticipant, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Waiting Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.WAITING_FOR_STUDENTS,
+        participants=[
+            SessionParticipant(
+                student_id="student-1",
+                connection_status="CONNECTED",
+            )
+        ],
+        created_by=admin_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    # Start session
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["id"] == created_session.id
+    assert data["status"] == "IN_PROGRESS"
+    assert data["started_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_start_session_as_teacher(
+    test_client,
+    teacher_token,
+    test_class,
+    test_entity,
+    test_db_session,
+    teacher_user,
+    student_user,
+):
+    """Test starting session as teacher of the class."""
+    from app.domain.aggregates.session import Session, SessionParticipant, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Teacher's Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.WAITING_FOR_STUDENTS,
+        participants=[
+            SessionParticipant(
+                student_id=student_user.id,
+                connection_status="CONNECTED",
+            )
+        ],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "IN_PROGRESS"
+
+
+@pytest.mark.asyncio
+async def test_start_session_fails_as_student(
+    test_client, student_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test starting session fails for student role."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.WAITING_FOR_STUDENTS,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/start",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403  # Forbidden
+
+
+@pytest.mark.asyncio
+async def test_start_session_not_found(test_client, admin_token):
+    """Test starting session fails for non-existent session."""
+    response = await test_client.post(
+        "/api/v1/sessions/non-existent-id/start",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cancel_session_as_admin(
+    test_client, admin_token, test_class, test_entity, test_db_session, admin_user
+):
+    """Test cancelling session as admin."""
+    # Create a session in progress
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Active Session",
+        scheduled_at=datetime.utcnow(),
+        started_at=datetime.utcnow(),
+        status=SessionStatus.SCHEDULED,
+        participants=[],
+        created_by=admin_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    # Cancel session
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/cancel",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["session_id"] == created_session.id
+    assert data["success"] is True
+    assert data["cancelled_by"] == admin_user.id
+    assert data["cancelled_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_cancel_session_as_teacher(
+    test_client, teacher_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test cancelling session as teacher of the class."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Teacher's Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.SCHEDULED,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/cancel",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["cancelled_by"] == teacher_user.id
+
+
+@pytest.mark.asyncio
+async def test_cancel_session_fails_as_student(
+    test_client, student_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test cancelling session fails for student role."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        status=SessionStatus.IN_PROGRESS,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/cancel",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403  # Forbidden
+
+
+@pytest.mark.asyncio
+async def test_cancel_session_not_found(test_client, admin_token):
+    """Test cancelling session fails for non-existent session."""
+    response = await test_client.post(
+        "/api/v1/sessions/non-existent-id/cancel",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cancel_scheduled_session(
+    test_client, teacher_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test cancelling a scheduled session that hasn't started yet."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Future Session",
+        scheduled_at=datetime.utcnow() + timedelta(days=1),
+        status=SessionStatus.SCHEDULED,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/cancel",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_complete_session_as_admin(
+    test_client, admin_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test completing an in-progress session as admin."""
+    from app.domain.aggregates.session import Session, SessionParticipant, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        started_at=datetime.utcnow(),
+        status=SessionStatus.IN_PROGRESS,
+        participants=[
+            SessionParticipant(
+                student_id="student-1",
+                connection_status="CONNECTED",
+            )
+        ],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/complete",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["session_id"] == created_session.id
+    assert data["completed_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_complete_session_as_teacher(
+    test_client,
+    teacher_token,
+    test_class,
+    test_entity,
+    test_db_session,
+    teacher_user,
+    student_user,
+):
+    """Test completing an in-progress session as teacher of the class."""
+    from app.domain.aggregates.session import Session, SessionParticipant, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Teacher's Session",
+        scheduled_at=datetime.utcnow(),
+        started_at=datetime.utcnow(),
+        status=SessionStatus.IN_PROGRESS,
+        participants=[
+            SessionParticipant(
+                student_id=student_user.id,
+                connection_status="CONNECTED",
+            )
+        ],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/complete",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_complete_session_fails_as_student(
+    test_client, student_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test completing session fails for student role."""
+    from app.domain.aggregates.session import Session, SessionStatus
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+
+    session = Session(
+        class_id=test_class.id,
+        test_id=test_entity.id,
+        title="Test Session",
+        scheduled_at=datetime.utcnow(),
+        started_at=datetime.utcnow(),
+        status=SessionStatus.IN_PROGRESS,
+        participants=[],
+        created_by=teacher_user.id,
+        created_at=datetime.utcnow(),
+    )
+
+    created_session = await session_repo.create(session)
+    await test_db_session.commit()
+
+    response = await test_client.post(
+        f"/api/v1/sessions/{created_session.id}/complete",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert response.status_code == 403  # Forbidden
+
+
+@pytest.mark.asyncio
+async def test_complete_session_not_found(test_client, admin_token):
+    """Test completing session fails for non-existent session."""
+    response = await test_client.post(
+        "/api/v1/sessions/non-existent-id/complete",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_full_session_workflow(
+    test_client, teacher_token, test_class, test_entity, test_db_session, teacher_user
+):
+    """Test complete session workflow: create -> start waiting -> start -> complete."""
+    # 1. Create session
+    scheduled_at = (datetime.utcnow() + timedelta(days=1)).isoformat()
+
+    create_response = await test_client.post(
+        "/api/v1/sessions",
+        json={
+            "class_id": test_class.id,
+            "test_id": test_entity.id,
+            "title": "Full Workflow Test",
+            "scheduled_at": scheduled_at,
+        },
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert create_response.status_code == 200
+    session_data = create_response.json()
+    session_id = session_data["id"]
+    assert session_data["status"] == "SCHEDULED"
+
+    # 2. Start waiting phase
+    waiting_response = await test_client.post(
+        f"/api/v1/sessions/{session_id}/start-waiting",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert waiting_response.status_code == 200
+    waiting_data = waiting_response.json()
+    assert waiting_data["status"] == "WAITING_FOR_STUDENTS"
+
+    # 2.5. Manually connect a student (simulating WebSocket join)
+    from app.infrastructure.repositories.sql_session_repository import (
+        SQLSessionRepository,
+    )
+
+    session_repo = SQLSessionRepository(test_db_session)
+    session = await session_repo.get_by_id(session_id)
+
+    # Simulate student joining the session
+    if session and session.participants:
+        session.participants[0].connection_status = "CONNECTED"
+        await session_repo.update(session)
+        await test_db_session.commit()
+
+    # 3. Start session
+    start_response = await test_client.post(
+        f"/api/v1/sessions/{session_id}/start",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert start_response.status_code == 200
+    start_data = start_response.json()
+    assert start_data["status"] == "IN_PROGRESS"
+    assert start_data["started_at"] is not None
+
+    # 4. Complete session (test finished or manually stopped)
+    complete_response = await test_client.post(
+        f"/api/v1/sessions/{session_id}/complete",
+        headers={"Authorization": f"Bearer {teacher_token}"},
+    )
+
+    assert complete_response.status_code == 200
+    complete_data = complete_response.json()
+    assert complete_data["success"] is True
+    assert complete_data["session_id"] == session_id
+    assert complete_data["completed_at"] is not None
