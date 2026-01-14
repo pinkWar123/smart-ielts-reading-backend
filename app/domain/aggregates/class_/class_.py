@@ -190,3 +190,32 @@ class Class(BaseModel):
             Number of assigned teachers
         """
         return len(self.teacher_ids)
+
+    def update_details(
+        self,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        status: Optional[ClassStatus] = None,
+    ) -> None:
+        """
+        Update class details (name, description, or status)
+
+        Args:
+            name: New name for the class (optional)
+            description: New description for the class (optional)
+            status: New status for the class (optional)
+
+        Raises:
+            ClassAlreadyArchivedError: If trying to update an already archived class
+        """
+        if self.status == ClassStatus.ARCHIVED:
+            raise ClassAlreadyArchivedError(self.id)
+
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if status is not None:
+            self.status = status
+
+        self.updated_at = TimeHelper.utc_now()

@@ -15,6 +15,9 @@ from app.application.use_cases.auth.commands.register.register_use_case import (
 from app.application.use_cases.auth.queries.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
+from app.application.use_cases.classes.commands.assign_teacher.assign_teacher_use_case import (
+    AssignTeacherUseCase,
+)
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
@@ -23,6 +26,9 @@ from app.application.use_cases.classes.commands.enroll_student.enroll_student_us
 )
 from app.application.use_cases.classes.commands.remove_student.remove_student_use_case import (
     RemoveStudentUseCase,
+)
+from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_use_case import (
+    RemoveTeacherUseCase,
 )
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
@@ -121,6 +127,8 @@ class ClassUseCases:
     get_class_by_id_use_case: GetClassByIdUseCase
     enroll_student_use_case: EnrollStudentUseCase
     remove_student_use_case: RemoveStudentUseCase
+    assign_teacher_use_case: AssignTeacherUseCase
+    remove_teacher_use_case: RemoveTeacherUseCase
 
 
 # Test-related dependencies
@@ -258,6 +266,16 @@ async def get_class_use_cases(
             user_repo=user_repo,
         ),
         remove_student_use_case=container.remove_student_use_case(
+            class_query_service=class_query_service,
+            class_repo=class_repo,
+            user_repo=user_repo,
+        ),
+        assign_teacher_use_case=container.assign_teacher_use_case(
+            class_repo=class_repo,
+            user_repo=user_repo,
+            class_query_service=class_query_service,
+        ),
+        remove_teacher_use_case=container.remove_teacher_use_case(
             class_query_service=class_query_service,
             class_repo=class_repo,
             user_repo=user_repo,

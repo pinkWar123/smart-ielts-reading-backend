@@ -12,6 +12,9 @@ from app.application.use_cases.auth.commands.register.register_use_case import (
 from app.application.use_cases.auth.queries.get_current_user.get_current_user_use_case import (
     GetCurrentUserUseCase,
 )
+from app.application.use_cases.classes.commands.assign_teacher.assign_teacher_use_case import (
+    AssignTeacherUseCase,
+)
 from app.application.use_cases.classes.commands.create_class.create_class_use_case import (
     CreateClassUseCase,
 )
@@ -20,6 +23,9 @@ from app.application.use_cases.classes.commands.enroll_student.enroll_student_us
 )
 from app.application.use_cases.classes.commands.remove_student.remove_student_use_case import (
     RemoveStudentUseCase,
+)
+from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_use_case import (
+    RemoveTeacherUseCase,
 )
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_use_case import (
     GetClassByIdUseCase,
@@ -269,6 +275,18 @@ class ApplicationContainer(containers.DeclarativeContainer):
     )
     remove_student_use_case = providers.Factory(
         RemoveStudentUseCase,
+        class_query_service=class_query_service,
+        class_repo=class_repository,
+        user_repo=user_repository,
+    )
+    assign_teacher_use_case = providers.Factory(
+        AssignTeacherUseCase,
+        class_repo=class_repository,
+        user_repo=user_repository,
+        class_query_service=class_query_service,
+    )
+    remove_teacher_use_case = providers.Factory(
+        RemoveTeacherUseCase,
         class_query_service=class_query_service,
         class_repo=class_repository,
         user_repo=user_repository,

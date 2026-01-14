@@ -8,6 +8,7 @@ from app.domain.aggregates.users.user import UserRole
 from app.domain.errors.class_errors import (
     ClassNotFoundError,
     NoPermissionToAddStudentError,
+    NotAStudent,
 )
 from app.domain.errors.user_errors import UserNotFoundError
 from app.domain.repositories.class_repository import ClassRepositoryInterface
@@ -44,6 +45,10 @@ class EnrollStudentUseCase(
 
         if user.role == UserRole.TEACHER and user.id not in class_entity.teacher_ids:
             raise NoPermissionToAddStudentError(user_id=user_id)
+
+        student = await self.user_repo.get_by_id(request.student_id)
+        if not student or student.role != UserRole.STUDENT:
+            raise NotAStudent(user_id=request.student_id)
 
         class_entity.enroll_student(request.student_id)
 

@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from app.application.services.query.classes.class_query_model import ClassSortField
+from app.application.use_cases.classes.commands.assign_teacher.assign_teacher_dto import (
+    AssignTeacherRequest,
+    AssignTeacherResponse,
+)
 from app.application.use_cases.classes.commands.create_class.create_class_dto import (
     CreateClassRequest,
     CreateClassResponse,
@@ -14,6 +18,9 @@ from app.application.use_cases.classes.commands.enroll_student.enroll_student_dt
 )
 from app.application.use_cases.classes.commands.remove_student.remove_student_dto import (
     RemoveStudentRequest,
+)
+from app.application.use_cases.classes.commands.remove_teacher.remove_teacher_dto import (
+    RemoveTeacherRequest,
 )
 from app.application.use_cases.classes.queries.get_class_by_id.get_class_by_id_dto import (
     GetClassByIdQuery,
@@ -118,7 +125,7 @@ class EnrollRequest(BaseModel):
 
 
 @router.post(
-    "{class_id}/enroll",
+    "/{class_id}/students",
     response_model=EnrollStudentResponse,
     summary="Enroll Student in Class",
     description="""
@@ -145,12 +152,42 @@ async def enroll_student(
     )
 
 
-class DisenrollRequest(BaseModel):
-    student_id: str
+class AssignRequest(BaseModel):
+    teacher_id: str
+
+
+@router.post(
+    "/{class_id}/teachers",
+    response_model=AssignTeacherResponse,
+    summary="Assign a teacher into a class",
+    description="""
+    Enroll a teacher into a class.
+    The creator must be either an ADMIN or a teacher.
+    If he is a teacher, there are 2 cases:
+        - He can assign himself to that class
+        - He can assign another teacher to that class, but he must be in the list of teachers who are teaching that class
+    """,
+    responses={
+        400: {"description": "Invalid request"},
+        404: {"description": "Not found"},
+        422: {"description": "Validation error"},
+        403: {"description": "Forbidden"},
+    },
+)
+async def assign_teacher(
+    class_id: str,
+    request: AssignRequest,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    command = AssignTeacherRequest(class_id=class_id, teacher_id=request.teacher_id)
+    return await use_cases.assign_teacher_use_case.execute(
+        request=command, user_id=current_user["user_id"]
+    )
 
 
 @router.delete(
-    "/{class_id}/students",
+    "/{class_id}/students/{student_id}",
     summary="Remove Student from Class",
     description="""
         Remove a student from a class.
@@ -160,11 +197,32 @@ class DisenrollRequest(BaseModel):
 )
 async def disenroll_student(
     class_id: str,
-    request: DisenrollRequest,
+    student_id: str,
     current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
     use_cases: ClassUseCases = Depends(get_class_use_cases),
 ):
-    command = RemoveStudentRequest(class_id=class_id, student_id=request.student_id)
+    command = RemoveStudentRequest(class_id=class_id, student_id=student_id)
     return await use_cases.remove_student_use_case.execute(
+        request=command, user_id=current_user["user_id"]
+    )
+
+
+@router.delete(
+    "/{class_id}/teachers/{teacher_id}",
+    summary="Remove a teacher from Class",
+    description="""
+        Remove a teacher from a class.
+        The remover must be either an ADMIN or a teacher.
+    If he is a teacher, he must be in the list of teachers who are teaching that class
+    """,
+)
+async def remove_teacher(
+    class_id: str,
+    teacher_id: str,
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    use_cases: ClassUseCases = Depends(get_class_use_cases),
+):
+    command = RemoveTeacherRequest(class_id=class_id, teacher_id=teacher_id)
+    return await use_cases.remove_teacher_use_case.execute(
         request=command, user_id=current_user["user_id"]
     )

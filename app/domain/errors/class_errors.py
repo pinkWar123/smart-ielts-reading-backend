@@ -50,10 +50,34 @@ class NoPermissionToAddStudentError(Error):
         )
 
 
+class NoPermissionToAssignTeacherToClass(Error):
+    def __init__(self, user_id: str, class_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to assign a teacher to class {class_id}",
+            ErrorCode.FORBIDDEN,
+        )
+
+
+class NoPermissionToAssignTeacherToClassThatYouDontTeach(Error):
+    def __init__(self, user_id: str, class_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to assign a teacher to class {class_id}, because he is a teacher but doesn't teach the class",
+            ErrorCode.FORBIDDEN,
+        )
+
+
 class NoPermissionToRemoveStudentError(Error):
     def __init__(self, user_id: str):
         super().__init__(
             f"User {user_id} does not have permission to remove a student from a class",
+            ErrorCode.FORBIDDEN,
+        )
+
+
+class NoPermissionToRemoveTeacherError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to remove a teacher from a class",
             ErrorCode.FORBIDDEN,
         )
 
