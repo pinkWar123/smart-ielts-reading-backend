@@ -1,5 +1,5 @@
 from app.application.services.query.classes.class_query_service import ClassQueryService
-from app.application.use_cases.base.use_case import RequestType, ResponseType, UseCase
+from app.application.use_cases.base.use_case import UseCase
 from app.application.use_cases.classes.queries.list_classes.list_classes_dto import (
     ClassCreatorDTO,
     ClassDTO,

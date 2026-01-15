@@ -28,6 +28,7 @@ class PassageModel(BaseModel):
     question_groups = relationship(
         "QuestionGroupModel", back_populates="passage", cascade="all, delete-orphan"
     )
+
     # Many-to-many relationship with tests will be handled through TestPassage association table
 
     def to_domain(self) -> Passage:

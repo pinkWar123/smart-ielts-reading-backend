@@ -3,17 +3,14 @@ from app.application.services.connection_manager_service import (
 )
 from app.application.use_cases.base.use_case import (
     AuthenticatedUseCase,
-    RequestType,
-    ResponseType,
 )
 from app.application.use_cases.sessions.commands.cancel_session.cancel_session_dto import (
     CancelSessionRequest,
     CancelSessionResponse,
 )
-from app.domain.aggregates.session import Session, SessionStatus
+from app.domain.aggregates.session import Session
 from app.domain.aggregates.users.user import User, UserRole
 from app.domain.errors.session_errors import (
-    CannotDeleteSessionError,
     NoPermissionToManageSessionError,
     SessionNotFoundError,
 )

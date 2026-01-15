@@ -24,12 +24,10 @@ from app.application.services.query.tests.test_query_model import (
 from app.application.services.query.tests.test_query_service import TestQueryService
 from app.common.pagination import PaginationMeta
 from app.domain.aggregates.passage import Passage
-from app.domain.aggregates.passage.question import Question, QuestionType
-from app.domain.aggregates.passage.question_group import QuestionGroup
+from app.domain.aggregates.passage.question import QuestionType
 from app.domain.aggregates.test.test_status import TestStatus
 from app.domain.aggregates.test.test_type import TestType
 from app.domain.errors.test_errors import TestNotFoundError
-from app.domain.value_objects.question_value_objects import CorrectAnswer, Option
 from app.infrastructure.persistence.models import QuestionGroupModel
 from app.infrastructure.persistence.models.passage_model import PassageModel
 from app.infrastructure.persistence.models.test_model import (

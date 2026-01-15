@@ -8,7 +8,6 @@ from app.application.use_cases.sessions.commands.complete_session.complete_sessi
     CompleteSessionRequest,
     CompleteSessionResponse,
 )
-from app.common.utils.time_helper import TimeHelper
 from app.domain.aggregates.session import Session
 from app.domain.aggregates.users.user import User, UserRole
 from app.domain.errors.session_errors import (

@@ -1,10 +1,6 @@
-from types import new_class
-
 from app.application.services.query.classes.class_query_service import ClassQueryService
 from app.application.use_cases.base.use_case import (
     AuthenticatedUseCase,
-    RequestType,
-    ResponseType,
 )
 from app.application.use_cases.classes.commands.assign_teacher.assign_teacher_dto import (
     AssignTeacherRequest,
@@ -16,7 +12,6 @@ from app.domain.errors.class_errors import (
     ClassNotFoundError,
     NoPermissionToAssignTeacherToClass,
     NoPermissionToAssignTeacherToClassThatYouDontTeach,
-    NoPermissionToRemoveStudentError,
     NotATeacherError,
 )
 from app.domain.errors.user_errors import UserNotFoundError

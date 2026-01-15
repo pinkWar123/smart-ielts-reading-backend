@@ -1,5 +1,3 @@
-import enum
-
 from sqlalchemy import JSON, Column, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 

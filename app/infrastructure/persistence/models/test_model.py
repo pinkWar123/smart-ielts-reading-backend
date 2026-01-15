@@ -1,5 +1,3 @@
-import enum
-
 from sqlalchemy import (
     Boolean,
     Column,
@@ -8,7 +6,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    Table,
     Text,
 )
 from sqlalchemy.orm import relationship

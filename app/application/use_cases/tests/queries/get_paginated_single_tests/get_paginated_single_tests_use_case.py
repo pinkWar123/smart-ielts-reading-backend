@@ -1,6 +1,5 @@
 from app.application.services.query.tests.test_query_service import TestQueryService
-from app.application.use_cases.base.use_case import RequestType, ResponseType, UseCase
-from app.application.use_cases.common.dtos.passage_detail_dto import PassageDTO
+from app.application.use_cases.base.use_case import UseCase
 from app.application.use_cases.tests.queries.get_paginated_single_tests.get_paginated_single_tests_dto import (
     GetPaginatedSingleTestsQuery,
     GetPaginatedSingleTestsResponse,

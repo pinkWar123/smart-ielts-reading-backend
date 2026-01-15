@@ -1,5 +1,3 @@
-from typing import List
-
 from app.application.services.connection_manager_service import (
     ConnectionManagerServiceInterface,
 )

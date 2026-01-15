@@ -1,4 +1,4 @@
-from typing import BinaryIO, Optional
+from typing import Optional
 
 from app.application.errors.ocr_errors import InvalidContent, InvalidFile
 from app.application.services.image_to_text_service import IImageToTextService

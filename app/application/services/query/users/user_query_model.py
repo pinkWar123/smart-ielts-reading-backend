@@ -2,8 +2,6 @@ from typing import List
 
 from pydantic import BaseModel
 
-from app.domain.aggregates.users.user import User
-
 
 class Teacher(BaseModel):
     id: str

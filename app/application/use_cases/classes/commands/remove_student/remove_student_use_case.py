@@ -1,8 +1,6 @@
 from app.application.services.query.classes.class_query_service import ClassQueryService
 from app.application.use_cases.base.use_case import (
     AuthenticatedUseCase,
-    RequestType,
-    ResponseType,
 )
 from app.application.use_cases.classes.commands.remove_student.remove_student_dto import (
     RemoveStudentRequest,

@@ -1,6 +1,5 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import ExpiredSignatureError, JWTError
 
 from app.application.services.token_service import TokenService
 from app.common.dependencies import get_jwt_service
