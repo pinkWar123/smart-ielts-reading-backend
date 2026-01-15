@@ -71,6 +71,14 @@ class NoPermissionToManageSessionError(Error):
         )
 
 
+class NoPermissionToJoinSessionError(Error):
+    def __init__(self, user_id: str, session_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to join session {session_id}",
+            ErrorCode.FORBIDDEN,
+        )
+
+
 class CannotDeleteSessionError(Error):
     def __init__(self, session_id: str, current_status: SessionStatus):
         super().__init__(

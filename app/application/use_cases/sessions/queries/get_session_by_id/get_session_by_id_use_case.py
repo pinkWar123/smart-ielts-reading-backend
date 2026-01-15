@@ -22,7 +22,6 @@ class GetSessionByIdUseCase(UseCase[GetSessionByIdQuery, GetSessionByIdResponse]
         # Convert to response DTO
         return GetSessionByIdResponse(
             id=session.id,
-            class_id=session.class_id,
             test_id=session.test_id,
             title=session.title,
             scheduled_at=session.scheduled_at,

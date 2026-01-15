@@ -14,6 +14,10 @@ from app.application.use_cases.sessions.commands.create_session.create_session_d
     CreateSessionRequest,
     CreateSessionResponse,
 )
+from app.application.use_cases.sessions.commands.join_session.join_session_dto import (
+    SessionJoinRequest,
+    SessionJoinResponse,
+)
 from app.application.use_cases.sessions.commands.start_session.start_session_dto import (
     StartSessionRequest,
     StartSessionResponse,
@@ -275,5 +279,37 @@ async def complete_session(
 ):
     request = CompleteSessionRequest(session_id=session_id)
     return await use_cases.complete_session_use_case.execute(
+        request, user_id=current_user["user_id"]
+    )
+
+
+@router.post(
+    "/{session_id}/join",
+    response_model=SessionJoinResponse,
+    summary="Join Session",
+    description="""
+    Join a session
+
+    This is used when a test times out or when an admin/teacher manually stops
+    the test before the timeout. All connected students will be notified via WebSocket.
+
+    Requirements:
+    - Must be an ADMIN or TEACHER
+    - If TEACHER, must be teaching the session's class
+    - Session must exist and be in IN_PROGRESS status
+    """,
+    responses={
+        400: {"description": "Invalid session state"},
+        403: {"description": "Forbidden - User does not have permission"},
+        404: {"description": "Session not found"},
+    },
+)
+async def join_session(
+    session_id: str,
+    current_user=Depends(RequireRoles([UserRole.STUDENT])),
+    use_cases: SessionUseCases = Depends(get_session_use_cases),
+):
+    request = SessionJoinRequest(session_id=session_id)
+    return await use_cases.join_session_use_case.execute(
         request, user_id=current_user["user_id"]
     )

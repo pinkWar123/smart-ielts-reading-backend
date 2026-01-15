@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.services.connection_manager_service import (
+    ConnectionManagerServiceInterface,
+)
 from app.application.use_cases.auth.commands.login.login_use_case import LoginUseCase
 from app.application.use_cases.auth.commands.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
@@ -66,6 +69,12 @@ from app.application.use_cases.sessions.commands.complete_session.complete_sessi
 from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
     CreateSessionUseCase,
 )
+from app.application.use_cases.sessions.commands.disconnect_session.disconnect_session_use_case import (
+    DisconnectSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.join_session.join_session_use_case import (
+    JoinSessionUseCase,
+)
 from app.application.use_cases.sessions.commands.start_session.start_session_use_case import (
     StartSessionUseCase,
 )
@@ -110,6 +119,7 @@ from app.application.use_cases.tests.queries.get_test_with_passages.get_test_wit
 )
 from app.common.db.engine import get_database_session
 from app.container import container
+from app.domain.repositories.class_repository import ClassRepositoryInterface
 
 
 @dataclass
@@ -169,6 +179,8 @@ class SessionUseCases:
     start_waiting_use_case: StartWaitingUseCase
     cancel_session_use_case: CancelledSessionUseCase
     complete_session_use_case: CompleteSessionUseCase
+    join_session_use_case: JoinSessionUseCase
+    disconnect_session_use_case: DisconnectSessionUseCase
 
 
 # Test-related dependencies
@@ -378,6 +390,17 @@ async def get_session_use_cases(
             class_repo=class_repo,
             connection_manager=connection_manager,
         ),
+        join_session_use_case=container.join_session_use_case(
+            session_repo=session_repo,
+            user_repo=user_repo,
+            class_repo=class_repo,
+            connection_manager=connection_manager,
+        ),
+        disconnect_session_use_case=container.disconnect_session_use_case(
+            user_repo=user_repo,
+            session_repo=session_repo,
+            connection_manager=connection_manager,
+        ),
     )
 
 
@@ -387,3 +410,13 @@ async def get_jwt_service(
     """Get JwtService with session-scoped refresh token repository."""
     refresh_token_repo = container.refresh_token_repository(session=session)
     return container.jwt_service(refresh_token_repo=refresh_token_repo)
+
+
+async def get_connection_manager_service() -> ConnectionManagerServiceInterface:
+    return container.connection_manager()
+
+
+async def get_class_repository(
+    session: AsyncSession = Depends(get_database_session),
+) -> ClassRepositoryInterface:
+    return container.class_repository(session=session)

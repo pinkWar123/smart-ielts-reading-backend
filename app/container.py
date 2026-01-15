@@ -69,6 +69,12 @@ from app.application.use_cases.sessions.commands.complete_session.complete_sessi
 from app.application.use_cases.sessions.commands.create_session.create_session_use_case import (
     CreateSessionUseCase,
 )
+from app.application.use_cases.sessions.commands.disconnect_session.disconnect_session_use_case import (
+    DisconnectSessionUseCase,
+)
+from app.application.use_cases.sessions.commands.join_session.join_session_use_case import (
+    JoinSessionUseCase,
+)
 from app.application.use_cases.sessions.commands.start_session.start_session_use_case import (
     StartSessionUseCase,
 )
@@ -372,11 +378,26 @@ class ApplicationContainer(containers.DeclarativeContainer):
         class_repo=class_repository,
         connection_manager=connection_manager,
     )
-    complete_session_use_case = providers.Factory(
-        CompleteSessionUseCase,
+    complete_session_use_case = (
+        providers.Factory(
+            CompleteSessionUseCase,
+            session_repo=session_repository,
+            user_repo=user_repository,
+            class_repo=class_repository,
+            connection_manager=connection_manager,
+        ),
+    )
+    join_session_use_case = providers.Factory(
+        JoinSessionUseCase,
         session_repo=session_repository,
         user_repo=user_repository,
         class_repo=class_repository,
+        connection_manager=connection_manager,
+    )
+    disconnect_session_use_case = providers.Factory(
+        DisconnectSessionUseCase,
+        user_repo=user_repository,
+        session_repo=session_repository,
         connection_manager=connection_manager,
     )
 
