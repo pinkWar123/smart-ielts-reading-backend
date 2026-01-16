@@ -7,6 +7,7 @@ from app.common.db.engine import close_database, initialize_database
 from app.common.settings import settings
 from app.container import container
 from app.presentation.exception.global_exception_handler import setup_exception_handlers
+from app.presentation.routes.attempt_router import router as attempt_router
 from app.presentation.routes.auth_router import router as auth_router
 from app.presentation.routes.class_router import router as class_router
 from app.presentation.routes.ocr_router import router as ocr_router
@@ -62,6 +63,7 @@ v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 v1_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
 v1_router.include_router(class_router, prefix="/classes", tags=["Classes"])
 v1_router.include_router(session_router, prefix="/sessions", tags=["Sessions"])
+v1_router.include_router(attempt_router, prefix="/attempts", tags=["Attempts"])
 v1_router.include_router(websocket_router, prefix="/websocket", tags=["Websocket"])
 
 app.include_router(v1_router)

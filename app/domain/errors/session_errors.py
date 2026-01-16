@@ -63,6 +63,14 @@ class NoPermissionToCreateSessionError(Error):
         )
 
 
+class NoPermissionToViewSessionError(Error):
+    def __init__(self, user_id: str, session_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to view session {session_id}",
+            ErrorCode.FORBIDDEN,
+        )
+
+
 class NoPermissionToManageSessionError(Error):
     def __init__(self, user_id: str, session_id: str):
         super().__init__(

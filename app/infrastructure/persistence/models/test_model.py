@@ -11,7 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.domain.aggregates.test import TestStatus, TestType
+from app.domain.aggregates.test import Test, TestStatus, TestType
 from app.infrastructure.persistence.models.base import Base, BaseModel
 
 
@@ -63,3 +63,20 @@ class TestModel(BaseModel):
     def passages(self):
         """Get passages in order"""
         return [assoc.passage for assoc in self.passage_associations]
+
+    def to_domain(self) -> Test:
+        return Test(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            test_type=self.test_type,
+            time_limit_minutes=self.time_limit_minutes,
+            total_questions=self.total_questions,
+            total_points=self.total_points,
+            status=self.status,
+            created_by=self.creator.email,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            is_active=self.is_active,
+            passage_ids=[passage.id for passage in self.passages],
+        )

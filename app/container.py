@@ -2,6 +2,12 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 
 from app.application.services.passage_service import PassageService
+from app.application.services.query.attempts.attempt_query_service import (
+    AttemptQueryService,
+)
+from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
+    GetAttemptByIdUseCase,
+)
 from app.application.use_cases.auth.commands.login.login_use_case import LoginUseCase
 from app.application.use_cases.auth.commands.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
@@ -180,6 +186,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     passage_query_service = providers.Factory(SqlPassageQueryService)
     user_query_service = providers.Factory(SQLUserQueryService)
     class_query_service = providers.Factory(SqlClassQueryService)
+    attempt_query_service = providers.Factory(AttemptQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -399,6 +406,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
         user_repo=user_repository,
         session_repo=session_repository,
         connection_manager=connection_manager,
+    )
+
+    # Attempt use cases
+    get_attempt_by_id_use_case = providers.Factory(
+        GetAttemptByIdUseCase, attempt_query_service=attempt_query_service
     )
 
 

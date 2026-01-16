@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.services.connection_manager_service import (
     ConnectionManagerServiceInterface,
 )
+from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
+    GetAttemptByIdUseCase,
+)
 from app.application.use_cases.auth.commands.login.login_use_case import LoginUseCase
 from app.application.use_cases.auth.commands.regenerate_tokens.regenerate_tokens_use_case import (
     RegenerateTokensUseCase,
@@ -181,6 +184,11 @@ class SessionUseCases:
     complete_session_use_case: CompleteSessionUseCase
     join_session_use_case: JoinSessionUseCase
     disconnect_session_use_case: DisconnectSessionUseCase
+
+
+@dataclass
+class AttemptUseCases:
+    get_attempt_by_id: GetAttemptByIdUseCase
 
 
 # Test-related dependencies
@@ -401,6 +409,18 @@ async def get_session_use_cases(
             session_repo=session_repo,
             connection_manager=connection_manager,
         ),
+    )
+
+
+async def get_attempt_use_cases(
+    session: AsyncSession = Depends(get_database_session),
+) -> AttemptUseCases:
+    attempt_query_service = container.attempt_query_service(session=session)
+    user_repo = container.user_repository(session=session)
+    return AttemptUseCases(
+        get_attempt_by_id=container.get_attempt_by_id(
+            attempt_query_service=attempt_query_service, user_repo=user_repo
+        )
     )
 
 
