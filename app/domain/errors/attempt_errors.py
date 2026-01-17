@@ -9,6 +9,19 @@ class AttemptNotFoundError(Error):
         super().__init__(f"Attempt with ID {attempt_id} not found", ErrorCode.NOT_FOUND)
 
 
+class AttemptOfUserNotFoundError(Error):
+    def __init__(self, session_id: str, user_id: str):
+        super().__init__(
+            f"Attempt of user with ID {user_id} in session {session_id} not found",
+            ErrorCode.NOT_FOUND,
+        )
+
+
+class UserNotAStudentError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(f"User {user_id} is not a student", ErrorCode.FORBIDDEN)
+
+
 class InvalidAttemptStatusError(Error):
     def __init__(self, attempt_id: str, current_status):
         super().__init__(
