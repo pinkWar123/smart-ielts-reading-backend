@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.services.connection_manager_service import (
     ConnectionManagerServiceInterface,
 )
+from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
+    UpdateAnswerUseCase,
+)
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
 )
@@ -189,6 +192,7 @@ class SessionUseCases:
 @dataclass
 class AttemptUseCases:
     get_attempt_by_id: GetAttemptByIdUseCase
+    update_answer: UpdateAnswerUseCase
 
 
 # Test-related dependencies
@@ -416,11 +420,16 @@ async def get_attempt_use_cases(
     session: AsyncSession = Depends(get_database_session),
 ) -> AttemptUseCases:
     attempt_query_service = container.attempt_query_service(session=session)
+    test_query_service = container.test_query_service(session=session)
     user_repo = container.user_repository(session=session)
+    attempt_repo = container.attempt_repository(session=session)
     return AttemptUseCases(
         get_attempt_by_id=container.get_attempt_by_id(
             attempt_query_service=attempt_query_service, user_repo=user_repo
-        )
+        ),
+        update_answer=container.update_answer_use_case(
+            test_query_service=test_query_service, attempt_repo=attempt_repo
+        ),
     )
 
 

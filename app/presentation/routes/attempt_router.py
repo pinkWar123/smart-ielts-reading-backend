@@ -1,5 +1,10 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
+from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_dto import (
+    UpdateAnswerRequest,
+    UpdateAnswerResponse,
+)
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_dto import (
     GetAttemptByIdQuery,
     GetAttemptByIdResponse,
@@ -43,4 +48,24 @@ async def get_attempt_by_id(
     query = GetAttemptByIdQuery(id=attempt_id)
     return await use_cases.get_attempt_by_id.execute(
         query, user_id=current_user["user_id"]
+    )
+
+
+class UpdateAnswerContract(BaseModel):
+    answer: str
+    question_id: str
+
+
+@router.post("/{attempt_id}/answers", response_model=UpdateAnswerResponse)
+async def update_answer(
+    attempt_id: str,
+    request: UpdateAnswerContract,
+    use_cases: AttemptUseCases = Depends(get_attempt_use_cases),
+    current_user=Depends(RequireRoles([UserRole.STUDENT])),
+):
+    use_case_request = UpdateAnswerRequest(
+        attempt_id=attempt_id, question_id=request.question_id, answer=request.answer
+    )
+    return await use_cases.update_answer.execute(
+        use_case_request, user_id=current_user["user_id"]
     )

@@ -40,3 +40,11 @@ class AttemptAlreadySubmittedError(Error):
 class InvalidAttemptDataError(Error):
     def __init__(self, message: str):
         super().__init__(message, ErrorCode.INVALID_DATA)
+
+
+class NoPermissionToUpdateAttemptError(Error):
+    def __init__(self, user_id: str):
+        super().__init__(
+            f"User {user_id} does not have permission to update attempt",
+            ErrorCode.FORBIDDEN,
+        )

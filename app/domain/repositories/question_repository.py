@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from app.domain.entities.question import Question
+from app.domain.aggregates.passage import Question
 
 
 class QuestionRepositoryInterface(ABC):

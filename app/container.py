@@ -5,6 +5,9 @@ from app.application.services.passage_service import PassageService
 from app.application.services.query.attempts.attempt_query_service import (
     AttemptQueryService,
 )
+from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
+    UpdateAnswerUseCase,
+)
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
 )
@@ -138,6 +141,7 @@ from app.infrastructure.query_services.sql_test_query_service import (
     SQLTestQueryService,
 )
 from app.infrastructure.query_services.sql_user_query_service import SQLUserQueryService
+from app.infrastructure.repositories.sql_attempt_repository import SQLAttemptRepository
 from app.infrastructure.repositories.sql_class_repository import SQLClassRepository
 from app.infrastructure.repositories.sql_passage_repository import (
     SQLPassageRepositoryInterface,
@@ -180,6 +184,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     refresh_token_repository = providers.Factory(SQLRefreshTokenRepositoryInterface)
     class_repository = providers.Factory(SQLClassRepository)
     session_repository = providers.Factory(SQLSessionRepository)
+    attempt_repository = providers.Factory(SQLAttemptRepository)
 
     # Query Services (for optimized reads)
     test_query_service = providers.Factory(SQLTestQueryService)
@@ -411,6 +416,11 @@ class ApplicationContainer(containers.DeclarativeContainer):
     # Attempt use cases
     get_attempt_by_id_use_case = providers.Factory(
         GetAttemptByIdUseCase, attempt_query_service=attempt_query_service
+    )
+    update_answer_use_case = providers.Factory(
+        UpdateAnswerUseCase,
+        test_query_service=test_query_service,
+        attempt_repo=attempt_repository,
     )
 
 

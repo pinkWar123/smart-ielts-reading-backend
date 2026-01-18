@@ -92,3 +92,11 @@ class InvalidQuestionOptionsError(Error):
             "Options should be defined at the group level.",
             ErrorCode.INVALID_DATA,
         )
+
+
+class QuestionDoesNotBelongToTestError(Error):
+    def __init__(self, question_id: str, test_id: str):
+        super().__init__(
+            f"Question {question_id} does not belong to passage {test_id}",
+            ErrorCode.INVALID_DATA,
+        )
