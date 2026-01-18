@@ -1,8 +1,14 @@
+from typing import Optional
+
+from app.application.services.websocket_broadcaster_service import (
+    WebSocketBroadcasterService,
+)
 from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_dto import (
     RecordHighlightRequest,
     RecordHighlightResponse,
 )
 from app.application.use_cases.base.use_case import AuthenticatedUseCase
+from app.common.utils.time_helper import TimeHelper
 from app.domain.aggregates.attempt.attempt import Attempt, AttemptStatus
 from app.domain.errors.attempt_errors import (
     AttemptNotFoundError,
@@ -10,6 +16,8 @@ from app.domain.errors.attempt_errors import (
     NoPermissionToUpdateAttemptError,
 )
 from app.domain.repositories.attempt_repository import AttemptRepositoryInterface
+from app.domain.repositories.user_repository import UserRepositoryInterface
+from app.infrastructure.web_socket.message_types import StudentHighlightMessage
 
 
 class RecordHighlightUseCase(
@@ -28,8 +36,15 @@ class RecordHighlightUseCase(
 
     MAX_HIGHLIGHTS_PER_ATTEMPT = 100
 
-    def __init__(self, attempt_repo: AttemptRepositoryInterface):
+    def __init__(
+        self,
+        attempt_repo: AttemptRepositoryInterface,
+        user_repo: UserRepositoryInterface,
+        broadcaster: Optional[WebSocketBroadcasterService] = None,
+    ):
         self.attempt_repo = attempt_repo
+        self.user_repo = user_repo
+        self.broadcaster = broadcaster
 
     async def execute(
         self, request: RecordHighlightRequest, user_id: str
@@ -68,6 +83,14 @@ class RecordHighlightUseCase(
         # Get the last highlight that was just added
         last_highlight = updated_attempt.highlighted_text[-1]
 
+        # Broadcast to teachers if part of a session
+        if updated_attempt.session_id and self.broadcaster:
+            await self._broadcast_highlight_activity(
+                attempt=updated_attempt,
+                text=last_highlight.text,
+                passage_id=last_highlight.passage_id,
+            )
+
         return RecordHighlightResponse(
             id=last_highlight.id,
             text=last_highlight.text,
@@ -93,3 +116,33 @@ class RecordHighlightUseCase(
             )
 
         return attempt
+
+    async def _broadcast_highlight_activity(
+        self, attempt: Attempt, text: str, passage_id: str
+    ) -> None:
+        """Broadcast student highlight activity to teachers."""
+        try:
+            # Get student name
+            student = await self.user_repo.get_by_id(attempt.student_id)
+            student_name = student.full_name if student else "Unknown Student"
+
+            # Truncate text to first 100 characters
+            truncated_text = text[:100] if len(text) > 100 else text
+
+            message = StudentHighlightMessage(
+                session_id=attempt.session_id,
+                student_id=attempt.student_id,
+                student_name=student_name,
+                text=truncated_text,
+                passage_id=passage_id,
+                timestamp=TimeHelper.utc_now(),
+            )
+
+            await self.broadcaster.broadcast_student_activity(
+                session_id=attempt.session_id,
+                student_id=attempt.student_id,
+                message=message.dict(),
+            )
+        except Exception as e:
+            # Log error but don't fail the operation
+            print(f"Failed to broadcast highlight activity: {e}")

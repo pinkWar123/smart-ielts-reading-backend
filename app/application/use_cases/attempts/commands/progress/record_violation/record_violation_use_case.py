@@ -1,9 +1,9 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
-from app.application.services.connection_manager_service import (
-    ConnectionManagerServiceInterface,
+from app.application.services.websocket_broadcaster_service import (
+    WebSocketBroadcasterService,
 )
 from app.application.use_cases.attempts.commands.progress.record_violation.record_violation_dto import (
     RecordViolationRequest,
@@ -19,6 +19,7 @@ from app.domain.errors.attempt_errors import (
     NoPermissionToUpdateAttemptError,
 )
 from app.domain.repositories.attempt_repository import AttemptRepositoryInterface
+from app.domain.repositories.user_repository import UserRepositoryInterface
 from app.infrastructure.web_socket.message_types import ViolationRecordedMessage
 
 
@@ -43,10 +44,12 @@ class RecordViolationUseCase(
     def __init__(
         self,
         attempt_repo: AttemptRepositoryInterface,
-        connection_manager: ConnectionManagerServiceInterface,
+        user_repo: UserRepositoryInterface,
+        broadcaster: Optional[WebSocketBroadcasterService] = None,
     ):
         self.attempt_repo = attempt_repo
-        self.connection_manager = connection_manager
+        self.user_repo = user_repo
+        self.broadcaster = broadcaster
 
     async def execute(
         self, request: RecordViolationRequest, user_id: str
@@ -69,11 +72,10 @@ class RecordViolationUseCase(
         last_violation = updated_attempt.tab_violations[-1]
         total_violations = updated_attempt.get_violation_count()
 
-        # Broadcast to teacher via WebSocket if part of a session
-        if updated_attempt.session_id:
-            await self._broadcast_violation_to_teacher(
-                session_id=updated_attempt.session_id,
-                student_id=updated_attempt.student_id,
+        # Broadcast to teachers via WebSocket if part of a session
+        if updated_attempt.session_id and self.broadcaster:
+            await self._broadcast_violation_to_teachers(
+                attempt=updated_attempt,
                 violation_type=request.violation_type.value,
                 timestamp=last_violation.timestamp,
                 total_count=total_violations,
@@ -129,27 +131,32 @@ class RecordViolationUseCase(
             k: v for k, v in self._rate_limit_tracker.items() if v > cutoff_time
         }
 
-    async def _broadcast_violation_to_teacher(
+    async def _broadcast_violation_to_teachers(
         self,
-        session_id: str,
-        student_id: str,
+        attempt: Attempt,
         violation_type: str,
         timestamp: datetime,
         total_count: int,
     ) -> None:
-        """Broadcast violation event to teacher via WebSocket."""
+        """Broadcast violation event to teachers only via WebSocket."""
         try:
+            # Get student name
+            student = await self.user_repo.get_by_id(attempt.student_id)
+            student_name = student.full_name if student else "Unknown Student"
+
             message = ViolationRecordedMessage(
-                student_id=student_id,
+                student_id=attempt.student_id,
                 violation_type=violation_type,
                 timestamp=timestamp,
                 total_count=total_count,
             )
-            await self.connection_manager.broadcast_to_session(
-                session_id=session_id,
+
+            await self.broadcaster.broadcast_student_activity(
+                session_id=attempt.session_id,
+                student_id=attempt.student_id,
                 message=message.dict(),
             )
         except Exception as e:
             # Log error but don't fail the violation recording
             # WebSocket failures should not prevent violation tracking
-            print(f"Failed to broadcast violation to teacher: {e}")
+            print(f"Failed to broadcast violation to teachers: {e}")

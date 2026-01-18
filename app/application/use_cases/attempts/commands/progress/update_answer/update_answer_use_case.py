@@ -1,7 +1,12 @@
+from typing import Optional
+
 from app.application.services.query.tests.test_query_model import (
     TestWithPassagesQueryModel,
 )
 from app.application.services.query.tests.test_query_service import TestQueryService
+from app.application.services.websocket_broadcaster_service import (
+    WebSocketBroadcasterService,
+)
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_dto import (
     UpdateAnswerRequest,
     UpdateAnswerResponse,
@@ -22,6 +27,8 @@ from app.domain.errors.question_errors import QuestionDoesNotBelongToTestError
 from app.domain.errors.test_errors import TestNotFoundError
 from app.domain.repositories.attempt_repository import AttemptRepositoryInterface
 from app.domain.repositories.question_repository import QuestionRepositoryInterface
+from app.domain.repositories.user_repository import UserRepositoryInterface
+from app.infrastructure.web_socket.message_types import StudentAnswerMessage
 
 
 class UpdateAnswerUseCase(
@@ -31,9 +38,13 @@ class UpdateAnswerUseCase(
         self,
         test_query_service: TestQueryService,
         attempt_repo: AttemptRepositoryInterface,
+        user_repo: UserRepositoryInterface,
+        broadcaster: Optional[WebSocketBroadcasterService] = None,
     ):
         self.test_query_service = test_query_service
         self.attempt_repo = attempt_repo
+        self.user_repo = user_repo
+        self.broadcaster = broadcaster
 
     async def execute(
         self, request: UpdateAnswerRequest, user_id: str
@@ -43,9 +54,19 @@ class UpdateAnswerUseCase(
         question = self._validate_and_get_question(request.question_id, test)
 
         answer = self._create_answer(request)
+        is_update = any(a.question_id == request.question_id for a in attempt.answers)
         attempt.submit_answer(answer)
 
         updated_attempt = await self.attempt_repo.update(attempt)
+
+        # Broadcast to teachers if part of a session
+        if updated_attempt.session_id and self.broadcaster:
+            await self._broadcast_answer_activity(
+                attempt=updated_attempt,
+                question=question,
+                is_update=is_update,
+            )
+
         return UpdateAnswerResponse(
             question_id=request.question_id,
             question_number=question.question_number,
@@ -103,3 +124,32 @@ class UpdateAnswerUseCase(
             is_correct=False,  # This is false, because we will calculate it later
             answered_at=TimeHelper.utc_now(),
         )
+
+    async def _broadcast_answer_activity(
+        self, attempt: Attempt, question: Question, is_update: bool
+    ) -> None:
+        """Broadcast student answer activity to teachers."""
+        try:
+            # Get student name
+            student = await self.user_repo.get_by_id(attempt.student_id)
+            student_name = student.full_name if student else "Unknown Student"
+
+            message = StudentAnswerMessage(
+                session_id=attempt.session_id,
+                student_id=attempt.student_id,
+                student_name=student_name,
+                question_id=question.id,
+                question_number=question.question_number,
+                answered=True,
+                is_update=is_update,
+                timestamp=TimeHelper.utc_now(),
+            )
+
+            await self.broadcaster.broadcast_student_activity(
+                session_id=attempt.session_id,
+                student_id=attempt.student_id,
+                message=message.dict(),
+            )
+        except Exception as e:
+            # Log error but don't fail the operation
+            print(f"Failed to broadcast answer activity: {e}")

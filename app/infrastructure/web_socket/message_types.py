@@ -77,3 +77,56 @@ class ViolationRecordedMessage(BaseModel):
     violation_type: str
     timestamp: datetime
     total_count: int
+
+
+# Student Activity Messages (Teacher Only)
+class StudentProgressMessage(BaseModel):
+    type: Literal["student_progress"] = "student_progress"
+    session_id: str
+    student_id: str
+    student_name: str
+    passage_index: int
+    question_index: int
+    question_number: int
+    timestamp: datetime
+
+
+class StudentAnswerMessage(BaseModel):
+    type: Literal["student_answer"] = "student_answer"
+    session_id: str
+    student_id: str
+    student_name: str
+    question_id: str
+    question_number: int
+    answered: bool
+    is_update: bool
+    timestamp: datetime
+
+
+class StudentHighlightMessage(BaseModel):
+    type: Literal["student_highlight"] = "student_highlight"
+    session_id: str
+    student_id: str
+    student_name: str
+    text: str  # first 100 chars
+    passage_id: str
+    timestamp: datetime
+
+
+class StudentSubmittedMessage(BaseModel):
+    type: Literal["student_submitted"] = "student_submitted"
+    session_id: str
+    student_id: str
+    student_name: str
+    score: Optional[float]
+    time_taken_seconds: int
+    answered_questions: int
+    total_questions: int
+    timestamp: datetime
+
+
+class SessionStatsMessage(BaseModel):
+    type: Literal["session_stats"] = "session_stats"
+    session_id: str
+    stats: dict  # connection counts, progress, violations
+    timestamp: datetime
