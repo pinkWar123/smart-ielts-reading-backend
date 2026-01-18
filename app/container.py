@@ -5,11 +5,17 @@ from app.application.services.passage_service import PassageService
 from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_use_case import (
     RecordHighlightUseCase,
 )
+from app.application.use_cases.attempts.commands.progress.record_violation.record_violation_use_case import (
+    RecordViolationUseCase,
+)
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
     UpdateAnswerUseCase,
 )
 from app.application.use_cases.attempts.commands.progress.update_progress.update_progress_use_case import (
     UpdateProgressUseCase,
+)
+from app.application.use_cases.attempts.commands.submit.submit_attempt_use_case import (
+    SubmitAttemptUseCase,
 )
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
@@ -435,6 +441,16 @@ class ApplicationContainer(containers.DeclarativeContainer):
     record_highlight_use_case = providers.Factory(
         RecordHighlightUseCase,
         attempt_repo=attempt_repository,
+    )
+    record_violation_use_case = providers.Factory(
+        RecordViolationUseCase,
+        attempt_repo=attempt_repository,
+        connection_manager=connection_manager,
+    )
+    submit_attempt_use_case = providers.Factory(
+        SubmitAttemptUseCase,
+        attempt_repo=attempt_repository,
+        test_query_service=test_query_service,
     )
 
 

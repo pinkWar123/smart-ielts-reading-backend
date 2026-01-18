@@ -83,6 +83,7 @@ class AttemptModel(BaseModel):
             TabViolation(
                 timestamp=datetime.fromisoformat(v["timestamp"]),
                 violation_type=v["violation_type"],
+                metadata=v.get("metadata"),
             )
             for v in (self.tab_violations or [])
         ]

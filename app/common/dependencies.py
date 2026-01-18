@@ -11,11 +11,17 @@ from app.application.services.connection_manager_service import (
 from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_use_case import (
     RecordHighlightUseCase,
 )
+from app.application.use_cases.attempts.commands.progress.record_violation.record_violation_use_case import (
+    RecordViolationUseCase,
+)
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
     UpdateAnswerUseCase,
 )
 from app.application.use_cases.attempts.commands.progress.update_progress.update_progress_use_case import (
     UpdateProgressUseCase,
+)
+from app.application.use_cases.attempts.commands.submit.submit_attempt_use_case import (
+    SubmitAttemptUseCase,
 )
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
@@ -201,6 +207,8 @@ class AttemptUseCases:
     update_answer: UpdateAnswerUseCase
     update_progress: UpdateProgressUseCase
     record_highlight: RecordHighlightUseCase
+    record_violation: RecordViolationUseCase
+    submit_attempt: SubmitAttemptUseCase
 
 
 # Test-related dependencies
@@ -431,6 +439,7 @@ async def get_attempt_use_cases(
     test_query_service = container.test_query_service(session=session)
     user_repo = container.user_repository(session=session)
     attempt_repo = container.attempt_repository(session=session)
+    connection_manager = container.connection_manager()
     return AttemptUseCases(
         get_attempt_by_id=container.get_attempt_by_id_use_case(
             attempt_query_service=attempt_query_service, user_repo=user_repo
@@ -440,6 +449,12 @@ async def get_attempt_use_cases(
         ),
         update_progress=container.update_progress_use_case(attempt_repo=attempt_repo),
         record_highlight=container.record_highlight_use_case(attempt_repo=attempt_repo),
+        record_violation=container.record_violation_use_case(
+            attempt_repo=attempt_repo, connection_manager=connection_manager
+        ),
+        submit_attempt=container.submit_attempt_use_case(
+            attempt_repo=attempt_repo, test_query_service=test_query_service
+        ),
     )
 
 

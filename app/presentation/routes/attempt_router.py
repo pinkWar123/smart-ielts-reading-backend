@@ -4,6 +4,9 @@ from pydantic import BaseModel
 from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_dto import (
     RecordHighlightResponse,
 )
+from app.application.use_cases.attempts.commands.progress.record_violation.record_violation_dto import (
+    RecordViolationResponse,
+)
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_dto import (
     UpdateAnswerRequest,
     UpdateAnswerResponse,
@@ -12,11 +15,17 @@ from app.application.use_cases.attempts.commands.progress.update_progress.update
     UpdateProgressRequest,
     UpdateProgressResponse,
 )
+from app.application.use_cases.attempts.commands.submit.submit_attempt_dto import (
+    SubmitAttemptRequest,
+    SubmitAttemptResponse,
+)
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_dto import (
     GetAttemptByIdQuery,
     GetAttemptByIdResponse,
 )
 from app.common.dependencies import AttemptUseCases, get_attempt_use_cases
+from app.domain.aggregates.attempt.attempt import SubmitType
+from app.domain.aggregates.attempt.violation_type import ViolationType
 from app.domain.aggregates.users.user import UserRole
 from app.presentation.security.dependencies import RequireRoles
 
@@ -172,5 +181,88 @@ async def record_highlight(
         color=request.color,
     )
     return await use_cases.record_highlight.execute(
+        use_case_request, user_id=current_user["user_id"]
+    )
+
+
+class RecordViolationContract(BaseModel):
+    violation_type: ViolationType
+    metadata: dict[str, str] | None = None
+
+
+@router.post(
+    "/{attempt_id}/violations",
+    response_model=RecordViolationResponse,
+    status_code=201,
+    description="""
+    Record tab switches and other violations during test
+
+    Business rules:
+    - Only students can record violations in their own attempts
+    - Attempt must be IN_PROGRESS status
+    - Violations are recorded immediately
+    - Broadcast to teacher via WebSocket if part of a session
+    - Rate limiting: max 1 violation per second per type (prevent spam)
+    """,
+    responses={
+        201: {"description": "Violation recorded successfully"},
+        400: {"description": "Invalid violation data"},
+        401: {"description": "Authentication required"},
+        403: {"description": "User doesn't have permission"},
+        404: {"description": "Attempt not found"},
+    },
+)
+async def record_violation(
+    attempt_id: str,
+    request: RecordViolationContract,
+    use_cases: AttemptUseCases = Depends(get_attempt_use_cases),
+    current_user=Depends(RequireRoles([UserRole.STUDENT])),
+):
+    from app.application.use_cases.attempts.commands.progress.record_violation.record_violation_dto import (
+        RecordViolationRequest,
+    )
+
+    use_case_request = RecordViolationRequest(
+        attempt_id=attempt_id,
+        violation_type=request.violation_type,
+        metadata=request.metadata,
+    )
+    return await use_cases.record_violation.execute(
+        use_case_request, user_id=current_user["user_id"]
+    )
+
+
+class SubmitAttemptContract(BaseModel):
+    submit_type: SubmitType
+
+    class Config:
+        use_enum_values = True
+
+
+@router.post(
+    "/{attempt_id}/submit",
+    response_model=SubmitAttemptResponse,
+    status_code=201,
+    description="""
+    Submit attempt and calculate score
+    """,
+    responses={
+        201: {"description": "Attempt submitted successfully"},
+        400: {"description": "Invalid submission data"},
+        401: {"description": "Authentication required"},
+        403: {"description": "User doesn't have permission"},
+        404: {"description": "Attempt not found"},
+    },
+)
+async def submit_attempt(
+    attempt_id: str,
+    request: SubmitAttemptContract,
+    use_cases: AttemptUseCases = Depends(get_attempt_use_cases),
+    current_user=Depends(RequireRoles([UserRole.STUDENT])),
+):
+    use_case_request = SubmitAttemptRequest(
+        attempt_id=attempt_id, submit_type=request.submit_type
+    )
+    return await use_cases.submit_attempt.execute(
         use_case_request, user_id=current_user["user_id"]
     )

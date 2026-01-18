@@ -1,12 +1,13 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 from app.common.utils.time_helper import TimeHelper
 from app.domain.aggregates.attempt.text_highlight import TextHighlight
+from app.domain.aggregates.attempt.violation_type import ViolationType
 from app.domain.errors.attempt_errors import (
     AttemptAlreadySubmittedError,
     InvalidAttemptStatusError,
@@ -23,6 +24,7 @@ class AttemptStatus(str, Enum):
 class TabViolation(BaseModel):
     timestamp: datetime
     violation_type: str
+    metadata: Optional[Dict[str, str]] = None
 
 
 class Answer(BaseModel):
@@ -31,6 +33,12 @@ class Answer(BaseModel):
     is_correct: bool
     points_earned: int = 0
     answered_at: datetime
+
+
+class SubmitType(str, Enum):
+    MANUAL = "MANUAL"
+    AUTO_TIME_EXPIRED = "AUTO_TIME_EXPIRED"
+    TEACHER_FORCED = "TEACHER_FORCED"
 
 
 class Attempt(BaseModel):
@@ -53,6 +61,7 @@ class Attempt(BaseModel):
     )
     status: AttemptStatus = Field(default=AttemptStatus.IN_PROGRESS)
     started_at: datetime = Field(default_factory=TimeHelper.utc_now)
+    submit_type: Optional[SubmitType]
     submitted_at: Optional[datetime] = None
     time_remaining_seconds: Optional[int] = None
     answers: List[Answer] = Field(default_factory=list)
@@ -63,15 +72,24 @@ class Attempt(BaseModel):
     current_passage_index: int = Field(default=0, ge=0)
     current_question_index: int = Field(default=0, ge=0)
 
-    def record_tab_violation(self, violation_type: str = "TAB_SWITCH") -> None:
+    def record_tab_violation(
+        self,
+        violation_type: ViolationType = ViolationType.TAB_SWITCH,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> None:
         """
-        Record a tab switching violation
+        Record a tab switching or other violation
 
         Args:
-            violation_type: Type of violation (default: "TAB_SWITCH")
+            violation_type: Type of violation (default: TAB_SWITCH)
+            metadata: Optional additional context (e.g., tab title, url)
         """
         self.tab_violations.append(
-            TabViolation(timestamp=TimeHelper.utc_now(), violation_type=violation_type)
+            TabViolation(
+                timestamp=TimeHelper.utc_now(),
+                violation_type=violation_type.value,
+                metadata=metadata,
+            )
         )
 
     def record_text_highlight(
@@ -152,7 +170,7 @@ class Attempt(BaseModel):
         """
         self.time_remaining_seconds = seconds
 
-    def submit_attempt(self) -> None:
+    def submit_attempt(self, submit_type: SubmitType) -> None:
         """
         Mark attempt as submitted
 
@@ -171,6 +189,7 @@ class Attempt(BaseModel):
 
         self.status = AttemptStatus.SUBMITTED
         self.submitted_at = TimeHelper.utc_now()
+        self.submit_type = submit_type
 
     def abandon_attempt(self) -> None:
         """
@@ -207,3 +226,41 @@ class Attempt(BaseModel):
             Number of text highlights
         """
         return len(self.highlighted_text)
+
+    def get_correct_answers_count(self) -> int:
+        """
+        Get the number of correct answers
+
+        Returns:
+            Number of correct answers
+        """
+        return sum(1 for answer in self.answers if answer.is_correct)
+
+    def calculate_band_score(self) -> float:
+        """
+        Calculate IELTS band score based on correct answers
+
+        Returns:
+            Band score (0.5 to 9.0)
+        """
+        correct_answers_count = self.get_correct_answers_count()
+
+        if correct_answers_count >= 39:
+            return 9.0
+        if correct_answers_count >= 36:
+            return 8.0
+        if correct_answers_count >= 33:
+            return 7.0
+        if correct_answers_count >= 30:
+            return 6.0
+        if correct_answers_count >= 27:
+            return 5.0
+        if correct_answers_count >= 24:
+            return 4.0
+        if correct_answers_count >= 21:
+            return 3.0
+        if correct_answers_count >= 18:
+            return 2.0
+        if correct_answers_count >= 15:
+            return 1.0
+        return 0.5

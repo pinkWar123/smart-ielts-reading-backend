@@ -148,6 +148,7 @@ class SQLAttemptRepository(AttemptRepositoryInterface):
         attempt_model.percentage_score = attempt.band_score
         attempt_model.current_passage_index = attempt.current_passage_index
         attempt_model.current_question_index = attempt.current_question_index
+        attempt_model.submit_type = attempt.submit_type
 
         await self.session.flush()
         await self.session.refresh(attempt_model)
@@ -213,6 +214,7 @@ class SQLAttemptRepository(AttemptRepositoryInterface):
             {
                 "timestamp": v.timestamp.isoformat(),
                 "violation_type": v.violation_type,
+                "metadata": v.metadata,
             }
             for v in violations
         ]

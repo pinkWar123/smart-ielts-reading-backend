@@ -69,3 +69,11 @@ class ErrorMessage(BaseModel):
     type: Literal["error"] = "error"
     message: str
     code: str
+
+
+class ViolationRecordedMessage(BaseModel):
+    type: Literal["violation"] = "violation"
+    student_id: str
+    violation_type: str
+    timestamp: datetime
+    total_count: int
