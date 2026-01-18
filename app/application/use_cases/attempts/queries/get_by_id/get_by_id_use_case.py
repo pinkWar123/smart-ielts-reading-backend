@@ -47,17 +47,13 @@ class GetAttemptByIdUseCase(
         if attempt is None:
             raise AttemptNotFoundError(request.id)
 
+        # Session and class are optional for standalone attempts
         session = attempt.session
-        if session is None:
-            raise SessionNotFoundError(attempt.session_id)
-
         class_ = attempt.class_
-        if class_ is None:
-            raise ClassNotFoundError(attempt.class_id)
 
         test = attempt.test
         if test is None:
-            raise TestNotFoundError(attempt.test_id)
+            raise TestNotFoundError("unknown_test_id")
 
         self._validate_user_permission(user, attempt.student_id, session, class_)
 

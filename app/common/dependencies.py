@@ -8,8 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.services.connection_manager_service import (
     ConnectionManagerServiceInterface,
 )
+from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_use_case import (
+    RecordHighlightUseCase,
+)
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
     UpdateAnswerUseCase,
+)
+from app.application.use_cases.attempts.commands.progress.update_progress.update_progress_use_case import (
+    UpdateProgressUseCase,
 )
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
@@ -193,6 +199,8 @@ class SessionUseCases:
 class AttemptUseCases:
     get_attempt_by_id: GetAttemptByIdUseCase
     update_answer: UpdateAnswerUseCase
+    update_progress: UpdateProgressUseCase
+    record_highlight: RecordHighlightUseCase
 
 
 # Test-related dependencies
@@ -424,12 +432,14 @@ async def get_attempt_use_cases(
     user_repo = container.user_repository(session=session)
     attempt_repo = container.attempt_repository(session=session)
     return AttemptUseCases(
-        get_attempt_by_id=container.get_attempt_by_id(
+        get_attempt_by_id=container.get_attempt_by_id_use_case(
             attempt_query_service=attempt_query_service, user_repo=user_repo
         ),
         update_answer=container.update_answer_use_case(
             test_query_service=test_query_service, attempt_repo=attempt_repo
         ),
+        update_progress=container.update_progress_use_case(attempt_repo=attempt_repo),
+        record_highlight=container.record_highlight_use_case(attempt_repo=attempt_repo),
     )
 
 

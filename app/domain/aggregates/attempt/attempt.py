@@ -75,7 +75,12 @@ class Attempt(BaseModel):
         )
 
     def record_text_highlight(
-        self, text: str, passage_id: str, start: int, end: int
+        self,
+        text: str,
+        passage_id: str,
+        start: int,
+        end: int,
+        color_code: str = "#FFFF00",
     ) -> None:
         """
         Record a text highlighting action
@@ -85,6 +90,7 @@ class Attempt(BaseModel):
             passage_id: ID of the passage containing the text
             start: Start position in the passage
             end: End position in the passage
+            color_code: Color code for the highlight (default: yellow #FFFF00)
         """
         self.highlighted_text.append(
             TextHighlight(
@@ -93,6 +99,7 @@ class Attempt(BaseModel):
                 passage_id=passage_id,
                 position_start=start,
                 position_end=end,
+                color_code=color_code,
                 comment=None,
             )
         )

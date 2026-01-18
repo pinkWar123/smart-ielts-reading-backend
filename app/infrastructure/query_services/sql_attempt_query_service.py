@@ -24,7 +24,9 @@ class SQLAttemptQueryService(AttemptQueryService):
             select(SessionModel, TestModel, ClassModel, AttemptModel)
             .select_from(AttemptModel)
             .outerjoin(SessionModel, SessionModel.id == AttemptModel.session_id)
-            .outerjoin(TestModel, TestModel.id == SessionModel.test_id)
+            .outerjoin(
+                TestModel, TestModel.id == AttemptModel.test_id
+            )  # Join test directly from attempt
             .outerjoin(ClassModel, ClassModel.id == SessionModel.class_id)
             .where(AttemptModel.id == attempt_id)
         )
@@ -44,10 +46,24 @@ class SQLAttemptQueryService(AttemptQueryService):
         if attempt_model is None:
             return None
 
+        # Map database enum to domain enum
+        from app.domain.aggregates.attempt.attempt import (
+            AttemptStatus as DomainAttemptStatus,
+        )
+        from app.infrastructure.persistence.models.attempt_model import (
+            AttemptStatus as ModelAttemptStatus,
+        )
+
+        status_mapping = {
+            ModelAttemptStatus.IN_PROGRESS: DomainAttemptStatus.IN_PROGRESS,
+            ModelAttemptStatus.SUBMITTED: DomainAttemptStatus.SUBMITTED,
+            ModelAttemptStatus.ABANDONED: DomainAttemptStatus.ABANDONED,
+        }
+
         return AttemptDetail(
             id=attempt_model.id,
             started_at=attempt_model.started_at,
-            status=attempt_model.status,
+            status=status_mapping[attempt_model.status],
             submitted_at=attempt_model.submitted_at,
             time_remaining_seconds=attempt_model.time_remaining_seconds,
             answers=attempt_model.answers,

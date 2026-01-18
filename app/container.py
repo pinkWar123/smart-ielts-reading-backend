@@ -2,11 +2,14 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 
 from app.application.services.passage_service import PassageService
-from app.application.services.query.attempts.attempt_query_service import (
-    AttemptQueryService,
+from app.application.use_cases.attempts.commands.progress.record_highlight.record_highlight_use_case import (
+    RecordHighlightUseCase,
 )
 from app.application.use_cases.attempts.commands.progress.update_answer.update_answer_use_case import (
     UpdateAnswerUseCase,
+)
+from app.application.use_cases.attempts.commands.progress.update_progress.update_progress_use_case import (
+    UpdateProgressUseCase,
 )
 from app.application.use_cases.attempts.queries.get_by_id.get_by_id_use_case import (
     GetAttemptByIdUseCase,
@@ -131,6 +134,9 @@ from app.infrastructure.llm.claude_test_generator_service import (
     ClaudeTestGeneratorService,
 )
 from app.infrastructure.ocr.claude_image_to_text_service import ClaudeImageToTextService
+from app.infrastructure.query_services.sql_attempt_query_service import (
+    SQLAttemptQueryService,
+)
 from app.infrastructure.query_services.sql_class_query_service import (
     SqlClassQueryService,
 )
@@ -191,7 +197,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     passage_query_service = providers.Factory(SqlPassageQueryService)
     user_query_service = providers.Factory(SQLUserQueryService)
     class_query_service = providers.Factory(SqlClassQueryService)
-    attempt_query_service = providers.Factory(AttemptQueryService)
+    attempt_query_service = providers.Factory(SQLAttemptQueryService)
 
     # Services
     passage_service = providers.Factory(PassageService, passage_repo=passage_repository)
@@ -420,6 +426,14 @@ class ApplicationContainer(containers.DeclarativeContainer):
     update_answer_use_case = providers.Factory(
         UpdateAnswerUseCase,
         test_query_service=test_query_service,
+        attempt_repo=attempt_repository,
+    )
+    update_progress_use_case = providers.Factory(
+        UpdateProgressUseCase,
+        attempt_repo=attempt_repository,
+    )
+    record_highlight_use_case = providers.Factory(
+        RecordHighlightUseCase,
         attempt_repo=attempt_repository,
     )
 
