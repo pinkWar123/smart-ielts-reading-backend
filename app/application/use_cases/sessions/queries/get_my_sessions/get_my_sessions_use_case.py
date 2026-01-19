@@ -4,6 +4,7 @@ from app.application.use_cases.sessions.queries.get_my_sessions.get_my_sessions_
     GetMySessionsResponse,
     MySessionDTO,
 )
+from app.common.pagination import PaginationMeta
 from app.domain.repositories.session_repository import SessionRepositoryInterface
 
 
@@ -12,8 +13,13 @@ class GetMySessionsUseCase(UseCase[GetMySessionsQuery, GetMySessionsResponse]):
         self.session_repo = session_repo
 
     async def execute(self, request: GetMySessionsQuery) -> GetMySessionsResponse:
+        # Get total count for pagination metadata
+        total_count = await self.session_repo.count_by_student(request.student_id)
+
         # Get all sessions where student is a participant
-        sessions = await self.session_repo.get_by_student(request.student_id)
+        sessions = await self.session_repo.get_by_student(
+            request.student_id, params=request
+        )
 
         # Convert to DTOs with student-specific info
         my_sessions = []
@@ -41,4 +47,11 @@ class GetMySessionsUseCase(UseCase[GetMySessionsQuery, GetMySessionsResponse]):
                     )
                 )
 
-        return GetMySessionsResponse(sessions=my_sessions)
+        # Create pagination metadata
+        meta = PaginationMeta.from_params(
+            total_items=total_count,
+            page=request.page,
+            page_size=request.page_size,
+        )
+
+        return GetMySessionsResponse(data=my_sessions, meta=meta)

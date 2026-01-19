@@ -405,15 +405,14 @@ class ApplicationContainer(containers.DeclarativeContainer):
         class_repo=class_repository,
         connection_manager=connection_manager,
     )
-    complete_session_use_case = (
-        providers.Factory(
-            CompleteSessionUseCase,
-            session_repo=session_repository,
-            user_repo=user_repository,
-            class_repo=class_repository,
-            connection_manager=connection_manager,
-        ),
+    complete_session_use_case = providers.Factory(
+        CompleteSessionUseCase,
+        session_repo=session_repository,
+        user_repo=user_repository,
+        class_repo=class_repository,
+        connection_manager=connection_manager,
     )
+
     join_session_use_case = providers.Factory(
         JoinSessionUseCase,
         session_repo=session_repository,

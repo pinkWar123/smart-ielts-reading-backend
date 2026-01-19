@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
+from app.common.pagination import PaginatedResponse, SortableParams
 from app.domain.aggregates.session import SessionStatus
 
 
@@ -21,9 +22,9 @@ class MySessionDTO(BaseModel):
     created_at: datetime
 
 
-class GetMySessionsQuery(BaseModel):
+class GetMySessionsQuery(SortableParams):
     student_id: str
 
 
-class GetMySessionsResponse(BaseModel):
-    sessions: List[MySessionDTO]
+class GetMySessionsResponse(PaginatedResponse[MySessionDTO]):
+    pass

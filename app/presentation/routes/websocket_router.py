@@ -71,7 +71,13 @@ async def session_websocket_endpoint(
             scheduled_at=session.scheduled_at,
             status=session.status,
             participants=[
-                SessionParticipant(joined_at=p.joined_at, student_id=p.student_id)
+                SessionParticipant(
+                    student_id=p.student_id,
+                    attempt_id=p.attempt_id,
+                    joined_at=p.joined_at,
+                    connection_status=p.connection_status,
+                    last_activity=p.last_activity,
+                )
                 for p in session.participants
             ],
             created_by=session.created_by,
@@ -90,6 +96,7 @@ async def session_websocket_endpoint(
     except Exception as e:
         logger.error(f"Websocket access validation failed: {e}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
 
     await websocket.accept()
     await manager.connect(session_id=session_id, user_id=user_id, websocket=websocket)
@@ -105,7 +112,7 @@ async def session_websocket_endpoint(
     await websocket.send_json(
         ConnectedMessage(
             type="connected", session_id=session_id, timestamp=TimeHelper.utc_now()
-        ).dict()
+        ).model_dump(mode="json")
     )
 
     try:

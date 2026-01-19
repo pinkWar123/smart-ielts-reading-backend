@@ -154,7 +154,7 @@ class RecordViolationUseCase(
             await self.broadcaster.broadcast_student_activity(
                 session_id=attempt.session_id,
                 student_id=attempt.student_id,
-                message=message.dict(),
+                message=message.model_dump(mode="json"),
             )
         except Exception as e:
             # Log error but don't fail the violation recording

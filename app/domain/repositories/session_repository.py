@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from app.common.pagination import SortableParams
 from app.domain.aggregates.session import Session
 
 
@@ -40,7 +41,9 @@ class SessionRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_class(self, class_id: str) -> List[Session]:
+    async def get_by_class(
+        self, class_id: str, params: SortableParams
+    ) -> List[Session]:
         """
         Get all sessions for a specific class_
 
@@ -53,7 +56,9 @@ class SessionRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_student(self, student_id: str) -> List[Session]:
+    async def get_by_student(
+        self, student_id: str, params: SortableParams
+    ) -> List[Session]:
         """
         Get all sessions where a student is a participant
 
@@ -66,7 +71,9 @@ class SessionRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_by_teacher(self, teacher_id: str) -> List[Session]:
+    async def get_by_teacher(
+        self, teacher_id: str, params: SortableParams
+    ) -> List[Session]:
         """
         Get all sessions created by a specific teacher
 
@@ -105,11 +112,60 @@ class SessionRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_active_sessions(self) -> List[Session]:
+    async def get_active_sessions(self, params: SortableParams) -> List[Session]:
         """
         Get all active sessions (WAITING_FOR_STUDENTS or IN_PROGRESS)
 
         Returns:
             List of active sessions
+        """
+        pass
+
+    @abstractmethod
+    async def count_by_student(self, student_id: str) -> int:
+        """
+        Count all sessions where a student is a participant
+
+        Args:
+            student_id: The student ID
+
+        Returns:
+            Count of sessions
+        """
+        pass
+
+    @abstractmethod
+    async def count_by_teacher(self, teacher_id: str) -> int:
+        """
+        Count all sessions created by a specific teacher
+
+        Args:
+            teacher_id: The teacher ID
+
+        Returns:
+            Count of sessions
+        """
+        pass
+
+    @abstractmethod
+    async def count_by_class(self, class_id: str) -> int:
+        """
+        Count all sessions for a specific class
+
+        Args:
+            class_id: The class ID
+
+        Returns:
+            Count of sessions
+        """
+        pass
+
+    @abstractmethod
+    async def count_active_sessions(self) -> int:
+        """
+        Count all active sessions (WAITING_FOR_STUDENTS or IN_PROGRESS)
+
+        Returns:
+            Count of active sessions
         """
         pass

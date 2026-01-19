@@ -39,6 +39,7 @@ from app.application.use_cases.sessions.queries.list_sessions.list_sessions_dto 
     ListSessionsResponse,
 )
 from app.common.dependencies import SessionUseCases, get_session_use_cases
+from app.common.pagination import SortableParams, SortOrder
 from app.domain.aggregates.users.user import UserRole
 from app.presentation.security.dependencies import RequireRoles
 
@@ -98,10 +99,21 @@ async def list_sessions(
         None, description="Filter by teacher (creator) ID"
     ),
     class_id: Optional[str] = Query(None, description="Filter by class ID"),
-    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    sort_by: str = Query("created_at", description="Field to sort by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order"),
+    # current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
     use_cases: SessionUseCases = Depends(get_session_use_cases),
 ):
-    query = ListSessionsQuery(teacher_id=teacher_id, class_id=class_id)
+    query = ListSessionsQuery(
+        teacher_id=teacher_id,
+        class_id=class_id,
+        page=page,
+        page_size=page_size,
+        sort_order=sort_order,
+        sort_by=sort_by,
+    )
     return await use_cases.list_sessions_use_case.execute(query)
 
 
@@ -122,10 +134,20 @@ async def list_sessions(
     """,
 )
 async def get_my_sessions(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    sort_by: str = Query("created_at", description="Field to sort by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order"),
     current_user=Depends(RequireRoles([UserRole.STUDENT])),
     use_cases: SessionUseCases = Depends(get_session_use_cases),
 ):
-    query = GetMySessionsQuery(student_id=current_user["user_id"])
+    query = GetMySessionsQuery(
+        student_id=current_user["user_id"],
+        page=page,
+        page_size=page_size,
+        sort_order=sort_order,
+        sort_by=sort_by,
+    )
     return await use_cases.get_my_sessions_use_case.execute(query)
 
 

@@ -4,6 +4,7 @@ from app.application.use_cases.sessions.queries.list_sessions.list_sessions_dto 
     ListSessionsResponse,
     SessionSummaryDTO,
 )
+from app.common.pagination import PaginationMeta
 from app.domain.repositories.session_repository import SessionRepositoryInterface
 
 
@@ -12,14 +13,21 @@ class ListSessionsUseCase(UseCase[ListSessionsQuery, ListSessionsResponse]):
         self.session_repo = session_repo
 
     async def execute(self, request: ListSessionsQuery) -> ListSessionsResponse:
-        # Get sessions based on filter
+        # Get total count based on filter
         if request.teacher_id:
-            sessions = await self.session_repo.get_by_teacher(request.teacher_id)
+            total_count = await self.session_repo.count_by_teacher(request.teacher_id)
+            sessions = await self.session_repo.get_by_teacher(
+                request.teacher_id, params=request
+            )
         elif request.class_id:
-            sessions = await self.session_repo.get_by_class(request.class_id)
+            total_count = await self.session_repo.count_by_class(request.class_id)
+            sessions = await self.session_repo.get_by_class(
+                request.class_id, params=request
+            )
         else:
             # No filter - get active sessions (admin use case)
-            sessions = await self.session_repo.get_active_sessions()
+            total_count = await self.session_repo.count_active_sessions()
+            sessions = await self.session_repo.get_active_sessions(params=request)
 
         # Convert to summary DTOs
         session_summaries = [
@@ -39,4 +47,11 @@ class ListSessionsUseCase(UseCase[ListSessionsQuery, ListSessionsResponse]):
             for s in sessions
         ]
 
-        return ListSessionsResponse(sessions=session_summaries)
+        # Create pagination metadata
+        meta = PaginationMeta.from_params(
+            total_items=total_count,
+            page=request.page,
+            page_size=request.page_size,
+        )
+
+        return ListSessionsResponse(data=session_summaries, meta=meta)
