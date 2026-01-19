@@ -135,6 +135,9 @@ from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use
 from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import (
     GetTestWithPassagesUseCase,
 )
+from app.application.users.students.queries.list_users.list_student_use_case import (
+    ListUsersUseCase,
+)
 from app.common.db.engine import get_database_session
 from app.container import container
 from app.domain.repositories.class_repository import ClassRepositoryInterface
@@ -209,6 +212,11 @@ class AttemptUseCases:
     record_highlight: RecordHighlightUseCase
     record_violation: RecordViolationUseCase
     submit_attempt: SubmitAttemptUseCase
+
+
+@dataclass
+class UserUseCases:
+    list_users: ListUsersUseCase
 
 
 # Test-related dependencies
@@ -455,6 +463,15 @@ async def get_attempt_use_cases(
         submit_attempt=container.submit_attempt_use_case(
             attempt_repo=attempt_repo, test_query_service=test_query_service
         ),
+    )
+
+
+async def get_user_use_cases(
+    session: AsyncSession = Depends(get_database_session),
+) -> UserUseCases:
+    user_query_service = container.user_query_service(session=session)
+    return UserUseCases(
+        list_users=container.list_users_use_case(user_query_service=user_query_service)
     )
 
 

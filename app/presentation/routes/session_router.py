@@ -52,7 +52,7 @@ router = APIRouter()
     description="""
     Create a new exercise session for a class.
 
-    The session will be created in SCHEDULED status with all students from the class
+    The session will be created in SCHEDULED status with all users from the class
     added as participants (initially DISCONNECTED).
 
     Requirements:
@@ -163,7 +163,7 @@ async def get_session_by_id(
     Start the waiting phase for a session.
 
     This transitions the session from SCHEDULED to WAITING_FOR_STUDENTS status,
-    allowing students to connect to the waiting room.
+    allowing users to connect to the waiting room.
 
     Requirements:
     - Must be an ADMIN or TEACHER
@@ -194,7 +194,7 @@ async def start_waiting_phase(
     description="""
     Start a session, transitioning it from WAITING_FOR_STUDENTS to IN_PROGRESS.
 
-    This begins the actual test/exercise session. All connected students will
+    This begins the actual test/exercise session. All connected users will
     be notified via WebSocket that the session has started.
 
     Requirements:
@@ -227,7 +227,7 @@ async def start_session(
     Cancel a session, transitioning it to CANCELLED status.
 
     This can be used to cancel sessions that haven't started yet or are in progress.
-    All connected students will be notified via WebSocket (if implemented).
+    All connected users will be notified via WebSocket (if implemented).
 
     Requirements:
     - Must be an ADMIN or TEACHER
@@ -259,7 +259,7 @@ async def cancel_session(
     Complete a session, transitioning it to COMPLETED status.
 
     This is used when a test times out or when an admin/teacher manually stops
-    the test before the timeout. All connected students will be notified via WebSocket.
+    the test before the timeout. All connected users will be notified via WebSocket.
 
     Requirements:
     - Must be an ADMIN or TEACHER
@@ -291,7 +291,7 @@ async def complete_session(
     Join a session
 
     This is used when a test times out or when an admin/teacher manually stops
-    the test before the timeout. All connected students will be notified via WebSocket.
+    the test before the timeout. All connected users will be notified via WebSocket.
 
     Requirements:
     - Must be an ADMIN or TEACHER

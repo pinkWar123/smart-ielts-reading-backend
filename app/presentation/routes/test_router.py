@@ -38,7 +38,8 @@ from app.application.use_cases.tests.queries.get_test_with_passages.get_test_wit
 from app.common.dependencies import TestUseCases, get_test_use_cases
 from app.domain.aggregates.passage import QuestionType
 from app.domain.aggregates.test import TestStatus, TestType
-from app.presentation.security.dependencies import required_admin
+from app.domain.aggregates.users.user import UserRole
+from app.presentation.security.dependencies import RequireRoles, required_admin
 
 router = APIRouter()
 
@@ -143,12 +144,12 @@ async def get_test_detail(
 async def create_test(
     request: CreateTestRequest,
     use_cases: TestUseCases = Depends(get_test_use_cases),
-    current_user=Depends(required_admin),
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
 ):
     """
     Create a new empty test.
 
-    **Admin only endpoint** - requires admin role.
+    **Admin only endpoint** - requires admin or teacher role.
 
     - **title**: Test title (required, 1-255 characters)
     - **description**: Test description (optional)
@@ -158,7 +159,8 @@ async def create_test(
     The test is created with status DRAFT and can have passages added to it.
     Total questions and points are initially 0 and will be updated as passages are added.
     """
-    return await use_cases.create_test.execute(request)
+    user_id = current_user["user_id"]
+    return await use_cases.create_test.execute(request, user_id)
 
 
 @router.post(

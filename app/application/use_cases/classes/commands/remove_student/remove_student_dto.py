@@ -14,4 +14,4 @@ class RemoveStudentResponse(BaseModel):
     class_id: str
     student_id: str
     student_removed: bool
-    students: List[UserDto]  # List of students after removal
+    students: List[UserDto]  # List of users after removal

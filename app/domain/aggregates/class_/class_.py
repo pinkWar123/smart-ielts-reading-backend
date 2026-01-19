@@ -27,7 +27,7 @@ class Class(BaseModel):
     """
     Aggregate Root: Class (Teaching Class)
 
-    Represents a teaching class_ (e.g., "Beacon 31") with teachers and enrolled students.
+    Represents a teaching class_ (e.g., "Beacon 31") with teachers and enrolled users.
 
     Business Rules:
     - At least one teacher must be assigned to a class
@@ -119,10 +119,10 @@ class Class(BaseModel):
 
     def get_student_count(self) -> int:
         """
-        Get the number of students enrolled in this class_
+        Get the number of users enrolled in this class_
 
         Returns:
-            Number of enrolled students
+            Number of enrolled users
         """
         return len(self.student_ids)
 

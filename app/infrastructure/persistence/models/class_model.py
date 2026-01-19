@@ -14,7 +14,7 @@ class ClassModel(BaseModel):
 
     Relationships:
     - Many-to-many with teachers via class_teachers association table
-    - Many-to-many with students via class_students association table
+    - Many-to-many with users via class_students association table
     - Indexed on status for filtering active/archived classes
     """
 

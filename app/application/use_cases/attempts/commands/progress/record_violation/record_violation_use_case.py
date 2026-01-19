@@ -30,7 +30,7 @@ class RecordViolationUseCase(
     Use case for recording violations during an attempt.
 
     Business rules:
-    - Only students can record violations in their own attempts
+    - Only users can record violations in their own attempts
     - Attempt must be IN_PROGRESS status
     - Violations are recorded immediately
     - Rate limiting: max 1 violation per second per type (prevent spam)

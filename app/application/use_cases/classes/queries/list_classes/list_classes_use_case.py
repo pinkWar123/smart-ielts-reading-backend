@@ -30,7 +30,7 @@ class ListClassesUseCase(UseCase[ListClassesQuery, ListClassesResponse]):
             ClassDTO(
                 id=class_model["id"],
                 name=class_model["name"],
-                students_count=len(class_model["students"]),
+                students_count=len(class_model["users"]),
                 description=class_model["description"],
                 status=class_model["status"],
                 created_at=class_model["created_at"],

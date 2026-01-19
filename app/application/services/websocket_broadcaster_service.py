@@ -91,7 +91,7 @@ class WebSocketBroadcasterService:
 
     async def broadcast_to_all(self, session_id: str, message: dict) -> None:
         """
-        Broadcast message to all users in session (both students and teachers).
+        Broadcast message to all users in session (both users and teachers).
 
         Args:
             session_id: The session ID

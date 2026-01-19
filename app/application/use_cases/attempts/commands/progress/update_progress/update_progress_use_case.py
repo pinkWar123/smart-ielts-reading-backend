@@ -28,7 +28,7 @@ class UpdateProgressUseCase(
     Use case for updating student's progress in an attempt.
 
     Business rules:
-    - Only students can update their own attempt progress
+    - Only users can update their own attempt progress
     - Attempt must be IN_PROGRESS status
     - Progress is immediately persisted to database for reconnection support
     - Client should debounce progress updates (e.g., max 1 update per 2 seconds)

@@ -1619,7 +1619,7 @@ async def start_waiting_room(
     "/{session_id}/start",
     response_model=StartSessionResponse,
     summary="Start Session Countdown",
-    description="Start the session and begin countdown for all connected students.",
+    description="Start the session and begin countdown for all connected users.",
 )
 async def start_session(
     session_id: str,

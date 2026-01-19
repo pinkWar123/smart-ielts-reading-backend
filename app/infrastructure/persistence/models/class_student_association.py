@@ -1,4 +1,4 @@
-"""Association table for many-to-many relationship between classes and students"""
+"""Association table for many-to-many relationship between classes and users"""
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import relationship
@@ -8,7 +8,7 @@ from app.infrastructure.persistence.models.base import Base
 
 class ClassStudentAssociation(Base):
     """
-    Association object for many-to-many relationship between classes and students
+    Association object for many-to-many relationship between classes and users
 
     Attributes:
         class_id: Foreign key to classes table

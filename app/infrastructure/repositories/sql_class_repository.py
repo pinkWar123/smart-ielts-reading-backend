@@ -157,7 +157,7 @@ class SQLClassRepository(ClassRepositoryInterface):
         }
         new_student_ids = set(class_entity.student_ids)
 
-        # Remove students no longer in the class
+        # Remove users no longer in the class
         students_to_remove = existing_student_ids - new_student_ids
         if students_to_remove:
             await self.session.execute(
@@ -166,7 +166,7 @@ class SQLClassRepository(ClassRepositoryInterface):
                 .where(ClassStudentAssociation.student_id.in_(students_to_remove))
             )
 
-        # Add new students
+        # Add new users
         students_to_add = new_student_ids - existing_student_ids
         for student_id in students_to_add:
             association = ClassStudentAssociation(

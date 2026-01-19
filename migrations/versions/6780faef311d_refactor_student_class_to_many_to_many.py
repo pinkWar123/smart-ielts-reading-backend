@@ -89,7 +89,7 @@ def downgrade() -> None:
     class_ids = [row[0] for row in result.fetchall()]
 
     for class_id in class_ids:
-        # Get all students for this class
+        # Get all users for this class
         student_result = connection.execute(
             sa.text("SELECT student_id FROM class_students WHERE class_id = :class_id"),
             {"class_id": class_id},

@@ -135,6 +135,9 @@ from app.application.use_cases.tests.queries.get_test_detail.get_test_detail_use
 from app.application.use_cases.tests.queries.get_test_with_passages.get_test_with_passages_use_case import (
     GetTestWithPassagesUseCase,
 )
+from app.application.users.students.queries.list_users.list_student_use_case import (
+    ListUsersUseCase,
+)
 from app.common.settings import settings
 from app.infrastructure.llm.claude_test_generator_service import (
     ClaudeTestGeneratorService,
@@ -451,6 +454,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
         SubmitAttemptUseCase,
         attempt_repo=attempt_repository,
         test_query_service=test_query_service,
+    )
+
+    # User use cases
+    list_users_use_case = providers.Factory(
+        ListUsersUseCase,
+        user_query_service=user_query_service,
     )
 
 

@@ -27,14 +27,14 @@ class Session(BaseModel):
     """
     Aggregate Root: Session (Exercise Session)
 
-    Represents an exercise session where students take tests together in real-time.
+    Represents an exercise session where users take tests together in real-time.
 
     Business Rules:
     - Can only start if at least one student is connected
     - Cannot modify once IN_PROGRESS
     - Can only cancel if not IN_PROGRESS
     - Students can join during WAITING_FOR_STUDENTS or IN_PROGRESS
-    - Global timer: started_at determines test end time for all students
+    - Global timer: started_at determines test end time for all users
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -54,7 +54,7 @@ class Session(BaseModel):
 
     def start_waiting_phase(self) -> None:
         """
-        Open waiting room for students to join
+        Open waiting room for users to join
 
         Business rules:
         - Can only transition from SCHEDULED status
@@ -126,7 +126,7 @@ class Session(BaseModel):
 
     def start_session(self) -> List[str]:
         """
-        Start the test countdown - all connected students begin simultaneously
+        Start the test countdown - all connected users begin simultaneously
 
         Business rules:
         - Can only transition from WAITING_FOR_STUDENTS status
@@ -137,7 +137,7 @@ class Session(BaseModel):
 
         Raises:
             InvalidSessionStatusError: If session is not in WAITING_FOR_STUDENTS status
-            NoStudentsConnectedError: If no students are connected
+            NoStudentsConnectedError: If no users are connected
         """
         if self.status != SessionStatus.WAITING_FOR_STUDENTS:
             raise InvalidSessionStatusError(
@@ -209,10 +209,10 @@ class Session(BaseModel):
 
     def get_connected_student_count(self) -> int:
         """
-        Get the number of currently connected students
+        Get the number of currently connected users
 
         Returns:
-            Number of connected students
+            Number of connected users
         """
         return sum(
             1

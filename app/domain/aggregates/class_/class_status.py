@@ -6,5 +6,5 @@ from enum import Enum
 class ClassStatus(str, Enum):
     """Teaching class_ lifecycle status"""
 
-    ACTIVE = "ACTIVE"  # Class is active and accepting students
+    ACTIVE = "ACTIVE"  # Class is active and accepting users
     ARCHIVED = "ARCHIVED"  # Class is archived and no longer active

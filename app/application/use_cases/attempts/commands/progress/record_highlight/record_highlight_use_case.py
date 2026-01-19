@@ -27,7 +27,7 @@ class RecordHighlightUseCase(
     Use case for recording text highlights during an attempt.
 
     Business rules:
-    - Only students can record highlights in their own attempts
+    - Only users can record highlights in their own attempts
     - Attempt must be IN_PROGRESS status
     - Highlights are saved immediately to database
     - Students can have multiple overlapping highlights

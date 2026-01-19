@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.services.query.users.user_query_model import Student, Teacher
 from app.application.services.query.users.user_query_service import UserQueryService
-from app.domain.aggregates.users.user import UserRole
+from app.domain.aggregates.users.user import User, UserRole
 from app.infrastructure.persistence.models import (
     ClassModel,
     ClassStudentAssociation,
@@ -15,6 +15,43 @@ from app.infrastructure.persistence.models import (
 
 
 class SQLUserQueryService(UserQueryService):
+
+    async def search_users(
+        self, query: str, role: Optional[UserRole], limit: int
+    ) -> List[User]:
+        """
+        Search users by name or email with optional role filter.
+
+        Args:
+            query: Search string to match against full_name or email
+            role: Optional user role filter (STUDENT, TEACHER, or None for all)
+            limit: Maximum number of results to return
+
+        Returns:
+            List of User domain objects matching the search criteria
+        """
+        from sqlalchemy import or_
+
+        # Build the base query
+        stmt = select(UserModel).where(
+            or_(
+                UserModel.full_name.ilike(f"%{query}%"),
+                UserModel.email.ilike(f"%{query}%"),
+            )
+        )
+
+        # Apply role filter if specified
+        if role is not None:
+            stmt = stmt.where(UserModel.role == role)
+
+        # Apply limit and execute
+        stmt = stmt.limit(limit)
+        result = await self.session.execute(stmt)
+        user_models = result.scalars().all()
+
+        # Convert to domain objects
+        return [user_model.to_domain() for user_model in user_models]
+
     async def get_teachers_by_ids(self, teacher_ids: List[str]) -> List[Teacher]:
         stmt = (
             select(

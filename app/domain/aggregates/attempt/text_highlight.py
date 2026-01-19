@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 class TextHighlight(BaseModel):
     """
     Represents a text highlight action by a student during a test.
-    Stores full detail for analysis and persisting students' progress in case he disconnects.
+    Stores full detail for analysis and persisting users' progress in case he disconnects.
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

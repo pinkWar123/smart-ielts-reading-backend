@@ -44,7 +44,7 @@ router = APIRouter()
     
     Rules:
     - Students can only access their own attempts
-    - Teachers can access attempts of students in their classes
+    - Teachers can access attempts of users in their classes
     - Admins can access any attempt
     """,
     responses={
@@ -101,7 +101,7 @@ class UpdateProgressContract(BaseModel):
     Update student's progress in the test
 
     Business rules:
-    - Only students can update their own attempt progress
+    - Only users can update their own attempt progress
     - Attempt must be IN_PROGRESS status
     - Progress is immediately persisted to database
     - Client should debounce progress updates (e.g., max 1 update per 2 seconds)
@@ -148,7 +148,7 @@ class RecordHighlightContract(BaseModel):
     Record text highlighted by student during test
 
     Business rules:
-    - Only students can record highlights in their own attempts
+    - Only users can record highlights in their own attempts
     - Attempt must be IN_PROGRESS status
     - Highlights are saved immediately to database
     - Students can have multiple overlapping highlights
@@ -198,7 +198,7 @@ class RecordViolationContract(BaseModel):
     Record tab switches and other violations during test
 
     Business rules:
-    - Only students can record violations in their own attempts
+    - Only users can record violations in their own attempts
     - Attempt must be IN_PROGRESS status
     - Violations are recorded immediately
     - Broadcast to teacher via WebSocket if part of a session

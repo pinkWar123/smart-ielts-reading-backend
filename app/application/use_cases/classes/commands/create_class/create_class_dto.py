@@ -23,7 +23,7 @@ class CreateClassRequest(BaseModel):
         default=list,
     )
     student_ids: Optional[list[str]] = Field(
-        default_factory=list, description="IDs of students. Can be empty initially"
+        default_factory=list, description="IDs of users. Can be empty initially"
     )
 
 

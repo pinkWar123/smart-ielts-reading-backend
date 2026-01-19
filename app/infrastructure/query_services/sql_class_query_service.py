@@ -144,7 +144,7 @@ class SqlClassQueryService(ClassQueryService):
             name: Filter by class name (case-insensitive partial match)
 
         Optimizations:
-        1. Only fetch students for classes in current page
+        1. Only fetch users for classes in current page
         2. Proper column mapping for sorting
         3. Correct pagination calculations
         4. Efficient filtering with proper joins
@@ -220,7 +220,7 @@ class SqlClassQueryService(ClassQueryService):
         # Extract class IDs from current page only
         class_ids = [row[0] for row in rows]
 
-        # Fetch students ONLY for classes in current page (performance optimization)
+        # Fetch users ONLY for classes in current page (performance optimization)
         student_stmt = (
             select(ClassStudentAssociation.class_id, UserModel)
             .select_from(ClassStudentAssociation)
@@ -241,10 +241,10 @@ class SqlClassQueryService(ClassQueryService):
                 "status": status,
                 "created_at": created_at,
                 "created_by": user_model.to_domain(),
-                "students": [],
+                "users": [],
             }
 
-        # Add students to their respective classes (now safe from KeyError)
+        # Add users to their respective classes (now safe from KeyError)
         for class_id, user_model in student_rows:
             if user_model and class_id in class_dict:  # Null safety check
                 query_model = ListClassStudentsQueryModel(
@@ -252,7 +252,7 @@ class SqlClassQueryService(ClassQueryService):
                     username=user_model.username,
                     email=user_model.email,
                 )
-                class_dict[class_id]["students"].append(query_model)
+                class_dict[class_id]["users"].append(query_model)
 
         # Calculate pagination metadata correctly
         total_pages = math.ceil(total_count / page_size) if total_count > 0 else 0

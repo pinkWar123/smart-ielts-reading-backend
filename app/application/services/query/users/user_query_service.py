@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from app.application.services.query.users.user_query_model import Student, Teacher
+from app.domain.aggregates.users.user import User, UserRole
 
 
 class UserQueryService(ABC):
@@ -19,4 +20,10 @@ class UserQueryService(ABC):
 
     @abstractmethod
     async def get_students_by_ids(self, student_ids: List[str]) -> List[Student]:
+        pass
+
+    @abstractmethod
+    async def search_users(
+        self, query: str, role: Optional[UserRole], limit: int
+    ) -> List[User]:
         pass

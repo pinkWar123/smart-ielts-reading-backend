@@ -179,7 +179,7 @@ class TestGetMySessionsUseCase:
         my_session = response.sessions[0]
         assert my_session.my_attempt_id == "attempt-mine"
         assert my_session.my_connection_status == "DISCONNECTED"
-        # Should not include other students' info
+        # Should not include other users' info
 
     @pytest.mark.asyncio
     async def test_get_my_sessions_different_statuses(
