@@ -80,7 +80,9 @@ async def create_complete_passage(
     - Questions in a group must match the group's question type
     - Question numbers must fall within group range if assigned to a group
     """
-    return await use_cases.create_complete_passage.execute(request)
+    return await use_cases.create_complete_passage.execute(
+        request, user_id=current_user["user_id"]
+    )
 
 
 @router.post(

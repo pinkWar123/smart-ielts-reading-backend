@@ -110,7 +110,7 @@ async def get_class_by_id(
 )
 async def create_class(
     request: CreateClassRequest,
-    current_user=Depends(RequireRoles([UserRole.ADMIN])),
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
     use_cases: ClassUseCases = Depends(get_class_use_cases),
 ):
     create_class_request = CreateClassRequest(

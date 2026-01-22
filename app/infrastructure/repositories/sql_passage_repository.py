@@ -215,12 +215,12 @@ class SQLPassageRepositoryInterface(PassageRepositoryInterface):
         )
 
         await self.session.execute(
+            delete(QuestionModel).where(QuestionModel.passage_id == passage.id)
+        )
+        await self.session.execute(
             delete(QuestionGroupModel).where(
                 QuestionGroupModel.passage_id == passage.id
             )
-        )
-        await self.session.execute(
-            delete(QuestionModel).where(QuestionModel.passage_id == passage.id)
         )
 
         # Flush to ensure deletions are executed before we add new items

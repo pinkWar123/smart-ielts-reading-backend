@@ -201,7 +201,7 @@ async def add_passage_to_test(
 
     The test's total_questions and total_points are automatically updated based on the passage.
     """
-    return await use_cases.add_passage_to_test.execute(test_id)
+    return await use_cases.add_passage_to_test.execute(test_id, request)
 
 
 @router.post(

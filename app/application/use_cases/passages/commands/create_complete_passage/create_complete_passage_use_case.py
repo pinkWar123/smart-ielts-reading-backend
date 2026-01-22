@@ -64,7 +64,8 @@ class CreateCompletePassageUseCase(
                 start_question_number=qg_dto.start_question_number,
                 end_question_number=qg_dto.end_question_number,
                 order_in_passage=qg_dto.order_in_passage,
-                options=group_options,
+                options=group_options if group_options else [],
+                questions=[],
             )
             passage.add_question_group(question_group)
 

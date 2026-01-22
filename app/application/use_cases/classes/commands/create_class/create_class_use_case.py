@@ -106,6 +106,8 @@ class CreateClassUseCase(AuthenticatedUseCase[CreateClassRequest, CreateClassRes
         self, creator, request: CreateClassRequest, user_id: str
     ) -> None:
         """Ensure that if the creator is a teacher, they are added to the teacher list."""
+        if request.teacher_ids is None:
+            return
         if creator.role == UserRole.TEACHER and user_id not in request.teacher_ids:
             request.teacher_ids.append(user_id)
 

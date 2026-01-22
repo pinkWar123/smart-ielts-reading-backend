@@ -49,8 +49,8 @@ class Test(BaseModel):
         default_factory=list
     )  # References to Passage aggregates
     time_limit_minutes: int = Field(ge=MIN_TIME_LIMIT_MINUTES)
-    total_questions: int = Field(ge=MIN_TOTAL_QUESTIONS)
-    total_points: int = Field(ge=MIN_TOTAL_POINTS)
+    total_questions: int
+    total_points: int
     status: TestStatus = Field(default=TestStatus.DRAFT)
     created_by: str
     created_at: datetime = Field(default_factory=TimeHelper.utc_now)
