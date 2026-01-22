@@ -39,6 +39,7 @@ class GetSessionByIdUseCase(UseCase[GetSessionByIdQuery, GetSessionByIdResponse]
                 )
                 for p in session.participants
             ],
+            connected_participant_count=session.get_connected_student_count(),
             created_by=session.created_by,
             created_at=session.created_at,
             updated_at=session.updated_at,

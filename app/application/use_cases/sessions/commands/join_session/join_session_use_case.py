@@ -45,9 +45,9 @@ class JoinSessionUseCase(AuthenticatedUseCase[SessionJoinRequest, SessionJoinRes
         session.student_join(user_id)
 
         updated_session = await self.session_repo.update(session)
-        await self._broadcast_session_update(
-            user_id, updated_session.id, len(updated_session.participants)
-        )
+
+        # Note: Using polling approach - no WebSocket broadcast needed
+        # Teachers will see updates by polling GET /sessions/{session_id}
 
         return SessionJoinResponse(
             session_id=updated_session.id,

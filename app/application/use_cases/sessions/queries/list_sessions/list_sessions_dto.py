@@ -23,6 +23,7 @@ class SessionSummaryDTO(BaseModel):
     completed_at: Optional[datetime] = None
     status: SessionStatus
     participant_count: int
+    connected_participant_count: int
     created_by: str
     created_at: datetime
 

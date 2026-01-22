@@ -41,6 +41,7 @@ class ListSessionsUseCase(UseCase[ListSessionsQuery, ListSessionsResponse]):
                 completed_at=s.completed_at,
                 status=s.status,
                 participant_count=len(s.participants),
+                connected_participant_count=s.get_connected_student_count(),
                 created_by=s.created_by,
                 created_at=s.created_at,
             )

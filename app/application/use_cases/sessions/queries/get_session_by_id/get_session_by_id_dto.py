@@ -28,6 +28,7 @@ class GetSessionByIdResponse(BaseModel):
     completed_at: Optional[datetime] = None
     status: SessionStatus
     participants: List[ParticipantDetailDTO]
+    connected_participant_count: int
     created_by: str
     created_at: datetime
     updated_at: Optional[datetime] = None

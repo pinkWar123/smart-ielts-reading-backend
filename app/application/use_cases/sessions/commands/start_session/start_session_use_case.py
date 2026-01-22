@@ -9,6 +9,7 @@ from app.application.use_cases.sessions.commands.start_session.start_session_dto
 )
 from app.common.utils.time_helper import TimeHelper
 from app.domain.aggregates.session import Session
+from app.domain.aggregates.session.constants import CONNECTION_STATUS_CONNECTED
 from app.domain.aggregates.users.user import User, UserRole
 from app.domain.errors.class_errors import ClassNotFoundError
 from app.domain.errors.session_errors import (
@@ -112,6 +113,10 @@ class StartSessionUseCase(
                 session_id=session.id,
                 timestamp=TimeHelper.utc_now(),
                 started_at=session.started_at,
-                connected_students=[p.student_id for p in session.participants],
+                connected_students=[
+                    p.student_id
+                    for p in session.participants
+                    if p.connection_status == CONNECTION_STATUS_CONNECTED
+                ],
             ).dict(),
         )
