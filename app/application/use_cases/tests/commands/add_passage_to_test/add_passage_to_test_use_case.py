@@ -56,6 +56,12 @@ class AddPassageToTestUseCase(UseCase[AddPassageToTestRequest, TestResponse]):
         if not passage:
             raise PassageNotFoundError(request.passage_id)
 
+        current_question_count = test.total_questions
+        for question in passage.questions:
+            question.order_in_passage = (
+                current_question_count + question.order_in_passage
+            )
+
         # Use domain method to add passage (enforces business rules)
         test.add_passage(request.passage_id)
 
