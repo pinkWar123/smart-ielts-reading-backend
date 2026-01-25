@@ -117,6 +117,9 @@ from app.application.use_cases.tests.commands.create_test.create_test_use_case i
 from app.application.use_cases.tests.commands.publish_test.publish_test_use_case import (
     PublishTestUseCase,
 )
+from app.application.use_cases.tests.commands.unpublish_test.unpublish_test_use_case import (
+    UnpublishTestUseCase,
+)
 from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
@@ -310,6 +313,12 @@ class ApplicationContainer(containers.DeclarativeContainer):
         PublishTestUseCase,
         test_repository=test_repository,
         test_query_service=test_query_service,
+    )
+    unpublish_test_use_case = providers.Factory(
+        UnpublishTestUseCase,
+        test_repo=test_repository,
+        attempt_repo=attempt_repository,
+        user_repo=user_repository,
     )
     get_paginated_single_tests_use_case = providers.Factory(
         GetPaginatedSingleTestsUseCase, test_query_service=test_query_service

@@ -15,6 +15,10 @@ from app.application.use_cases.tests.commands.create_test.create_test_dtos impor
 from app.application.use_cases.tests.commands.publish_test.publish_test_dto import (
     PublishTestRequest,
 )
+from app.application.use_cases.tests.commands.unpublish_test.unpublish_test_dto import (
+    UnpublishTestCommand,
+    UnpublishTestResponse,
+)
 from app.application.use_cases.tests.queries.get_all_tests.get_all_tests_dto import (
     GetAllTestsQueryParams,
     GetAllTestsResponse,
@@ -226,6 +230,45 @@ async def publish_test(
 ):
     request = PublishTestRequest(id=test_id)
     return await use_cases.publish_test.execute(request)
+
+
+@router.post(
+    "/{test_id}/unpublish",
+    response_model=UnpublishTestResponse,
+    summary="Unpublish a test",
+    description="Unpublish a test (revert to DRAFT status). Only allowed if the test has not been taken by anyone. Must be admin or test creator.",
+    responses={
+        200: {"description": "Test unpublished successfully"},
+        400: {
+            "description": "Invalid request - test not found, already unpublished, or has been taken by users"
+        },
+        401: {"description": "Authentication required"},
+        403: {"description": "Unauthorized - must be admin or test creator"},
+        422: {"description": "Validation error"},
+    },
+)
+async def unpublish_test(
+    test_id: str,
+    use_cases: TestUseCases = Depends(get_test_use_cases),
+    current_user=Depends(RequireRoles([UserRole.ADMIN, UserRole.TEACHER])),
+):
+    """
+    Unpublish a test (revert to DRAFT status).
+
+    **Authorization**: Requires admin role OR must be the teacher who created the test.
+
+    - **test_id**: ID of the test to unpublish (path parameter)
+
+    Business rules enforced:
+    - Test must be currently published
+    - Test cannot have been taken by any users (no attempts exist)
+    - Only admins or the test creator can unpublish
+
+    After unpublishing, the test becomes editable again (can add/remove passages).
+    """
+    user_id = current_user["user_id"]
+    request = UnpublishTestCommand(id=test_id)
+    return await use_cases.unpublish_test.execute(request, user_id)
 
 
 @router.delete(

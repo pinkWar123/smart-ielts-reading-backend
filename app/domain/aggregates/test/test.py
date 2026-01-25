@@ -149,6 +149,23 @@ class Test(BaseModel):
         self.status = TestStatus.PUBLISHED
         self.updated_at = TimeHelper.utc_now()
 
+    def unpublish(self) -> None:
+        """
+        Unpublish the test (revert to DRAFT status)
+
+        Business rules:
+        - Can only unpublish if currently PUBLISHED
+        - Cannot unpublish if test has been taken by anyone
+
+        Raises:
+            InvalidTestStatusError: If test is not in PUBLISHED status
+        """
+        if self.status != TestStatus.PUBLISHED:
+            raise InvalidTestStatusError(self.status.value, TestStatus.PUBLISHED.value)
+
+        self.status = TestStatus.DRAFT
+        self.updated_at = TimeHelper.utc_now()
+
     def archive(self) -> None:
         """
         Archive the test
@@ -161,6 +178,11 @@ class Test(BaseModel):
 
         self.status = TestStatus.ARCHIVED
         self.updated_at = TimeHelper.utc_now()
+
+    @property
+    def is_published(self) -> bool:
+        """Check if the test is published"""
+        return self.status == TestStatus.PUBLISHED
 
     def update_totals(self, total_questions: int, total_points: int) -> None:
         """

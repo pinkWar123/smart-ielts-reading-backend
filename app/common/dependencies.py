@@ -117,6 +117,9 @@ from app.application.use_cases.tests.commands.create_test.create_test_use_case i
 from app.application.use_cases.tests.commands.publish_test.publish_test_use_case import (
     PublishTestUseCase,
 )
+from app.application.use_cases.tests.commands.unpublish_test.unpublish_test_use_case import (
+    UnpublishTestUseCase,
+)
 from app.application.use_cases.tests.queries.extract_test.extract_test_from_images.extract_test_from_images_use_case import (
     ExtractTestFromImagesUseCase,
 )
@@ -160,6 +163,7 @@ class TestUseCases:
     get_all_tests: GetAllTestsUseCase
     remove_passage_use_case: DeletePassageByIdUseCase
     publish_test: PublishTestUseCase
+    unpublish_test: UnpublishTestUseCase
     get_paginated_single_tests: GetPaginatedSingleTestsUseCase
     get_paginated_full_tests: GetPaginatedFullTestsUseCase
 
@@ -227,6 +231,8 @@ async def get_test_use_cases(
     # Create repositories with session
     test_repo = container.test_repository(session=session)
     passage_repo = container.passage_repository(session=session)
+    attempt_repo = container.attempt_repository(session=session)
+    user_repo = container.user_repository(session=session)
 
     # Create query services with session
     test_query_service = container.test_query_service(session=session)
@@ -249,6 +255,9 @@ async def get_test_use_cases(
         ),
         publish_test=container.publish_test_use_case(
             test_repository=test_repo, test_query_service=test_query_service
+        ),
+        unpublish_test=container.unpublish_test_use_case(
+            test_repo=test_repo, attempt_repo=attempt_repo, user_repo=user_repo
         ),
         get_paginated_single_tests=container.get_paginated_single_tests_use_case(
             test_query_service=test_query_service
